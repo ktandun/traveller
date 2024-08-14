@@ -1,6 +1,6 @@
-import traveller/router
 import gleam/erlang/process
 import mist
+import traveller/router
 import wisp
 
 pub fn main() {
