@@ -1,5 +1,5 @@
 import gleam/dynamic.{type Dynamic}
-import gleam/http.{Post}
+import gleam/http.{Get, Post}
 import gleam/json
 import traveller/error
 import traveller/user
@@ -13,6 +13,7 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
     // This matches `/`.
     ["login"] -> login(req, ctx)
     ["signup"] -> signup(req, ctx)
+    ["admin"] -> admin(req, ctx)
 
     _ -> wisp.not_found()
   }
@@ -81,11 +82,39 @@ fn login(req: Request, ctx: Context) -> Response {
 
   use login_request <- web.require_valid_json(login_request_decoder(json))
 
-  case user.login_user(ctx, login_request.email, login_request.password) {
-    Ok(is_valid) ->
-      json.object([#("success", json.bool(is_valid))])
-      |> json.to_string_builder
-      |> wisp.json_response(200)
-    Error(_) -> web.error_to_response(error.InvalidLogin)
+  use is_user_exists <- web.require_ok(user.is_user_exists(
+    ctx,
+    login_request.email,
+  ))
+
+  case is_user_exists {
+    True -> {
+      case user.login_user(ctx, login_request.email, login_request.password) {
+        Ok(userid) ->
+          json.object([#("success", json.bool(True))])
+          |> json.to_string_builder
+          |> wisp.json_response(200)
+          |> wisp.set_cookie(
+            req,
+            "traveller.auth",
+            userid,
+            wisp.Signed,
+            60 * 60 * 24,
+          )
+        Error(e) -> web.error_to_response(e)
+      }
+    }
+    False -> {
+      web.error_to_response(error.InvalidLogin)
+    }
   }
+}
+
+fn admin(req: Request, _ctx: Context) -> Response {
+  use <- wisp.require_method(req, Get)
+  use cookie <- web.require_authenticated(req)
+
+  json.object([#("userid", json.string(cookie))])
+  |> json.to_string_builder
+  |> wisp.json_response(200)
 }

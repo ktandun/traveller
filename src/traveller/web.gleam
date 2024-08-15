@@ -1,16 +1,19 @@
 import gleam/dynamic.{type DecodeErrors, DecodeError}
 import gleam/json.{type Json}
-import gleam/pgo
+import gleam/pgo.{
+  ConnectionUnavailable, ConstraintViolated, PostgresqlError,
+  UnexpectedArgumentCount, UnexpectedArgumentType, UnexpectedResultType,
+}
 import traveller/error.{type AppError, JsonDecodeError}
-import wisp.{type Response}
+import wisp.{type Request, type Response}
 
 pub type Context {
   Context(db: pgo.Connection)
 }
 
 pub fn middleware(
-  req: wisp.Request,
-  handle_request: fn(wisp.Request) -> wisp.Response,
+  req: Request,
+  handle_request: fn(Request) -> Response,
 ) -> wisp.Response {
   let req = wisp.method_override(req)
   use <- wisp.log_request(req)
@@ -41,6 +44,16 @@ pub fn require_ok(
   }
 }
 
+pub fn require_authenticated(
+  req: Request,
+  next: fn(String) -> Response,
+) -> Response {
+  case wisp.get_cookie(req, "traveller.auth", wisp.Signed) {
+    Ok(cookie) -> next(cookie)
+    Error(_) -> error_to_response(error.UserUnauthenticated)
+  }
+}
+
 pub fn require_valid_json(
   result: Result(a, DecodeErrors),
   next: fn(a) -> Response,
@@ -59,19 +72,61 @@ fn json_with_status(json: Json, status: Int) -> Response {
 
 pub fn error_to_response(error: AppError) -> Response {
   case error {
+    error.UnableToParseString ->
+      [#("title", json.string("UNABLE_TO_PARSE_STRING"))]
+      |> json.object()
+      |> json_with_status(500)
+
+    error.UserUnauthenticated ->
+      [#("title", json.string("USER_UNAUTHENTICATED"))]
+      |> json.object()
+      |> json_with_status(401)
+
     error.InvalidLogin ->
-      [#("error", json.string("INVALID_LOGIN"))]
+      [#("title", json.string("INVALID_LOGIN"))]
       |> json.object()
       |> json_with_status(400)
 
     error.UserAlreadyRegistered ->
-      [#("error", json.string("USER_ALREADY_REGISTERED"))]
+      [#("title", json.string("USER_ALREADY_REGISTERED"))]
       |> json.object()
       |> json_with_status(400)
 
-    error.DatabaseError ->
-      json.object([#("error", json.string("DATABASE_ERROR"))])
-      |> json_with_status(500)
+    error.DatabaseError(query_error) -> {
+      case query_error {
+        ConstraintViolated(_message, _constraint, _detail) ->
+          json.object([
+            #("title", json.string("DATABASE_ERROR")),
+            #("detail", json.string("constraint violated")),
+          ])
+          |> json_with_status(500)
+        PostgresqlError(_code, _name, _message) ->
+          json.object([
+            #("title", json.string("DATABASE_ERROR")),
+            #("detail", json.string("postgresql error")),
+          ])
+          |> json_with_status(500)
+        UnexpectedArgumentCount(_expected, _got) ->
+          json.object([
+            #("title", json.string("DATABASE_ERROR")),
+            #("detail", json.string("unexpected argument count")),
+          ])
+          |> json_with_status(500)
+        UnexpectedArgumentType(_expected, _got) ->
+          json.object([
+            #("title", json.string("DATABASE_ERROR")),
+            #("detail", json.string("unexpected argument count")),
+          ])
+          |> json_with_status(500)
+        UnexpectedResultType(e) -> error_to_response(JsonDecodeError(e))
+        ConnectionUnavailable ->
+          json.object([
+            #("title", json.string("DATABASE_ERROR")),
+            #("detail", json.string("connection unavailable")),
+          ])
+          |> json_with_status(500)
+      }
+    }
 
     error.JsonDecodeError(errors) -> {
       let decode_errors_json =
@@ -90,7 +145,7 @@ pub fn error_to_response(error: AppError) -> Response {
           ])
         })
 
-      [#("error", decode_errors_json)]
+      [#("title", json.string("DECODE_ERROR")), #("detail", decode_errors_json)]
       |> json.object
       |> json_with_status(400)
     }

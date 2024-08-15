@@ -28,7 +28,7 @@ pub fn one(
       let assert [row] = result.rows
       Ok(row)
     }
-    Error(_) -> Error(error.DatabaseError)
+    Error(e) -> Error(error.DatabaseError(e))
   }
 }
 

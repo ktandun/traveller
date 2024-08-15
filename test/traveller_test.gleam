@@ -31,12 +31,12 @@ pub fn login_successful_test() {
     testing.post_json("/login", [], json)
     |> router.handle_request(ctx)
 
-  response.status
-  |> should.equal(200)
-
   response
   |> testing.string_body
   |> birdie.snap(title: "login successful")
+
+  response.status
+  |> should.equal(200)
 }
 
 pub fn login_invalid_json_test() {
@@ -51,10 +51,10 @@ pub fn login_invalid_json_test() {
     testing.post_json("/login", [], json)
     |> router.handle_request(ctx)
 
-  response.status
-  |> should.equal(400)
-
   response
   |> testing.string_body
   |> birdie.snap(title: "login invalid")
+
+  response.status
+  |> should.equal(400)
 }

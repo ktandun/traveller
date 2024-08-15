@@ -4,4 +4,4 @@ title: login invalid
 file: ./test/traveller_test.gleam
 test_name: login_invalid_json_test
 ---
-{"error":[{"expected":"String","found":"Bool","path":["password"]}]}
+{"title":"DECODE_ERROR","detail":[{"expected":"String","found":"Bool","path":["password"]}]}
