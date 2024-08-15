@@ -1,0 +1,7 @@
+---
+version: 1.2.0
+title: login invalid
+file: ./test/traveller_test.gleam
+test_name: login_invalid_json_test
+---
+{"error":"Invalid JSON"}

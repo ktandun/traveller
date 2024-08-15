@@ -1,14 +1,24 @@
 import gleam/erlang/process
 import mist
+import traveller/database
 import traveller/router
+import traveller/web
 import wisp
 
 pub fn main() {
   wisp.configure_logger()
+
   let secret_key_base = wisp.random_string(64)
 
+  use db <- database.with_connection()
+
+  let context = web.Context(db: db)
+
+  let handler = router.handle_request(_, context)
+
   let assert Ok(_) =
-    wisp.mist_handler(router.handle_request, secret_key_base)
+    handler
+    |> wisp.mist_handler(secret_key_base)
     |> mist.new
     |> mist.port(8000)
     |> mist.start_http

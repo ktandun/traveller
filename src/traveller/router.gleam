@@ -5,17 +5,17 @@ import gleam/result
 import gleam/string_builder
 import traveller/error
 import traveller/user
-import traveller/web
+import traveller/web.{type Context}
 import wisp.{type Request, type Response}
 
-pub fn handle_request(req: Request) -> Response {
+pub fn handle_request(req: Request, ctx: Context) -> Response {
   use req <- web.middleware(req)
 
   case wisp.path_segments(req) {
     // This matches `/`.
     [] -> home_page(req)
 
-    ["login"] -> login(req)
+    ["login"] -> login(req, ctx)
 
     _ -> wisp.not_found()
   }
@@ -36,22 +36,22 @@ fn login_request_decoder(json: Dynamic) {
   decoder(json)
 }
 
-fn login(req: Request) -> Response {
+fn login(req: Request, ctx: Context) -> Response {
   use <- wisp.require_method(req, Post)
   use json <- wisp.require_json(req)
 
   let login_request =
     login_request_decoder(json)
-    |> result.map_error(with: fn(_) { error.JsonDecodeError })
+    |> result.map_error(with: fn(e) { error.JsonDecodeError(e) })
 
   use valid_request <- web.require_ok(login_request)
 
-  case user.login_user(valid_request.email, valid_request.password) {
-    True ->
-      json.object([#("success", json.bool(True))])
+  case user.login_user(ctx, valid_request.email, valid_request.password) {
+    Ok(is_valid) ->
+      json.object([#("success", json.bool(is_valid))])
       |> json.to_string_builder
       |> wisp.json_response(200)
-    False ->
+    Error(_) ->
       json.object([#("success", json.bool(False))])
       |> json.to_string_builder
       |> wisp.json_response(400)

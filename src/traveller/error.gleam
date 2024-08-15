@@ -1,4 +1,7 @@
+import gleam/dynamic.{type DecodeErrors}
+
 pub type AppError {
   UnknownError
-  JsonDecodeError
+  JsonDecodeError(DecodeErrors)
+  DatabaseError
 }

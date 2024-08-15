@@ -1,5 +1,11 @@
+import gleam/json
+import gleam/pgo
 import traveller/error.{type AppError}
 import wisp.{type Response}
+
+pub type Context {
+  Context(db: pgo.Connection)
+}
 
 pub fn middleware(
   req: wisp.Request,
@@ -37,6 +43,10 @@ pub fn require_ok(
 pub fn error_to_response(error: AppError) -> Response {
   case error {
     error.UnknownError -> wisp.unprocessable_entity()
-    error.JsonDecodeError -> wisp.unprocessable_entity()
+    error.DatabaseError -> wisp.unprocessable_entity()
+    error.JsonDecodeError(_e) ->
+      json.object([#("error", json.string("Invalid JSON"))])
+      |> json.to_string_builder
+      |> wisp.json_response(400)
   }
 }
