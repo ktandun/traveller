@@ -12,18 +12,15 @@ pub fn main() {
 }
 
 fn with_context(testcase: fn(web.Context) -> t) -> t {
-  // Create a new database connection for this test
   use db <- database.with_connection()
 
-  // Truncate the database so there is no prexisting data from previous tests
   let context = web.Context(db: db)
 
-  // Run the test with the context
   testcase(context)
 }
 
 pub fn login_successful_test() {
-  use context <- with_context()
+  use ctx <- with_context()
 
   let json =
     json.object([
@@ -32,7 +29,7 @@ pub fn login_successful_test() {
     ])
   let response =
     testing.post_json("/login", [], json)
-    |> router.handle_request(context)
+    |> router.handle_request(ctx)
 
   response.status
   |> should.equal(200)
@@ -43,7 +40,7 @@ pub fn login_successful_test() {
 }
 
 pub fn login_invalid_json_test() {
-  use context <- with_context()
+  use ctx <- with_context()
 
   let json =
     json.object([
@@ -52,7 +49,7 @@ pub fn login_invalid_json_test() {
     ])
   let response =
     testing.post_json("/login", [], json)
-    |> router.handle_request(context)
+    |> router.handle_request(ctx)
 
   response.status
   |> should.equal(400)

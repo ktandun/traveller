@@ -1,5 +1,4 @@
 import gleam/dynamic
-import gleam/io
 import gleam/pgo
 import traveller/error.{type AppError}
 
@@ -29,13 +28,14 @@ pub fn one(
       let assert [row] = result.rows
       Ok(row)
     }
-    Error(e) -> {
-      e |> io.debug
-      Error(error.DatabaseError)
-    }
+    Error(_) -> Error(error.DatabaseError)
   }
 }
 
 pub fn int_decoder() {
   dynamic.element(0, dynamic.int)
+}
+
+pub fn string_decoder() {
+  dynamic.element(0, dynamic.string)
 }

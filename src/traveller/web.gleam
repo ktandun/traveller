@@ -1,6 +1,7 @@
-import gleam/json
+import gleam/dynamic.{type DecodeErrors, DecodeError}
+import gleam/json.{type Json}
 import gleam/pgo
-import traveller/error.{type AppError}
+import traveller/error.{type AppError, JsonDecodeError}
 import wisp.{type Response}
 
 pub type Context {
@@ -40,13 +41,58 @@ pub fn require_ok(
   }
 }
 
+pub fn require_valid_json(
+  result: Result(a, DecodeErrors),
+  next: fn(a) -> Response,
+) -> Response {
+  case result {
+    Ok(value) -> next(value)
+    Error(e) -> error_to_response(JsonDecodeError(e))
+  }
+}
+
+fn json_with_status(json: Json, status: Int) -> Response {
+  json
+  |> json.to_string_builder
+  |> wisp.json_response(status)
+}
+
 pub fn error_to_response(error: AppError) -> Response {
   case error {
-    error.UnknownError -> wisp.unprocessable_entity()
-    error.DatabaseError -> wisp.unprocessable_entity()
-    error.JsonDecodeError(_e) ->
-      json.object([#("error", json.string("Invalid JSON"))])
-      |> json.to_string_builder
-      |> wisp.json_response(400)
+    error.InvalidLogin ->
+      [#("error", json.string("INVALID_LOGIN"))]
+      |> json.object()
+      |> json_with_status(400)
+
+    error.UserAlreadyRegistered ->
+      [#("error", json.string("USER_ALREADY_REGISTERED"))]
+      |> json.object()
+      |> json_with_status(400)
+
+    error.DatabaseError ->
+      json.object([#("error", json.string("DATABASE_ERROR"))])
+      |> json_with_status(500)
+
+    error.JsonDecodeError(errors) -> {
+      let decode_errors_json =
+        json.array(errors, of: fn(error) {
+          let decode_error = {
+            case error {
+              DecodeError(expected, found, path) -> #(expected, found, path)
+            }
+          }
+
+          let #(expected, found, path) = decode_error
+          json.object([
+            #("expected", json.string(expected)),
+            #("found", json.string(found)),
+            #("path", json.array(path, of: json.string)),
+          ])
+        })
+
+      [#("error", decode_errors_json)]
+      |> json.object
+      |> json_with_status(400)
+    }
   }
 }

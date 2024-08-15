@@ -1,8 +1,6 @@
 import gleam/dynamic.{type Dynamic}
-import gleam/http.{Get, Post}
+import gleam/http.{Post}
 import gleam/json
-import gleam/result
-import gleam/string_builder
 import traveller/error
 import traveller/user
 import traveller/web.{type Context}
@@ -13,9 +11,9 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
 
   case wisp.path_segments(req) {
     // This matches `/`.
-    [] -> home_page(req)
 
     ["login"] -> login(req, ctx)
+    ["signup"] -> signup(req, ctx)
 
     _ -> wisp.not_found()
   }
@@ -23,6 +21,10 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
 
 type LoginRequest {
   LoginRequest(email: String, password: String)
+}
+
+type SignupRequest {
+  SignupRequest(email: String, password: String)
 }
 
 fn login_request_decoder(json: Dynamic) {
@@ -36,34 +38,55 @@ fn login_request_decoder(json: Dynamic) {
   decoder(json)
 }
 
+fn signup_request_decoder(json: Dynamic) {
+  let decoder =
+    dynamic.decode2(
+      SignupRequest,
+      dynamic.field("email", dynamic.string),
+      dynamic.field("password", dynamic.string),
+    )
+
+  decoder(json)
+}
+
+fn signup(req: Request, ctx: Context) -> Response {
+  use <- wisp.require_method(req, Post)
+  use json <- wisp.require_json(req)
+
+  use signup_request <- web.require_valid_json(signup_request_decoder(json))
+  use is_user_exists <- web.require_ok(user.is_user_exists(
+    ctx,
+    signup_request.email,
+  ))
+
+  case is_user_exists {
+    False -> {
+      use userid <- web.require_ok(user.create_user(
+        ctx,
+        signup_request.email,
+        signup_request.password,
+      ))
+
+      json.object([#("userid", json.string(userid))])
+      |> json.to_string_builder
+      |> wisp.json_response(200)
+    }
+
+    True -> web.error_to_response(error.UserAlreadyRegistered)
+  }
+}
+
 fn login(req: Request, ctx: Context) -> Response {
   use <- wisp.require_method(req, Post)
   use json <- wisp.require_json(req)
 
-  let login_request =
-    login_request_decoder(json)
-    |> result.map_error(with: fn(e) { error.JsonDecodeError(e) })
+  use login_request <- web.require_valid_json(login_request_decoder(json))
 
-  use valid_request <- web.require_ok(login_request)
-
-  case user.login_user(ctx, valid_request.email, valid_request.password) {
+  case user.login_user(ctx, login_request.email, login_request.password) {
     Ok(is_valid) ->
       json.object([#("success", json.bool(is_valid))])
       |> json.to_string_builder
       |> wisp.json_response(200)
-    Error(_) ->
-      json.object([#("success", json.bool(False))])
-      |> json.to_string_builder
-      |> wisp.json_response(400)
+    Error(_) -> web.error_to_response(error.InvalidLogin)
   }
-}
-
-fn home_page(req: Request) -> Response {
-  // The home page can only be accessed via GET requests, so this middleware is
-  // used to return a 405: Method Not Allowed response for all other methods.
-  use <- wisp.require_method(req, Get)
-
-  let html = string_builder.from_string("Hello, Joe!")
-  wisp.ok()
-  |> wisp.html_body(html)
 }
