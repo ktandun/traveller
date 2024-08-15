@@ -10,7 +10,6 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
   use req <- web.middleware(req)
 
   case wisp.path_segments(req) {
-    // This matches `/`.
     ["login"] -> login(req, ctx)
     ["signup"] -> signup(req, ctx)
     ["admin"] -> admin(req, ctx)
@@ -54,7 +53,7 @@ fn signup(req: Request, ctx: Context) -> Response {
   use json <- wisp.require_json(req)
 
   use signup_request <- web.require_valid_json(signup_request_decoder(json))
-  use is_user_exists <- web.require_ok(user.is_user_exists(
+  use is_user_exists <- web.require_ok(user.find_user_by_email(
     ctx,
     signup_request.email,
   ))
@@ -82,7 +81,7 @@ fn login(req: Request, ctx: Context) -> Response {
 
   use login_request <- web.require_valid_json(login_request_decoder(json))
 
-  use is_user_exists <- web.require_ok(user.is_user_exists(
+  use is_user_exists <- web.require_ok(user.find_user_by_email(
     ctx,
     login_request.email,
   ))
@@ -110,9 +109,9 @@ fn login(req: Request, ctx: Context) -> Response {
   }
 }
 
-fn admin(req: Request, _ctx: Context) -> Response {
+fn admin(req: Request, ctx: Context) -> Response {
   use <- wisp.require_method(req, Get)
-  use cookie <- web.require_authenticated(req)
+  use cookie <- web.require_authenticated(req, ctx)
 
   json.object([#("userid", json.string(cookie))])
   |> json.to_string_builder

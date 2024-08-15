@@ -1,13 +1,12 @@
 -- migrate:up
-
 CREATE TABLE users (
-  userid UUID PRIMARY KEY,
-  email VARCHAR(255) NOT NULL,
-  password VARCHAR(255) NOT NULL
+    userid uuid PRIMARY KEY,
+    email varchar(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    UNIQUE (email)
 );
 
-insert into users (userid, email, password)
-values (gen_random_uuid (), 'test@example.com', 'password')
+INSERT INTO users (userid, email, PASSWORD)
+    VALUES ('49bee8c8-3a1d-4ec8-9d28-ba6d863df62e', 'test@example.com', 'password')
 
 -- migrate:down
-

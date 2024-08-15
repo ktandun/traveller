@@ -5,6 +5,7 @@ import gleeunit/should
 import traveller/database
 import traveller/router
 import traveller/web
+import wisp
 import wisp/testing
 
 pub fn main() {
@@ -57,4 +58,31 @@ pub fn login_invalid_json_test() {
 
   response.status
   |> should.equal(400)
+}
+
+pub fn admin_unauthorised_test() {
+  use ctx <- with_context()
+
+  let response =
+    testing.get("/admin", [])
+    |> router.handle_request(ctx)
+
+  response.status
+  |> should.equal(401)
+}
+
+pub fn admin_authorised_test() {
+  use ctx <- with_context()
+
+  let response =
+    testing.get("/admin", [])
+    |> testing.set_cookie(
+      "traveller.auth",
+      "49bee8c8-3a1d-4ec8-9d28-ba6d863df62e",
+      wisp.Signed,
+    )
+    |> router.handle_request(ctx)
+
+  response.status
+  |> should.equal(200)
 }

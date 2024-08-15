@@ -1,7 +1,6 @@
 import gleam/pgo
-import gleam/result
-import traveller/database
 import traveller/error.{type AppError}
+import traveller/sql
 import traveller/web.{type Context}
 
 pub fn login_user(
@@ -9,12 +8,19 @@ pub fn login_user(
   email: String,
   password: String,
 ) -> Result(String, AppError) {
-  database.one(
-    ctx.db,
-    " select u.userid::varchar from users u where u.email = $1 and u.password = $2 ",
-    [pgo.text(email), pgo.text(password)],
-    database.string_decoder(),
-  )
+  case sql.get_userid_by_email_password(ctx.db, email, password) {
+    Ok(pgo.Returned(rows_count, rows)) -> {
+      case rows_count {
+        0 -> Error(error.InvalidLogin)
+        _ -> {
+          let assert [row] = rows
+
+          Ok(row.userid)
+        }
+      }
+    }
+    Error(e) -> Error(error.DatabaseError(e))
+  }
 }
 
 pub fn create_user(
@@ -22,28 +28,21 @@ pub fn create_user(
   email: String,
   password: String,
 ) -> Result(String, AppError) {
-  database.one(
-    ctx.db,
-    " insert into users 
-        ( userid, email, password )
-      values
-        ( gen_random_uuid(), $1, $2 )
-      returning userid::varchar
-    ",
-    [pgo.text(email), pgo.text(password)],
-    database.string_decoder(),
-  )
+  case sql.create_user(ctx.db, email, password) {
+    Error(e) -> Error(error.DatabaseError(e))
+    Ok(pgo.Returned(_, rows)) -> {
+      let assert [row] = rows
+
+      Ok(row.userid)
+    }
+  }
 }
 
-pub fn is_user_exists(ctx: Context, email: String) -> Result(Bool, AppError) {
-  database.one(
-    ctx.db,
-    " select 1
-      from users u
-      where u.email = $1
-    ",
-    [pgo.text(email)],
-    database.int_decoder(),
-  )
-  |> result.map(with: fn(count) { count == 1 })
+pub fn find_user_by_email(ctx: Context, email: String) -> Result(Bool, AppError) {
+  case sql.find_user_by_email(ctx.db, email) {
+    Error(e) -> Error(error.DatabaseError(e))
+    Ok(pgo.Returned(rows_count, _)) -> {
+      Ok(rows_count == 1)
+    }
+  }
 }

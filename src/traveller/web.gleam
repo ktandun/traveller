@@ -5,6 +5,7 @@ import gleam/pgo.{
   UnexpectedArgumentCount, UnexpectedArgumentType, UnexpectedResultType,
 }
 import traveller/error.{type AppError, JsonDecodeError}
+import traveller/sql
 import wisp.{type Request, type Response}
 
 pub type Context {
@@ -46,10 +47,23 @@ pub fn require_ok(
 
 pub fn require_authenticated(
   req: Request,
+  ctx: Context,
   next: fn(String) -> Response,
 ) -> Response {
   case wisp.get_cookie(req, "traveller.auth", wisp.Signed) {
-    Ok(cookie) -> next(cookie)
+    Ok(cookie) -> {
+      case sql.find_user_by_userid(ctx.db, cookie) {
+        Ok(pgo.Returned(_, rows)) -> {
+          let assert [row] = rows
+
+          case row.count == 1 {
+            True -> next(cookie)
+            False -> error_to_response(error.UserUnauthenticated)
+          }
+        }
+        Error(e) -> error_to_response(error.DatabaseError(e))
+      }
+    }
     Error(_) -> error_to_response(error.UserUnauthenticated)
   }
 }
