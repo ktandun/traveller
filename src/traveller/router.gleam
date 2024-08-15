@@ -11,7 +11,6 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
 
   case wisp.path_segments(req) {
     // This matches `/`.
-
     ["login"] -> login(req, ctx)
     ["signup"] -> signup(req, ctx)
 
