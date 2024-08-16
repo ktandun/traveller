@@ -9,5 +9,4 @@ pub type AppError {
   DatabaseError(QueryError)
   UserAlreadyRegistered
   InvalidLogin
-  UnableToParseString
 }
