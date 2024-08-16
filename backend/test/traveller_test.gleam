@@ -3,6 +3,7 @@ import gleam_community/codec
 import gleeunit
 import gleeunit/should
 import shared/auth
+import shared/constants
 import traveller/database
 import traveller/router
 import traveller/web
@@ -92,7 +93,7 @@ pub fn trips_authorised_test() {
   let response =
     testing.get("/trips", [])
     |> testing.set_cookie(
-      "traveller.auth",
+      constants.cookie,
       "00000000-0000-0000-0000-000000000001",
       wisp.Signed,
     )
@@ -108,7 +109,7 @@ pub fn get_user_trips_test() {
   let response =
     testing.get("/trips", [])
     |> testing.set_cookie(
-      "traveller.auth",
+      constants.cookie,
       "00000000-0000-0000-0000-000000000001",
       wisp.Signed,
     )

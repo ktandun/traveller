@@ -4,6 +4,7 @@ import gleam/pgo
 import gleam/result
 import gleam_community/codec
 import shared/auth
+import shared/constants
 import traveller/database
 import traveller/error.{type AppError}
 import traveller/sql
@@ -62,7 +63,7 @@ pub fn login(req: Request, ctx: Context) -> Response {
           |> wisp.json_response(200)
           |> wisp.set_cookie(
             req,
-            "traveller.auth",
+            constants.cookie,
             userid,
             wisp.Signed,
             60 * 60 * 24,

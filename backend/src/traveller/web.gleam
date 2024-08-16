@@ -5,6 +5,7 @@ import gleam/pgo.{
   UnexpectedArgumentCount, UnexpectedArgumentType, UnexpectedResultType,
 }
 import gleam/result
+import shared/constants
 import traveller/error.{type AppError, JsonDecodeError}
 import traveller/sql
 import wisp.{type Request, type Response}
@@ -52,7 +53,7 @@ pub fn require_authenticated(
   next: fn(String) -> Response,
 ) {
   use cookie <- require_ok(
-    wisp.get_cookie(req, "traveller.auth", wisp.Signed)
+    wisp.get_cookie(req, constants.cookie, wisp.Signed)
     |> result.map_error(fn(_) { error.UserUnauthenticated }),
   )
 
