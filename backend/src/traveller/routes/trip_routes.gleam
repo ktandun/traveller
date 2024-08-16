@@ -28,7 +28,8 @@ fn create_trip(req: Request, ctx: Context) -> Response {
   use <- wisp.require_method(req, Post)
   use user_id <- web.require_authenticated(req, ctx)
 
-  let assert Ok(trip_id) = trip.create_user_trip(ctx.db, ctx.uuid_provider, user_id)
+  let assert Ok(trip_id) =
+    trip.create_user_trip(ctx.db, ctx.uuid_provider, user_id)
 
   trip_id
   |> codec.encode_string_custom_from(trips.trip_id_codec())
