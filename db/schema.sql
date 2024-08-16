@@ -44,6 +44,26 @@ CREATE TABLE public.schema_migrations (
 
 
 --
+-- Name: trips; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.trips (
+    tripid uuid NOT NULL,
+    destination character varying(255) NOT NULL
+);
+
+
+--
+-- Name: user_trips; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_trips (
+    userid uuid NOT NULL,
+    tripid uuid NOT NULL
+);
+
+
+--
 -- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -60,6 +80,22 @@ CREATE TABLE public.users (
 
 ALTER TABLE ONLY public.schema_migrations
     ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (version);
+
+
+--
+-- Name: trips trips_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.trips
+    ADD CONSTRAINT trips_pkey PRIMARY KEY (tripid);
+
+
+--
+-- Name: user_trips user_trips_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_trips
+    ADD CONSTRAINT user_trips_pkey PRIMARY KEY (userid, tripid);
 
 
 --

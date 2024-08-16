@@ -67,8 +67,7 @@ WHERE
     u.email = $1
     AND u.password = crypt($2, u.password)
 "
-  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _),
-  )
+  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _))
 }
 
 /// A row you get from running the `create_user` query
@@ -100,8 +99,42 @@ pub fn create_user(db, arg_1, arg_2) {
 RETURNING
     userid::varchar
 "
-  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _),
-  )
+  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _))
+}
+
+/// A row you get from running the `get_user_trips` query
+/// defined in `./src/traveller/sql/get_user_trips.sql`.
+///
+/// > 🐿️ This type definition was generated automatically using v1.3.1 of the
+/// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub type GetUserTripsRow {
+  GetUserTripsRow(destination: String)
+}
+
+/// Runs the `get_user_trips` query
+/// defined in `./src/traveller/sql/get_user_trips.sql`.
+///
+/// > 🐿️ This function was generated automatically using v1.3.1 of
+/// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub fn get_user_trips(db, arg_1) {
+  let decoder =
+    decode.into({
+      use destination <- decode.parameter
+      GetUserTripsRow(destination: destination)
+    })
+    |> decode.field(0, decode.string)
+
+  "select t.destination
+from trips t
+where t.tripid in (
+  select ut.tripid
+  from user_trips ut
+  where ut.userid::varchar = $1
+)
+"
+  |> pgo.execute(db, [pgo.text(arg_1)], decode.from(decoder, _))
 }
 
 /// A row you get from running the `find_user_by_email` query

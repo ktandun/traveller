@@ -1,7 +1,9 @@
 import gleam/dynamic.{type Dynamic}
 import gleam/http.{Get, Post}
 import gleam/json
+import gleam_community/codec
 import traveller/error
+import traveller/trip
 import traveller/user
 import traveller/web.{type Context}
 import wisp.{type Request, type Response}
@@ -12,7 +14,7 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
   case wisp.path_segments(req) {
     ["login"] -> login(req, ctx)
     ["signup"] -> signup(req, ctx)
-    ["admin"] -> admin(req, ctx)
+    ["trips"] -> trips(req, ctx)
 
     _ -> wisp.not_found()
   }
@@ -109,11 +111,13 @@ fn login(req: Request, ctx: Context) -> Response {
   }
 }
 
-fn admin(req: Request, ctx: Context) -> Response {
+fn trips(req: Request, ctx: Context) -> Response {
   use <- wisp.require_method(req, Get)
-  use cookie <- web.require_authenticated(req, ctx)
+  use userid <- web.require_authenticated(req, ctx)
 
-  json.object([#("userid", json.string(cookie))])
-  |> json.to_string_builder
+  use user_trips <- web.require_ok(trip.get_user_trips(ctx, userid))
+
+  user_trips
+  |> codec.encode_string_custom_from(trip.user_trips_codec())
   |> wisp.json_response(200)
 }

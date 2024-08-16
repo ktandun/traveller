@@ -64,7 +64,7 @@ pub fn admin_unauthorised_test() {
   use ctx <- with_context()
 
   let response =
-    testing.get("/admin", [])
+    testing.get("/trips", [])
     |> router.handle_request(ctx)
 
   response.status
@@ -75,14 +75,31 @@ pub fn admin_authorised_test() {
   use ctx <- with_context()
 
   let response =
-    testing.get("/admin", [])
+    testing.get("/trips", [])
     |> testing.set_cookie(
       "traveller.auth",
-      "49bee8c8-3a1d-4ec8-9d28-ba6d863df62e",
+      "00000000-0000-0000-0000-000000000001",
       wisp.Signed,
     )
     |> router.handle_request(ctx)
 
   response.status
   |> should.equal(200)
+}
+
+pub fn get_user_trips_test() {
+  use ctx <- with_context()
+
+  let response =
+    testing.get("/trips", [])
+    |> testing.set_cookie(
+      "traveller.auth",
+      "00000000-0000-0000-0000-000000000001",
+      wisp.Signed,
+    )
+    |> router.handle_request(ctx)
+
+  response
+  |> testing.string_body
+  |> birdie.snap(title: "get user trips test")
 }
