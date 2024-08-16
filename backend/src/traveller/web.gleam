@@ -1,5 +1,5 @@
-import gleam/dynamic.{type DecodeErrors, DecodeError}
-import gleam/json.{type Json}
+import gleam/dynamic
+import gleam/json.{type Json,type DecodeError}
 import gleam/pgo.{
   ConnectionUnavailable, ConstraintViolated, PostgresqlError,
   UnexpectedArgumentCount, UnexpectedArgumentType, UnexpectedResultType,
@@ -70,12 +70,12 @@ pub fn require_authenticated(
 }
 
 pub fn require_valid_json(
-  result: Result(a, DecodeErrors),
+  result: Result(a, DecodeError),
   next: fn(a) -> Response,
 ) -> Response {
   case result {
     Ok(value) -> next(value)
-    Error(e) -> error_to_response(JsonDecodeError(e))
+    Error(e) -> error_to_response(error.JsonCodecDecodeError(e))
   }
 }
 
@@ -87,6 +87,11 @@ fn json_with_status(json: Json, status: Int) -> Response {
 
 pub fn error_to_response(error: AppError) -> Response {
   case error {
+    error.JsonCodecDecodeError(e) ->
+      [#("title", json.string("JSON_CODEC_DECODE_ERROR"))]
+      |> json.object()
+      |> json_with_status(500)
+
     error.UnableToParseString ->
       [#("title", json.string("UNABLE_TO_PARSE_STRING"))]
       |> json.object()
@@ -148,7 +153,7 @@ pub fn error_to_response(error: AppError) -> Response {
         json.array(errors, of: fn(error) {
           let decode_error = {
             case error {
-              DecodeError(expected, found, path) -> #(expected, found, path)
+              dynamic.DecodeError(expected, found, path) -> #(expected, found, path)
             }
           }
 

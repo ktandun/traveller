@@ -1,7 +1,8 @@
 import birdie
-import gleam/json
+import gleam_community/codec
 import gleeunit
 import gleeunit/should
+import shared/auth
 import traveller/database
 import traveller/router
 import traveller/web
@@ -24,12 +25,12 @@ pub fn login_successful_test() {
   use ctx <- with_context()
 
   let json =
-    json.object([
-      #("email", json.string("test@example.com")),
-      #("password", json.string("password")),
-    ])
+    auth.LoginRequest(email: "test@example.com", password: "password")
+    |> codec.encode_string(auth.login_request_codec())
+
   let response =
-    testing.post_json("/login", [], json)
+    testing.post("/login", [], json)
+    |> testing.set_header("content-type", "application/json")
     |> router.handle_request(ctx)
 
   response
@@ -40,16 +41,16 @@ pub fn login_successful_test() {
   |> should.equal(200)
 }
 
-pub fn login_invalid_json_test() {
+pub fn login_invalid_login_test() {
   use ctx <- with_context()
 
   let json =
-    json.object([
-      #("email", json.string("test@example.com")),
-      #("password", json.bool(True)),
-    ])
+    auth.LoginRequest(email: "test@example.com", password: "")
+    |> codec.encode_string(auth.login_request_codec())
+
   let response =
-    testing.post_json("/login", [], json)
+    testing.post("/login", [], json)
+    |> testing.set_header("content-type", "application/json")
     |> router.handle_request(ctx)
 
   response
@@ -60,7 +61,7 @@ pub fn login_invalid_json_test() {
   |> should.equal(400)
 }
 
-pub fn admin_unauthorised_test() {
+pub fn trips_unauthorised_test() {
   use ctx <- with_context()
 
   let response =
@@ -71,7 +72,7 @@ pub fn admin_unauthorised_test() {
   |> should.equal(401)
 }
 
-pub fn admin_authorised_test() {
+pub fn trips_authorised_test() {
   use ctx <- with_context()
 
   let response =
