@@ -1,5 +1,4 @@
-import gleam/dynamic.{type Dynamic}
-import gleam/http.{Get, Post}
+import gleam/http.{Get}
 import gleam_community/codec
 import shared/trips
 import traveller/routes/auth_routes
