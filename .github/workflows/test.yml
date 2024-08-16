@@ -17,8 +17,14 @@ jobs:
 
       - run: git submodule init && git submodule update
 
-      - run: cd backend/
       - run: dbmate drop && dbmate up
+        working-directory: ./backend
+
       - run: gleam deps download
+        working-directory: ./backend
+
       - run: gleam test
+        working-directory: ./backend
+
       - run: gleam format --check src test
+        working-directory: ./backend
