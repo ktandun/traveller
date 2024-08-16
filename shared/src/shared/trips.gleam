@@ -41,7 +41,11 @@ pub fn user_trips_codec() {
 
 pub fn create_trip_request_codec() {
   codec.custom({
-    use create_trip_request_codec <- codec.variant1("CreateTripRequest", CreateTripRequest, codec.string())
+    use create_trip_request_codec <- codec.variant1(
+      "CreateTripRequest",
+      CreateTripRequest,
+      codec.string(),
+    )
     codec.make_custom(fn(value) {
       case value {
         CreateTripRequest(destination) -> create_trip_request_codec(destination)

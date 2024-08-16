@@ -1,7 +1,7 @@
 import gleam/http.{Get, Post}
+import gleam/io
 import gleam/list
 import gleam/pgo
-import gleam/io
 import gleam/result
 import gleam_community/codec
 import shared/id.{type Id, type TripId, type UserId}
@@ -83,7 +83,6 @@ fn create_user_trip(
   let new_trip_id = ctx.uuid_provider()
   let assert Ok(trip_id) = uuid.from_string(new_trip_id)
   let assert Ok(user_id) = uuid.from_string(id.id_value(user_id))
-
 
   use pgo.Returned(_, _) <- result.try(
     sql.create_trip(ctx.db, trip_id, create_trip_request.destination)

@@ -2,9 +2,9 @@ import gleam/erlang/process
 import mist
 import traveller/database
 import traveller/router
-import youid/uuid
 import traveller/web
 import wisp
+import youid/uuid
 
 pub fn main() {
   wisp.configure_logger()
