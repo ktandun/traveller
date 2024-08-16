@@ -14,8 +14,11 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
+
       - run: git submodule init && git submodule update
       - run: dbmate drop && dbmate up
+
+      - run: cd backend/
       - run: gleam deps download
       - run: gleam test
       - run: gleam format --check src test

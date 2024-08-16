@@ -21,7 +21,8 @@ gleam_http = ">= 3.6.0 and < 4.0.0"
 gleam_json = ">= 1.0.1 and < 2.0.0"
 gleam_pgo = ">= 0.13.0 and < 1.0.0"
 decode = ">= 0.2.0 and < 1.0.0"
-gleam_community_codec = { path = "./codec/" }
+gleam_community_codec = { path = "../codec/" }
+shared = { path = "../shared/" }
 
 [dev-dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"
