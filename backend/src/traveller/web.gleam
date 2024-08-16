@@ -11,7 +11,7 @@ import traveller/sql
 import wisp.{type Request, type Response}
 
 pub type Context {
-  Context(db: pgo.Connection)
+  Context(db: pgo.Connection, uuid_provider: fn() -> String)
 }
 
 pub fn middleware(

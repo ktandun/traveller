@@ -67,8 +67,7 @@ WHERE
     u.email = $1
     AND u.password = crypt($2, u.password)
 "
-  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _),
-  )
+  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _))
 }
 
 /// A row you get from running the `create_user` query
@@ -100,8 +99,7 @@ pub fn create_user(db, arg_1, arg_2) {
 RETURNING
     userid::varchar
 "
-  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _),
-  )
+  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _))
 }
 
 /// A row you get from running the `get_user_trips` query

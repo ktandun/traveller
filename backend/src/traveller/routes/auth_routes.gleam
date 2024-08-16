@@ -1,3 +1,4 @@
+import gleam/bool
 import gleam/http.{Post}
 import gleam/json
 import gleam/pgo
@@ -54,26 +55,21 @@ pub fn login(req: Request, ctx: Context) -> Response {
     login_request.email,
   ))
 
-  case is_user_exists {
-    True -> {
-      case login_user(ctx.db, login_request.email, login_request.password) {
-        Ok(userid) ->
-          json.object([#("success", json.bool(True))])
-          |> json.to_string_builder
-          |> wisp.json_response(200)
-          |> wisp.set_cookie(
-            req,
-            constants.cookie,
-            userid,
-            wisp.Signed,
-            60 * 60 * 24,
-          )
-        Error(e) -> web.error_to_response(e)
-      }
-    }
-    False -> {
-      web.error_to_response(error.InvalidLogin)
-    }
+  use <- bool.guard(!is_user_exists, web.error_to_response(error.InvalidLogin))
+
+  case login_user(ctx.db, login_request.email, login_request.password) {
+    Ok(userid) ->
+      json.object([#("success", json.bool(True))])
+      |> json.to_string_builder
+      |> wisp.json_response(200)
+      |> wisp.set_cookie(
+        req,
+        constants.cookie,
+        userid,
+        wisp.Signed,
+        60 * 60 * 24,
+      )
+    Error(e) -> web.error_to_response(e)
   }
 }
 

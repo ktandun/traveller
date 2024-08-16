@@ -14,12 +14,15 @@ pub fn main() {
   gleeunit.main()
 }
 
-fn with_context(testcase: fn(web.Context) -> t) -> t {
+fn with_context(callback: fn(web.Context) -> t) -> t {
   use db <- database.with_connection()
 
-  let context = web.Context(db: db)
+  let context =
+    web.Context(db: db, uuid_provider: fn() {
+      "00000000-0000-0000-1111-000000000000"
+    })
 
-  testcase(context)
+  callback(context)
 }
 
 pub fn login_successful_test() {
@@ -118,4 +121,25 @@ pub fn get_user_trips_test() {
   response
   |> testing.string_body
   |> birdie.snap(title: "get user trips test")
+}
+
+pub fn create_user_trips_test() {
+  use ctx <- with_context()
+
+  let response =
+    testing.post("/trips", [], "null")
+    |> testing.set_header("content-type", "application/json")
+    |> testing.set_cookie(
+      constants.cookie,
+      "00000000-0000-0000-0000-000000000001",
+      wisp.Signed,
+    )
+    |> router.handle_request(ctx)
+
+  response.status
+  |> should.equal(200)
+
+  response
+  |> testing.string_body
+  |> birdie.snap(title: "create user trips test")
 }

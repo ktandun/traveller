@@ -25,10 +25,12 @@ fn get_trips(req: Request, ctx: Context) -> Response {
 }
 
 fn create_trip(req: Request, ctx: Context) -> Response {
-  use <- wisp.require_method(req, Get)
-  use userid <- web.require_authenticated(req, ctx)
+  use <- wisp.require_method(req, Post)
+  use user_id <- web.require_authenticated(req, ctx)
 
-  use user_trip_id <- web.require_ok(trip.create_user_trip(ctx.db, userid))
+  let assert Ok(trip_id) = trip.create_user_trip(ctx.db, ctx.uuid_provider, user_id)
 
-  todo
+  trip_id
+  |> codec.encode_string_custom_from(trips.trip_id_codec())
+  |> wisp.json_response(200)
 }
