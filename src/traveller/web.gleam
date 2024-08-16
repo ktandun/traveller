@@ -4,6 +4,7 @@ import gleam/pgo.{
   ConnectionUnavailable, ConstraintViolated, PostgresqlError,
   UnexpectedArgumentCount, UnexpectedArgumentType, UnexpectedResultType,
 }
+import gleam/result
 import traveller/error.{type AppError, JsonDecodeError}
 import traveller/sql
 import wisp.{type Request, type Response}
@@ -49,22 +50,22 @@ pub fn require_authenticated(
   req: Request,
   ctx: Context,
   next: fn(String) -> Response,
-) -> Response {
-  case wisp.get_cookie(req, "traveller.auth", wisp.Signed) {
-    Ok(cookie) -> {
-      case sql.find_user_by_userid(ctx.db, cookie) {
-        Ok(pgo.Returned(_, rows)) -> {
-          let assert [row] = rows
+) {
+  use cookie <- require_ok(
+    wisp.get_cookie(req, "traveller.auth", wisp.Signed)
+    |> result.map_error(fn(_) { error.UserUnauthenticated }),
+  )
 
-          case row.count == 1 {
-            True -> next(cookie)
-            False -> error_to_response(error.UserUnauthenticated)
-          }
-        }
-        Error(e) -> error_to_response(error.DatabaseError(e))
-      }
-    }
-    Error(_) -> error_to_response(error.UserUnauthenticated)
+  use pgo.Returned(_, rows) <- require_ok(
+    sql.find_user_by_userid(ctx.db, cookie)
+    |> result.map_error(fn(e) { error.DatabaseError(e) }),
+  )
+
+  let assert [row] = rows
+
+  case row.count {
+    1 -> next(cookie)
+    _ -> error_to_response(error.UserUnauthenticated)
   }
 }
 
