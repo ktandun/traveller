@@ -4,4 +4,4 @@ FROM
     users u
 WHERE
     u.email = $1
-    AND u.password = $2
+    AND u.password = crypt($2, u.password)

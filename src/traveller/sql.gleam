@@ -65,9 +65,10 @@ FROM
     users u
 WHERE
     u.email = $1
-    AND u.password = $2
+    AND u.password = crypt($2, u.password)
 "
-  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _))
+  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _),
+  )
 }
 
 /// A row you get from running the `create_user` query
@@ -94,12 +95,13 @@ pub fn create_user(db, arg_1, arg_2) {
     })
     |> decode.field(0, decode.string)
 
-  "INSERT INTO users (userid, email, password)
-    VALUES (gen_random_uuid(), $1, $2)
+  "INSERT INTO users (userid, email, PASSWORD)
+    VALUES (gen_random_uuid (), $1, crypt($2, gen_salt('bf', 8)))
 RETURNING
     userid::varchar
 "
-  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _))
+  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _),
+  )
 }
 
 /// A row you get from running the `find_user_by_email` query
