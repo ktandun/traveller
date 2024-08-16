@@ -1,11 +1,11 @@
 import gleam/list
 import gleam/pgo
 import gleam/result
+import shared/trips
 import traveller/database
 import traveller/error.{type AppError}
 import traveller/sql
 import traveller/web.{type Context}
-import shared/trips
 
 pub fn get_user_trips(
   ctx: Context,

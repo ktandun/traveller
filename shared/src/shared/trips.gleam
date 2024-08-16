@@ -8,7 +8,6 @@ pub type UserTrips {
   UserTrips(user_trips: List(UserTrip))
 }
 
-
 pub fn user_trip_codec() {
   codec.custom({
     use user_trip_codec <- codec.variant1("UserTrip", UserTrip, codec.string())
@@ -36,4 +35,3 @@ pub fn user_trips_codec() {
     })
   })
 }
-
