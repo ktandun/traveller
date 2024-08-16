@@ -26,11 +26,10 @@ pub fn login_successful_test() {
 
   let json =
     auth.LoginRequest(email: "test@example.com", password: "password")
-    |> codec.encode_string(auth.login_request_codec())
+    |> codec.encode_json(auth.login_request_codec())
 
   let response =
-    testing.post("/login", [], json)
-    |> testing.set_header("content-type", "application/json")
+    testing.post_json("/login", [], json)
     |> router.handle_request(ctx)
 
   response
@@ -46,11 +45,10 @@ pub fn login_invalid_login_test() {
 
   let json =
     auth.LoginRequest(email: "test@example.com", password: "")
-    |> codec.encode_string(auth.login_request_codec())
+    |> codec.encode_json(auth.login_request_codec())
 
   let response =
-    testing.post("/login", [], json)
-    |> testing.set_header("content-type", "application/json")
+    testing.post_json("/login", [], json)
     |> router.handle_request(ctx)
 
   response

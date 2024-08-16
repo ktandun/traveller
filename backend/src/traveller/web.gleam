@@ -90,7 +90,7 @@ pub fn error_to_response(error: AppError) -> Response {
     error.JsonCodecDecodeError(e) ->
       [#("title", json.string("JSON_CODEC_DECODE_ERROR"))]
       |> json.object()
-      |> json_with_status(500)
+      |> json_with_status(400)
 
     error.UnableToParseString ->
       [#("title", json.string("UNABLE_TO_PARSE_STRING"))]
