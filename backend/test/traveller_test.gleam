@@ -55,7 +55,23 @@ pub fn login_invalid_login_test() {
 
   response
   |> testing.string_body
-  |> birdie.snap(title: "login invalid")
+  |> birdie.snap(title: "login invalid login")
+
+  response.status
+  |> should.equal(400)
+}
+
+pub fn login_invalid_json_test() {
+  use ctx <- with_context()
+
+  let response =
+    testing.post("/login", [], "{hey}")
+    |> testing.set_header("content-type", "application/json")
+    |> router.handle_request(ctx)
+
+  response
+  |> testing.string_body
+  |> birdie.snap(title: "login invalid json")
 
   response.status
   |> should.equal(400)
