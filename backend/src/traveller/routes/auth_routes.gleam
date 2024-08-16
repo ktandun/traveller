@@ -5,6 +5,7 @@ import gleam/pgo
 import gleam/result
 import shared/auth
 import shared/constants
+import shared/id.{type Id, type UserId}
 import traveller/database
 import traveller/error.{type AppError}
 import traveller/json_util
@@ -14,7 +15,7 @@ import wisp.{type Request, type Response}
 
 // Public functions ------------------------------------------
 
-pub fn signup(req: Request, ctx: Context) -> Response {
+pub fn handle_signup(req: Request, ctx: Context) -> Response {
   use <- wisp.require_method(req, Post)
   use json <- wisp.require_string_body(req)
 
@@ -34,16 +35,16 @@ pub fn signup(req: Request, ctx: Context) -> Response {
     create_user(ctx.db, signup_request.email, signup_request.password)
   }
 
-  case response {
-    Ok(user_id) ->
-      json.object([#("user_id", json.string(user_id))])
-      |> json.to_string_builder
-      |> wisp.json_response(200)
-    Error(e) -> web.error_to_response(e)
-  }
+  use response <- web.require_ok(response)
+
+  let user_id = id.id_value(response)
+
+  json.object([#("user_id", json.string(user_id))])
+  |> json.to_string_builder
+  |> wisp.json_response(200)
 }
 
-pub fn login(req: Request, ctx: Context) -> Response {
+pub fn handle_login(req: Request, ctx: Context) -> Response {
   use <- wisp.require_method(req, Post)
   use json <- wisp.require_string_body(req)
 
@@ -63,20 +64,14 @@ pub fn login(req: Request, ctx: Context) -> Response {
     login_user(ctx.db, login_request.email, login_request.password)
   }
 
-  case response {
-    Ok(userid) ->
-      json.object([#("success", json.bool(True))])
-      |> json.to_string_builder
-      |> wisp.json_response(200)
-      |> wisp.set_cookie(
-        req,
-        constants.cookie,
-        userid,
-        wisp.Signed,
-        60 * 60 * 24,
-      )
-    Error(e) -> web.error_to_response(e)
-  }
+  use response <- web.require_ok(response)
+
+  let user_id = id.id_value(response)
+
+  json.object([#("success", json.bool(True))])
+  |> json.to_string_builder
+  |> wisp.json_response(200)
+  |> wisp.set_cookie(req, constants.cookie, user_id, wisp.Signed, 60 * 60 * 24)
 }
 
 // Private functions -----------------------------------------
@@ -85,7 +80,7 @@ fn login_user(
   conn: pgo.Connection,
   email: String,
   password: String,
-) -> Result(String, AppError) {
+) -> Result(Id(UserId), AppError) {
   use pgo.Returned(rows_count, rows) <- result.try(
     sql.get_userid_by_email_password(conn, email, password)
     |> database.map_error(),
@@ -96,7 +91,7 @@ fn login_user(
     _ -> {
       let assert [row] = rows
 
-      Ok(row.userid)
+      Ok(id.to_user_id(row.userid))
     }
   }
 }
@@ -105,14 +100,14 @@ fn create_user(
   conn: pgo.Connection,
   email: String,
   password: String,
-) -> Result(String, AppError) {
+) -> Result(Id(UserId), AppError) {
   use pgo.Returned(_, rows) <- result.map(
     sql.create_user(conn, email, password) |> database.map_error(),
   )
 
   let assert [row] = rows
 
-  row.userid
+  id.to_user_id(row.userid)
 }
 
 fn find_user_by_email(

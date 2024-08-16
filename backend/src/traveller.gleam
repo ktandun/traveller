@@ -2,7 +2,7 @@ import gleam/erlang/process
 import mist
 import traveller/database
 import traveller/router
-import traveller/uuid
+import youid/uuid
 import traveller/web
 import wisp
 
@@ -14,7 +14,7 @@ pub fn main() {
   use db <- database.with_connection()
 
   let context =
-    web.Context(db: db, uuid_provider: fn() { uuid.uuiv7() |> uuid.to_string() })
+    web.Context(db: db, uuid_provider: fn() { uuid.v7() |> uuid.to_string() })
 
   let handler = router.handle_request(_, context)
 

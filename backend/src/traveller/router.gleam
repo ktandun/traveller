@@ -7,9 +7,9 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
   use req <- web.middleware(req)
 
   case wisp.path_segments(req) {
-    ["login"] -> auth_routes.login(req, ctx)
-    ["signup"] -> auth_routes.signup(req, ctx)
-    ["trips"] -> trip_routes.trips(req, ctx)
+    ["login"] -> auth_routes.handle_login(req, ctx)
+    ["signup"] -> auth_routes.handle_signup(req, ctx)
+    ["trips"] -> trip_routes.handle_trips(req, ctx)
 
     _ -> wisp.not_found()
   }

@@ -1,14 +1,19 @@
 import birdie
+import gleam/io
+import gleam/json
 import gleam_community/codec
 import gleeunit
 import gleeunit/should
 import shared/auth
 import shared/constants
+import shared/trips
 import traveller/database
 import traveller/router
 import traveller/web
 import wisp
 import wisp/testing
+
+const testing_user_id = "00000000-0000-0000-0000-000000000001"
 
 pub fn main() {
   gleeunit.main()
@@ -95,11 +100,7 @@ pub fn trips_authorised_test() {
 
   let response =
     testing.get("/trips", [])
-    |> testing.set_cookie(
-      constants.cookie,
-      "00000000-0000-0000-0000-000000000001",
-      wisp.Signed,
-    )
+    |> testing.set_cookie(constants.cookie, testing_user_id, wisp.Signed)
     |> router.handle_request(ctx)
 
   response.status
@@ -111,11 +112,7 @@ pub fn get_user_trips_test() {
 
   let response =
     testing.get("/trips", [])
-    |> testing.set_cookie(
-      constants.cookie,
-      "00000000-0000-0000-0000-000000000001",
-      wisp.Signed,
-    )
+    |> testing.set_cookie(constants.cookie, testing_user_id, wisp.Signed)
     |> router.handle_request(ctx)
 
   response
@@ -126,18 +123,15 @@ pub fn get_user_trips_test() {
 pub fn create_user_trips_test() {
   use ctx <- with_context()
 
-  let response =
-    testing.post("/trips", [], "null")
-    |> testing.set_header("content-type", "application/json")
-    |> testing.set_cookie(
-      constants.cookie,
-      "00000000-0000-0000-0000-000000000001",
-      wisp.Signed,
-    )
-    |> router.handle_request(ctx)
+  let json =
+    trips.CreateTripRequest(destination: "India")
+    |> codec.encode_json(trips.create_trip_request_codec())
 
-  response.status
-  |> should.equal(200)
+  let response =
+    testing.post_json("/trips", [], json)
+    |> testing.set_header("content-type", "application/json")
+    |> testing.set_cookie(constants.cookie, testing_user_id, wisp.Signed)
+    |> router.handle_request(ctx)
 
   response
   |> testing.string_body
