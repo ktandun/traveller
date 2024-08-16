@@ -1,0 +1,3 @@
+[submodule "codec"]
+	path = codec
+	url = https://github.com/gleam-community/codec
