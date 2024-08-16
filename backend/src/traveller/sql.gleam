@@ -4,7 +4,7 @@ import gleam/pgo
 /// A row you get from running the `find_user_by_userid` query
 /// defined in `./src/traveller/sql/find_user_by_userid.sql`.
 ///
-/// > 🐿️ This type definition was generated automatically using v1.3.1 of the
+/// > 🐿️ This type definition was generated automatically using v1.3.2 of the
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type FindUserByUseridRow {
@@ -14,7 +14,7 @@ pub type FindUserByUseridRow {
 /// Runs the `find_user_by_userid` query
 /// defined in `./src/traveller/sql/find_user_by_userid.sql`.
 ///
-/// > 🐿️ This function was generated automatically using v1.3.1 of
+/// > 🐿️ This function was generated automatically using v1.3.2 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub fn find_user_by_userid(db, arg_1) {
@@ -38,7 +38,7 @@ WHERE
 /// A row you get from running the `get_userid_by_email_password` query
 /// defined in `./src/traveller/sql/get_userid_by_email_password.sql`.
 ///
-/// > 🐿️ This type definition was generated automatically using v1.3.1 of the
+/// > 🐿️ This type definition was generated automatically using v1.3.2 of the
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type GetUseridByEmailPasswordRow {
@@ -48,7 +48,7 @@ pub type GetUseridByEmailPasswordRow {
 /// Runs the `get_userid_by_email_password` query
 /// defined in `./src/traveller/sql/get_userid_by_email_password.sql`.
 ///
-/// > 🐿️ This function was generated automatically using v1.3.1 of
+/// > 🐿️ This function was generated automatically using v1.3.2 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub fn get_userid_by_email_password(db, arg_1, arg_2) {
@@ -67,13 +67,14 @@ WHERE
     u.email = $1
     AND u.password = crypt($2, u.password)
 "
-  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _))
+  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _),
+  )
 }
 
 /// A row you get from running the `create_user` query
 /// defined in `./src/traveller/sql/create_user.sql`.
 ///
-/// > 🐿️ This type definition was generated automatically using v1.3.1 of the
+/// > 🐿️ This type definition was generated automatically using v1.3.2 of the
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type CreateUserRow {
@@ -83,7 +84,7 @@ pub type CreateUserRow {
 /// Runs the `create_user` query
 /// defined in `./src/traveller/sql/create_user.sql`.
 ///
-/// > 🐿️ This function was generated automatically using v1.3.1 of
+/// > 🐿️ This function was generated automatically using v1.3.2 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub fn create_user(db, arg_1, arg_2) {
@@ -99,13 +100,14 @@ pub fn create_user(db, arg_1, arg_2) {
 RETURNING
     userid::varchar
 "
-  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _))
+  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _),
+  )
 }
 
 /// A row you get from running the `get_user_trips` query
 /// defined in `./src/traveller/sql/get_user_trips.sql`.
 ///
-/// > 🐿️ This type definition was generated automatically using v1.3.1 of the
+/// > 🐿️ This type definition was generated automatically using v1.3.2 of the
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type GetUserTripsRow {
@@ -115,7 +117,7 @@ pub type GetUserTripsRow {
 /// Runs the `get_user_trips` query
 /// defined in `./src/traveller/sql/get_user_trips.sql`.
 ///
-/// > 🐿️ This function was generated automatically using v1.3.1 of
+/// > 🐿️ This function was generated automatically using v1.3.2 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub fn get_user_trips(db, arg_1) {
@@ -140,7 +142,7 @@ where t.tripid in (
 /// A row you get from running the `find_user_by_email` query
 /// defined in `./src/traveller/sql/find_user_by_email.sql`.
 ///
-/// > 🐿️ This type definition was generated automatically using v1.3.1 of the
+/// > 🐿️ This type definition was generated automatically using v1.3.2 of the
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type FindUserByEmailRow {
@@ -150,7 +152,7 @@ pub type FindUserByEmailRow {
 /// Runs the `find_user_by_email` query
 /// defined in `./src/traveller/sql/find_user_by_email.sql`.
 ///
-/// > 🐿️ This function was generated automatically using v1.3.1 of
+/// > 🐿️ This function was generated automatically using v1.3.2 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub fn find_user_by_email(db, arg_1) {
