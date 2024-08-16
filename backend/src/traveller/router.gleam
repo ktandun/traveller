@@ -2,6 +2,7 @@ import gleam/dynamic.{type Dynamic}
 import gleam/http.{Get, Post}
 import gleam/json
 import gleam_community/codec
+import shared/trips
 import traveller/error
 import traveller/trip
 import traveller/user
@@ -118,6 +119,6 @@ fn trips(req: Request, ctx: Context) -> Response {
   use user_trips <- web.require_ok(trip.get_user_trips(ctx, userid))
 
   user_trips
-  |> codec.encode_string_custom_from(trip.user_trips_codec())
+  |> codec.encode_string_custom_from(trips.user_trips_codec())
   |> wisp.json_response(200)
 }
