@@ -3,11 +3,11 @@ import gleam/http.{Post}
 import gleam/json
 import gleam/pgo
 import gleam/result
-import gleam_community/codec
 import shared/auth
 import shared/constants
 import traveller/database
 import traveller/error.{type AppError}
+import traveller/json_util
 import traveller/sql
 import traveller/web.{type Context}
 import wisp.{type Request, type Response}
@@ -18,28 +18,28 @@ pub fn signup(req: Request, ctx: Context) -> Response {
   use <- wisp.require_method(req, Post)
   use json <- wisp.require_string_body(req)
 
-  let signup_request = codec.decode_string(json, auth.signup_request_codec())
+  let response = {
+    use signup_request <- result.try(json_util.try_decode(
+      json,
+      auth.signup_request_codec(),
+    ))
 
-  use signup_request <- web.require_valid_json(signup_request)
-  use is_user_exists <- web.require_ok(find_user_by_email(
-    ctx.db,
-    signup_request.email,
-  ))
+    use is_user_exists <- result.try(find_user_by_email(
+      ctx.db,
+      signup_request.email,
+    ))
 
-  case is_user_exists {
-    False -> {
-      use userid <- web.require_ok(create_user(
-        ctx.db,
-        signup_request.email,
-        signup_request.password,
-      ))
+    use <- bool.guard(is_user_exists, Error(error.UserAlreadyRegistered))
 
-      json.object([#("userid", json.string(userid))])
+    create_user(ctx.db, signup_request.email, signup_request.password)
+  }
+
+  case response {
+    Ok(user_id) ->
+      json.object([#("user_id", json.string(user_id))])
       |> json.to_string_builder
       |> wisp.json_response(200)
-    }
-
-    True -> web.error_to_response(error.UserAlreadyRegistered)
+    Error(e) -> web.error_to_response(e)
   }
 }
 
@@ -47,17 +47,23 @@ pub fn login(req: Request, ctx: Context) -> Response {
   use <- wisp.require_method(req, Post)
   use json <- wisp.require_string_body(req)
 
-  let login_request = codec.decode_string(json, auth.login_request_codec())
+  let response = {
+    use login_request <- result.try(json_util.try_decode(
+      json,
+      auth.login_request_codec(),
+    ))
 
-  use login_request <- web.require_valid_json(login_request)
-  use is_user_exists <- web.require_ok(find_user_by_email(
-    ctx.db,
-    login_request.email,
-  ))
+    use is_user_exists <- result.try(find_user_by_email(
+      ctx.db,
+      login_request.email,
+    ))
 
-  use <- bool.guard(!is_user_exists, web.error_to_response(error.InvalidLogin))
+    use <- bool.guard(!is_user_exists, Error(error.InvalidLogin))
 
-  case login_user(ctx.db, login_request.email, login_request.password) {
+    login_user(ctx.db, login_request.email, login_request.password)
+  }
+
+  case response {
     Ok(userid) ->
       json.object([#("success", json.bool(True))])
       |> json.to_string_builder

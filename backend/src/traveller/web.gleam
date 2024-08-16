@@ -72,11 +72,11 @@ pub fn require_authenticated(
 
 pub fn require_valid_json(
   result: Result(a, DecodeError),
-  next: fn(a) -> Response,
-) -> Response {
+  next: fn(a) -> b,
+) -> Result(b, AppError) {
   case result {
-    Ok(value) -> next(value)
-    Error(e) -> error_to_response(error.JsonCodecDecodeError(e))
+    Ok(value) -> Ok(next(value))
+    Error(e) -> Error(error.JsonCodecDecodeError(e))
   }
 }
 
