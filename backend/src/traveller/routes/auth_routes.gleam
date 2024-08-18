@@ -22,8 +22,10 @@ pub fn handle_signup(req: Request, ctx: Context) -> Response {
   let response = {
     use signup_request <- result.try(json_util.try_decode(
       json,
-      auth.signup_request_codec(),
+      auth.signup_request_decoder(),
     ))
+
+    let auth.SignupRequest(email, password) = signup_request
 
     use is_user_exists <- result.try(find_user_by_email(
       ctx.db,
@@ -32,7 +34,7 @@ pub fn handle_signup(req: Request, ctx: Context) -> Response {
 
     use <- bool.guard(is_user_exists, Error(error.UserAlreadyRegistered))
 
-    create_user(ctx.db, signup_request.email, signup_request.password)
+    create_user(ctx.db, email, password)
   }
 
   use response <- web.require_ok(response)
@@ -51,8 +53,10 @@ pub fn handle_login(req: Request, ctx: Context) -> Response {
   let response = {
     use login_request <- result.try(json_util.try_decode(
       json,
-      auth.login_request_codec(),
+      auth.login_request_decoder(),
     ))
+
+    let auth.LoginRequest(email, password) = login_request
 
     use is_user_exists <- result.try(find_user_by_email(
       ctx.db,
@@ -61,7 +65,7 @@ pub fn handle_login(req: Request, ctx: Context) -> Response {
 
     use <- bool.guard(!is_user_exists, Error(error.InvalidLogin))
 
-    login_user(ctx.db, login_request.email, login_request.password)
+    login_user(ctx.db, email, password)
   }
 
   use response <- web.require_ok(response)

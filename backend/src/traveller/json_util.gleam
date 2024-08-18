@@ -1,8 +1,10 @@
+import decode.{type Decoder}
+import gleam/json
 import gleam/result
-import gleam_community/codec.{type Codec}
 import traveller/error.{type AppError}
 
-pub fn try_decode(json: String, decoder: Codec(a)) -> Result(a, AppError) {
-  codec.decode_string(json, decoder)
+pub fn try_decode(json_str: String, decoder: Decoder(a)) -> Result(a, AppError) {
+  json_str
+  |> json.decode(fn(j) { decoder |> decode.from(j) })
   |> result.map_error(fn(e) { error.JsonCodecDecodeError(e) })
 }

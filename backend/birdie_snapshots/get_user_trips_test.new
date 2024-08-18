@@ -1,5 +1,0 @@
----
-version: 1.2.0
-title: get user trips test
----
-{"$":"UserTrips","0":[{"$":"UserTrip","0":"Fiji"},{"$":"UserTrip","0":"Singapore"},{"$":"UserTrip","0":"Paris"}]}

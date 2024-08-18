@@ -15,8 +15,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - run: git submodule init && git submodule update
-
       - run: dbmate drop && dbmate up
         working-directory: ./backend
 

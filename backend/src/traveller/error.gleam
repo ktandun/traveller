@@ -1,7 +1,6 @@
 import gleam/dynamic.{type DecodeErrors}
 import gleam/json.{type DecodeError}
 import gleam/pgo.{type QueryError}
-import pprint
 import wisp
 
 pub type AppError {
@@ -13,7 +12,7 @@ pub type AppError {
   UserUnauthenticated
 }
 
-pub fn json_codec_decode_error(e: DecodeError) {
+pub fn json_codec_decode_error(_) {
   let response =
     [#("title", json.string("JSON_CODEC_DECODE_ERROR"))]
     |> json.object()

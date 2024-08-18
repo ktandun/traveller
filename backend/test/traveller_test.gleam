@@ -1,7 +1,4 @@
 import birdie
-import gleam/io
-import gleam/json
-import gleam_community/codec
 import gleeunit
 import gleeunit/should
 import shared/auth
@@ -35,7 +32,7 @@ pub fn login_successful_test() {
 
   let json =
     auth.LoginRequest(email: "test@example.com", password: "password")
-    |> codec.encode_json(auth.login_request_codec())
+    |> auth.login_request_encoder
 
   let response =
     testing.post_json("/login", [], json)
@@ -54,7 +51,7 @@ pub fn login_invalid_login_test() {
 
   let json =
     auth.LoginRequest(email: "test@example.com", password: "")
-    |> codec.encode_json(auth.login_request_codec())
+    |> auth.login_request_encoder
 
   let response =
     testing.post_json("/login", [], json)
@@ -125,7 +122,7 @@ pub fn create_user_trips_test() {
 
   let json =
     trips.CreateTripRequest(destination: "India")
-    |> codec.encode_json(trips.create_trip_request_codec())
+    |> trips.create_trip_request_encoder
 
   let response =
     testing.post_json("/trips", [], json)

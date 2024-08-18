@@ -4,4 +4,4 @@ title: get user trips test
 file: ./test/traveller_test.gleam
 test_name: get_user_trips_test
 ---
-{"$":"UserTrips","0":[{"$":"UserTrip","0":"Fiji"},{"$":"UserTrip","0":"Singapore"}]}
+{"user_trips":[{"destination":"Fiji"},{"destination":"Singapore"}]}

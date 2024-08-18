@@ -1,9 +1,8 @@
 import gleam/http.{Get, Post}
-import gleam/io
 import gleam/list
 import gleam/pgo
+import gleam/json
 import gleam/result
-import gleam_community/codec
 import shared/id.{type Id, type TripId, type UserId}
 import shared/trips.{type CreateTripRequest}
 import traveller/database
@@ -33,7 +32,8 @@ fn handle_get_trips(req: Request, ctx: Context) -> Response {
   use user_trips <- web.require_ok(get_user_trips(ctx, user_id))
 
   user_trips
-  |> codec.encode_string_custom_from(trips.user_trips_codec())
+  |> trips.user_trips_encoder
+  |> json.to_string_builder
   |> wisp.json_response(200)
 }
 
@@ -45,7 +45,7 @@ fn handle_create_trip(req: Request, ctx: Context) -> Response {
   let response = {
     use create_trip_request <- result.try(json_util.try_decode(
       json,
-      trips.create_trip_request_codec(),
+      trips.create_trip_request_decoder(),
     ))
 
     create_user_trip(ctx, user_id, create_trip_request)
@@ -54,7 +54,8 @@ fn handle_create_trip(req: Request, ctx: Context) -> Response {
   use trip_id <- web.require_ok(response)
 
   trip_id
-  |> codec.encode_string_custom_from(id.id_codec())
+  |> id.id_encoder
+  |> json.to_string_builder
   |> wisp.json_response(200)
 }
 
