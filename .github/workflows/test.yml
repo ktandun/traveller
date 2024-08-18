@@ -21,5 +21,8 @@ jobs:
       - run: gleam deps download
         working-directory: ./backend
 
+      - run: gleam build
+        working-directory: ./backend
+
       - run: gleam test
         working-directory: ./backend
