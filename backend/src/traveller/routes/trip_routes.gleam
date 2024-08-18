@@ -23,6 +23,16 @@ pub fn handle_trips(req: Request, ctx: Context) -> Response {
   }
 }
 
+pub fn handle_trip_places(
+  req: Request,
+  ctx: Context,
+  trip_id: Id(TripId),
+) -> Response {
+  case req.method {
+    _ -> wisp.not_found()
+  }
+}
+
 // Private functions -----------------------------------------
 
 fn handle_get_trips(req: Request, ctx: Context) -> Response {
@@ -83,7 +93,7 @@ fn create_user_trip(
 ) -> Result(Id(TripId), AppError) {
   let new_trip_id = ctx.uuid_provider()
   let assert Ok(trip_id) = uuid.from_string(new_trip_id)
-  let assert Ok(user_id) = uuid.from_string(id.id_value(user_id))
+  let user_id = id.id_value(user_id)
 
   use pgo.Returned(_, _) <- result.try(
     sql.create_trip(ctx.db, trip_id, create_trip_request.destination)
@@ -95,5 +105,5 @@ fn create_user_trip(
     |> database.map_error(),
   )
 
-  Ok(id.to_trip_id(new_trip_id))
+  Ok(id.to_id(new_trip_id))
 }

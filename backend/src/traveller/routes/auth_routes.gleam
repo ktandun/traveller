@@ -1,5 +1,6 @@
 import gleam/bool
 import gleam/http.{Post}
+import gleam/io
 import gleam/json
 import gleam/pgo
 import gleam/result
@@ -12,6 +13,7 @@ import traveller/json_util
 import traveller/sql
 import traveller/web.{type Context}
 import wisp.{type Request, type Response}
+import youid/uuid
 
 // Public functions ------------------------------------------
 
@@ -37,11 +39,10 @@ pub fn handle_signup(req: Request, ctx: Context) -> Response {
     create_user(ctx.db, email, password)
   }
 
-  use response <- web.require_ok(response)
+  use user_id <- web.require_ok(response)
 
-  let user_id = id.id_value(response)
-
-  json.object([#("user_id", json.string(user_id))])
+  user_id
+  |> id.id_encoder
   |> json.to_string_builder
   |> wisp.json_response(200)
 }
@@ -68,14 +69,19 @@ pub fn handle_login(req: Request, ctx: Context) -> Response {
     login_user(ctx.db, email, password)
   }
 
-  use response <- web.require_ok(response)
+  use user_id <- web.require_ok(response)
 
-  let user_id = id.id_value(response)
-
-  json.object([#("success", json.bool(True))])
+  user_id
+  |> id.id_encoder
   |> json.to_string_builder
   |> wisp.json_response(200)
-  |> wisp.set_cookie(req, constants.cookie, user_id, wisp.Signed, 60 * 60 * 24)
+  |> wisp.set_cookie(
+    req,
+    constants.cookie,
+    uuid.to_string(id.id_value(user_id)),
+    wisp.Signed,
+    60 * 60 * 24,
+  )
 }
 
 // Private functions -----------------------------------------
@@ -95,7 +101,7 @@ fn login_user(
     _ -> {
       let assert [row] = rows
 
-      Ok(id.to_user_id(row.user_id))
+      Ok(id.to_id_from_uuid(row.user_id))
     }
   }
 }
@@ -111,7 +117,7 @@ fn create_user(
 
   let assert [row] = rows
 
-  id.to_user_id(row.user_id)
+  id.to_id_from_uuid(row.user_id)
 }
 
 fn find_user_by_email(

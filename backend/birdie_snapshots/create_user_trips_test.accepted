@@ -1,7 +1,0 @@
----
-version: 1.2.0
-title: create user trips test
-file: ./test/traveller_test.gleam
-test_name: create_user_trips_test
----
-{"id":"00000000-0000-0000-1111-000000000000"}

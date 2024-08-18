@@ -1,6 +1,7 @@
 import decode
+import gleam/io
 import gleam/pgo
-import youid/uuid
+import youid/uuid.{type Uuid}
 
 /// A row you get from running the `find_user_by_userid` query
 /// defined in `./src/traveller/sql/find_user_by_userid.sql`.
@@ -36,7 +37,6 @@ WHERE
   |> pgo.execute(db, [pgo.text(arg_1)], decode.from(decoder, _))
 }
 
-
 /// A row you get from running the `get_userid_by_email_password` query
 /// defined in `./src/traveller/sql/get_userid_by_email_password.sql`.
 ///
@@ -44,7 +44,7 @@ WHERE
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type GetUseridByEmailPasswordRow {
-  GetUseridByEmailPasswordRow(user_id: String)
+  GetUseridByEmailPasswordRow(user_id: Uuid)
 }
 
 /// Runs the `get_userid_by_email_password` query
@@ -59,20 +59,18 @@ pub fn get_userid_by_email_password(db, arg_1, arg_2) {
       use user_id <- decode.parameter
       GetUseridByEmailPasswordRow(user_id: user_id)
     })
-    |> decode.field(0, decode.string)
+    |> decode.field(0, uuid_decoder())
 
   "SELECT
-    u.user_id::varchar
+    u.user_id
 FROM
     users u
 WHERE
     u.email = $1
     AND u.password = crypt($2, u.password)
 "
-  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _),
-  )
+  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _))
 }
-
 
 /// A row you get from running the `create_user` query
 /// defined in `./src/traveller/sql/create_user.sql`.
@@ -81,7 +79,7 @@ WHERE
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type CreateUserRow {
-  CreateUserRow(user_id: String)
+  CreateUserRow(user_id: Uuid)
 }
 
 /// Runs the `create_user` query
@@ -96,17 +94,15 @@ pub fn create_user(db, arg_1, arg_2) {
       use user_id <- decode.parameter
       CreateUserRow(user_id: user_id)
     })
-    |> decode.field(0, decode.string)
+    |> decode.field(0, uuid_decoder())
 
   "INSERT INTO users (user_id, email, PASSWORD)
     VALUES (gen_random_uuid (), $1, crypt($2, gen_salt('bf', 8)))
 RETURNING
-    user_id::varchar
+    user_id
 "
-  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _),
-  )
+  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _))
 }
-
 
 /// Runs the `create_trip` query
 /// defined in `./src/traveller/sql/create_trip.sql`.
@@ -126,7 +122,6 @@ pub fn create_trip(db, arg_1, arg_2) {
     decode.from(decoder, _),
   )
 }
-
 
 /// Runs the `create_user_trip` query
 /// defined in `./src/traveller/sql/create_user_trip.sql`.
@@ -148,7 +143,6 @@ pub fn create_user_trip(db, arg_1, arg_2) {
   )
 }
 
-
 /// A row you get from running the `get_user_trips` query
 /// defined in `./src/traveller/sql/get_user_trips.sql`.
 ///
@@ -156,7 +150,7 @@ pub fn create_user_trip(db, arg_1, arg_2) {
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type GetUserTripsRow {
-  GetUserTripsRow(destination: String)
+  GetUserTripsRow(trip_id: Uuid, destination: String, places_count: Int)
 }
 
 /// Runs the `get_user_trips` query
@@ -168,22 +162,41 @@ pub type GetUserTripsRow {
 pub fn get_user_trips(db, arg_1) {
   let decoder =
     decode.into({
+      use trip_id <- decode.parameter
       use destination <- decode.parameter
-      GetUserTripsRow(destination: destination)
+      use places_count <- decode.parameter
+      GetUserTripsRow(
+        trip_id: trip_id,
+        destination: destination,
+        places_count: places_count,
+      )
     })
-    |> decode.field(0, decode.string)
+    |> decode.field(0, uuid_decoder())
+    |> decode.field(1, decode.string)
+    |> decode.field(2, decode.int)
 
-  "select t.destination
-from trips t
-where t.trip_id in (
-  select ut.trip_id
-  from user_trips ut
-  where ut.user_id::varchar = $1
-)
+  "SELECT
+    t.trip_id,
+    t.destination,
+    COUNT(tp.trip_place_id) AS places_count
+FROM
+    trips t
+    INNER JOIN trip_places tp ON t.trip_id = tp.trip_id
+WHERE
+    t.trip_id IN (
+        SELECT
+            ut.trip_id
+        FROM
+            user_trips ut
+        WHERE
+            ut.user_id = $1)
+GROUP BY
+    t.trip_id,
+    t.destination;
+
 "
-  |> pgo.execute(db, [pgo.text(arg_1)], decode.from(decoder, _))
+  |> pgo.execute(db, [pgo.text(uuid.to_string(arg_1))], decode.from(decoder, _))
 }
-
 
 /// A row you get from running the `find_user_by_email` query
 /// defined in `./src/traveller/sql/find_user_by_email.sql`.
@@ -217,4 +230,19 @@ WHERE
     email = $1
 "
   |> pgo.execute(db, [pgo.text(arg_1)], decode.from(decoder, _))
+}
+
+// --- UTILS -------------------------------------------------------------------
+
+/// A decoder to decode `Uuid`s coming from a Postgres query.
+///
+fn uuid_decoder() {
+  decode.then(decode.bit_array, fn(uuid) {
+    case uuid.from_bit_array(uuid) {
+      Ok(uuid) -> decode.into(uuid)
+      Error(e) -> {
+        decode.fail("uuid")
+      }
+    }
+  })
 }

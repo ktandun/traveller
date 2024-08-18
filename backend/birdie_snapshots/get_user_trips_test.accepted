@@ -1,7 +1,0 @@
----
-version: 1.2.0
-title: get user trips test
-file: ./test/traveller_test.gleam
-test_name: get_user_trips_test
----
-{"user_trips":[{"destination":"Singapore"},{"destination":"Fiji"}]}

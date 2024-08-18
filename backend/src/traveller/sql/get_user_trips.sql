@@ -1,7 +1,19 @@
-select t.destination
-from trips t
-where t.trip_id in (
-  select ut.trip_id
-  from user_trips ut
-  where ut.user_id::varchar = $1
-)
+SELECT
+    t.trip_id,
+    t.destination,
+    COUNT(tp.trip_place_id) AS places_count
+FROM
+    trips t
+    INNER JOIN trip_places tp ON t.trip_id = tp.trip_id
+WHERE
+    t.trip_id IN (
+        SELECT
+            ut.trip_id
+        FROM
+            user_trips ut
+        WHERE
+            ut.user_id = $1)
+GROUP BY
+    t.trip_id,
+    t.destination;
+

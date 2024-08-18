@@ -1,18 +1,22 @@
+import gleam/io
 import decode
 import gleam/json
+import youid/uuid.{type Uuid}
 
 pub type UserId
 
 pub type TripId
 
 pub opaque type Id(entity) {
-  Id(String)
+  Id(Uuid)
 }
 
 pub fn id_decoder() {
   decode.into({
     use id <- decode.parameter
-    Id(id)
+    let assert Ok(uid) = uuid.from_string(id)
+
+    uid
   })
   |> decode.field("id", decode.string)
 }
@@ -20,7 +24,7 @@ pub fn id_decoder() {
 pub fn id_encoder(data: Id(a)) {
   let Id(val) = data
 
-  json.object([#("id", json.string(val))])
+  json.object([#("id", json.string(uuid.to_string(val)))])
 }
 
 pub fn id_value(id: Id(a)) {
@@ -28,10 +32,12 @@ pub fn id_value(id: Id(a)) {
   value
 }
 
-pub fn to_user_id(id: String) -> Id(UserId) {
-  Id(id)
+pub fn to_id(id: String) -> Id(a) {
+  let assert Ok(uid) = uuid.from_string(id)
+
+  Id(uid)
 }
 
-pub fn to_trip_id(id: String) -> Id(TripId) {
+pub fn to_id_from_uuid(id: Uuid) -> Id(a) {
   Id(id)
 }

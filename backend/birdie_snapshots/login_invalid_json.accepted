@@ -1,7 +1,0 @@
----
-version: 1.2.0
-title: login invalid json
-file: ./test/traveller_test.gleam
-test_name: login_invalid_json_test
----
-{"title":"JSON_CODEC_DECODE_ERROR"}

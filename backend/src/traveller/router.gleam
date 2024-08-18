@@ -1,3 +1,4 @@
+import shared/id
 import traveller/routes/auth_routes
 import traveller/routes/trip_routes
 import traveller/web.{type Context}
@@ -10,6 +11,8 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
     ["login"] -> auth_routes.handle_login(req, ctx)
     ["signup"] -> auth_routes.handle_signup(req, ctx)
     ["trips"] -> trip_routes.handle_trips(req, ctx)
+    ["trips", trip_id, "places"] ->
+      trip_routes.handle_trip_places(req, ctx, id.to_id(trip_id))
 
     _ -> wisp.not_found()
   }

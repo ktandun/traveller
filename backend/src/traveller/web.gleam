@@ -67,7 +67,7 @@ pub fn require_authenticated(
   )
 
   case row_count {
-    1 -> next(id.to_user_id(user_id))
+    1 -> next(id.to_id(user_id))
     _ -> error_to_response(error.UserUnauthenticated)
   }
 }

@@ -1,7 +1,0 @@
----
-version: 1.2.0
-title: login successful
-file: ./test/traveller_test.gleam
-test_name: login_successful_test
----
-{"success":true}
