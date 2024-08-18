@@ -1,3 +1,4 @@
+import gleam/io
 import gleeunit
 import gleeunit/should
 import shared/auth
@@ -30,6 +31,23 @@ pub fn signup_successful_test() {
     json_util.try_decode(testing.string_body(response), id.id_decoder())
 
   should.be_ok(response)
+}
+
+pub fn signup_invalid_test() {
+  use ctx <- test_utils.with_context()
+
+  let json =
+    auth.SignupRequest(email: "test@example.com", password: "password")
+    |> auth.signup_request_encoder()
+
+  let response =
+    testing.post_json("/signup", [], json)
+    |> router.handle_request(ctx)
+
+  let response =
+    json_util.try_decode(testing.string_body(response), id.id_decoder())
+
+  should.be_error(response)
 }
 
 pub fn login_successful_test() {
@@ -102,6 +120,8 @@ pub fn get_user_trips_test() {
     )
 
   should.be_ok(response)
+
+  let assert Ok(user_trips) = response
 }
 
 pub fn create_user_trips_test() {
@@ -121,4 +141,25 @@ pub fn create_user_trips_test() {
     json_util.try_decode(testing.string_body(response), id.id_decoder())
 
   should.be_ok(response)
+}
+
+pub fn get_user_trip_places_test() {
+  use ctx <- test_utils.with_context()
+
+  let response =
+    testing.get("/trips/87fccf2c-dbeb-4e6f-b116-5f46463c2ee7/places", [])
+    |> test_utils.set_auth_cookie
+    |> router.handle_request(ctx)
+
+  let response =
+    json_util.try_decode(
+      testing.string_body(response),
+      trips.user_trip_places_decoder(),
+    )
+
+  should.be_ok(response)
+
+  let assert Ok(response) = response
+
+  io.debug(response)
 }

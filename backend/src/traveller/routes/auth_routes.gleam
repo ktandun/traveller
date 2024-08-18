@@ -1,5 +1,4 @@
 import gleam/bool
-import gleam/http.{Post}
 import gleam/io
 import gleam/json
 import gleam/pgo
@@ -18,7 +17,6 @@ import youid/uuid
 // Public functions ------------------------------------------
 
 pub fn handle_signup(req: Request, ctx: Context) -> Response {
-  use <- wisp.require_method(req, Post)
   use json <- wisp.require_string_body(req)
 
   let response = {
@@ -48,7 +46,6 @@ pub fn handle_signup(req: Request, ctx: Context) -> Response {
 }
 
 pub fn handle_login(req: Request, ctx: Context) -> Response {
-  use <- wisp.require_method(req, Post)
   use json <- wisp.require_string_body(req)
 
   let response = {

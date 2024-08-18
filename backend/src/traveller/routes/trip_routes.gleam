@@ -1,8 +1,11 @@
 import gleam/http.{Get, Post}
+import gleam/io
 import gleam/json
 import gleam/list
 import gleam/pgo
 import gleam/result
+import gleam/string_builder
+import pprint
 import shared/id.{type Id, type TripId, type UserId}
 import shared/trips.{type CreateTripRequest}
 import traveller/database
@@ -15,27 +18,26 @@ import youid/uuid
 
 // Public functions ------------------------------------------
 
-pub fn handle_trips(req: Request, ctx: Context) -> Response {
-  case req.method {
-    Get -> handle_get_trips(req, ctx)
-    Post -> handle_create_trip(req, ctx)
-    _ -> wisp.not_found()
-  }
-}
-
-pub fn handle_trip_places(
+pub fn handle_get_trip_places(
   req: Request,
   ctx: Context,
   trip_id: Id(TripId),
 ) -> Response {
-  case req.method {
-    _ -> wisp.not_found()
-  }
+  use <- wisp.require_method(req, Get)
+  use user_id <- web.require_authenticated(req, ctx)
+
+  use user_trip_places <- web.require_ok(get_user_trip_places(
+    ctx,
+    user_id,
+    trip_id,
+  ))
+
+  user_trip_places
+  |> string_builder.from_string
+  |> wisp.json_response(200)
 }
 
-// Private functions -----------------------------------------
-
-fn handle_get_trips(req: Request, ctx: Context) -> Response {
+pub fn handle_get_trips(req: Request, ctx: Context) -> Response {
   use <- wisp.require_method(req, Get)
   use user_id <- web.require_authenticated(req, ctx)
 
@@ -47,7 +49,7 @@ fn handle_get_trips(req: Request, ctx: Context) -> Response {
   |> wisp.json_response(200)
 }
 
-fn handle_create_trip(req: Request, ctx: Context) -> Response {
+pub fn handle_create_trip(req: Request, ctx: Context) -> Response {
   use <- wisp.require_method(req, Post)
   use json <- wisp.require_string_body(req)
   use user_id <- web.require_authenticated(req, ctx)
@@ -68,6 +70,8 @@ fn handle_create_trip(req: Request, ctx: Context) -> Response {
   |> json.to_string_builder
   |> wisp.json_response(200)
 }
+
+// Private functions -----------------------------------------
 
 fn get_user_trips(
   ctx: Context,
@@ -106,4 +110,23 @@ fn create_user_trip(
   )
 
   Ok(id.to_id(new_trip_id))
+}
+
+fn get_user_trip_places(
+  ctx: Context,
+  user_id: Id(UserId),
+  trip_id: Id(TripId),
+) -> Result(String, AppError) {
+  let user_id = id.id_value(user_id)
+  let trip_id = id.id_value(trip_id)
+
+  use pgo.Returned(_, rows) <- result.try(
+    sql.get_user_trip_places(ctx.db, user_id, trip_id)
+    |> database.map_error(),
+  )
+
+  let assert [row] = rows
+  let sql.GetUserTripPlacesRow(row) = row
+
+  Ok(row)
 }

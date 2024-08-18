@@ -36,7 +36,6 @@ WHERE
   |> pgo.execute(db, [pgo.text(arg_1)], decode.from(decoder, _))
 }
 
-
 /// A row you get from running the `get_userid_by_email_password` query
 /// defined in `./src/traveller/sql/get_userid_by_email_password.sql`.
 ///
@@ -69,10 +68,8 @@ WHERE
     u.email = $1
     AND u.password = crypt($2, u.password)
 "
-  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _),
-  )
+  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _))
 }
-
 
 /// A row you get from running the `create_user` query
 /// defined in `./src/traveller/sql/create_user.sql`.
@@ -103,10 +100,66 @@ pub fn create_user(db, arg_1, arg_2) {
 RETURNING
     user_id
 "
-  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _),
-  )
+  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _))
 }
 
+/// A row you get from running the `get_user_trip_places` query
+/// defined in `./src/traveller/sql/get_user_trip_places.sql`.
+///
+/// > 🐿️ This type definition was generated automatically using v1.4.0 of the
+/// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub type GetUserTripPlacesRow {
+  GetUserTripPlacesRow(data: String)
+}
+
+/// Runs the `get_user_trip_places` query
+/// defined in `./src/traveller/sql/get_user_trip_places.sql`.
+///
+/// > 🐿️ This function was generated automatically using v1.4.0 of
+/// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub fn get_user_trip_places(db, arg_1, arg_2) {
+  let decoder =
+    decode.into({
+      use data <- decode.parameter
+      GetUserTripPlacesRow(data: data)
+    })
+    |> decode.field(0, decode.string)
+
+  "WITH trip_places AS (
+    SELECT
+        t.trip_id::text,
+        t.destination,
+        tp.name,
+        tp.trip_place_id::text
+    FROM
+        trips t
+        INNER JOIN trip_places tp ON t.trip_id = tp.trip_id
+    WHERE
+        t.trip_id = $2
+        AND t.trip_id IN (
+            SELECT
+                ut.trip_id
+            FROM
+                user_trips ut
+            WHERE
+                ut.user_id = $1))
+SELECT
+    json_build_object('trip_id', trip_id, 'destination', destination, 'user_trip_places', json_agg(json_build_object('name', name, 'trip_place_id', trip_place_id))) AS data
+FROM
+    trip_places
+GROUP BY
+    trip_id,
+    destination;
+
+"
+  |> pgo.execute(
+    db,
+    [pgo.text(uuid.to_string(arg_1)), pgo.text(uuid.to_string(arg_2))],
+    decode.from(decoder, _),
+  )
+}
 
 /// Runs the `create_trip` query
 /// defined in `./src/traveller/sql/create_trip.sql`.
@@ -127,7 +180,6 @@ pub fn create_trip(db, arg_1, arg_2) {
   )
 }
 
-
 /// Runs the `create_user_trip` query
 /// defined in `./src/traveller/sql/create_user_trip.sql`.
 ///
@@ -147,7 +199,6 @@ pub fn create_user_trip(db, arg_1, arg_2) {
     decode.from(decoder, _),
   )
 }
-
 
 /// A row you get from running the `get_user_trips` query
 /// defined in `./src/traveller/sql/get_user_trips.sql`.
@@ -204,7 +255,6 @@ GROUP BY
   |> pgo.execute(db, [pgo.text(uuid.to_string(arg_1))], decode.from(decoder, _))
 }
 
-
 /// A row you get from running the `find_user_by_email` query
 /// defined in `./src/traveller/sql/find_user_by_email.sql`.
 ///
@@ -238,7 +288,6 @@ WHERE
 "
   |> pgo.execute(db, [pgo.text(arg_1)], decode.from(decoder, _))
 }
-
 
 // --- UTILS -------------------------------------------------------------------
 

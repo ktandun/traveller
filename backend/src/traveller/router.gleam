@@ -1,3 +1,4 @@
+import gleam/http
 import shared/id
 import traveller/routes/auth_routes
 import traveller/routes/trip_routes
@@ -8,11 +9,28 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
   use req <- web.middleware(req)
 
   case wisp.path_segments(req) {
-    ["login"] -> auth_routes.handle_login(req, ctx)
-    ["signup"] -> auth_routes.handle_signup(req, ctx)
-    ["trips"] -> trip_routes.handle_trips(req, ctx)
+    ["login"] ->
+      case req.method {
+        http.Post -> auth_routes.handle_login(req, ctx)
+        _ -> wisp.method_not_allowed([http.Post])
+      }
+    ["signup"] ->
+      case req.method {
+        http.Post -> auth_routes.handle_signup(req, ctx)
+        _ -> wisp.method_not_allowed([http.Post])
+      }
+    ["trips"] ->
+      case req.method {
+        http.Get -> trip_routes.handle_get_trips(req, ctx)
+        http.Post -> trip_routes.handle_create_trip(req, ctx)
+        _ -> wisp.method_not_allowed([http.Get, http.Post])
+      }
     ["trips", trip_id, "places"] ->
-      trip_routes.handle_trip_places(req, ctx, id.to_id(trip_id))
+      case req.method {
+        http.Get ->
+          trip_routes.handle_get_trip_places(req, ctx, id.to_id(trip_id))
+        _ -> wisp.method_not_allowed([http.Get])
+      }
 
     _ -> wisp.not_found()
   }
