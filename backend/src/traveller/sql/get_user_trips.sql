@@ -1,7 +1,7 @@
 select t.destination
 from trips t
-where t.tripid in (
-  select ut.tripid
+where t.trip_id in (
+  select ut.trip_id
   from user_trips ut
-  where ut.userid::varchar = $1
+  where ut.user_id::varchar = $1
 )

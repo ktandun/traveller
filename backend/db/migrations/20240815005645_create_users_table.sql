@@ -2,36 +2,47 @@
 CREATE EXTENSION pgcrypto;
 
 CREATE TABLE users (
-    userid uuid PRIMARY KEY,
+    user_id uuid PRIMARY KEY,
     created_utc timestamp DEFAULT (timezone('utc', now())),
     email varchar(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
     UNIQUE (email)
 );
 
-INSERT INTO users (userid, email, PASSWORD)
+INSERT INTO users (user_id, email, PASSWORD)
     VALUES ('00000000-0000-0000-0000-000000000001', 'test@example.com', crypt('password', gen_salt('bf', 8))),
     ('00000000-0000-0000-0000-000000000002', 'user@example.com', crypt('password', gen_salt('bf', 8)));
 
 CREATE TABLE trips (
-    tripid uuid PRIMARY KEY,
+    trip_id uuid PRIMARY KEY,
     destination varchar(255) NOT NULL
 );
 
+INSERT INTO trips (trip_id, destination)
+    VALUES ('00000000-0000-0000-0001-000000000001', 'Singapore'),
+    ('00000000-0000-0000-0001-000000000002', 'Fiji'),
+    ('00000000-0000-0000-0001-000000000003', 'Canada');
+
 CREATE TABLE user_trips (
-    userid uuid REFERENCES users (userid),
-    tripid uuid REFERENCES trips (tripid),
-    PRIMARY KEY (userid, tripid)
+    user_id uuid REFERENCES users (user_id),
+    trip_id uuid REFERENCES trips (trip_id),
+    PRIMARY KEY (user_id, trip_id)
 );
 
-INSERT INTO trips (tripid, destination)
-    VALUES ('6a81d19f-0387-4990-9b74-f9302ba20e81', 'Fiji'),
-    ('79bac422-dae5-4e17-8833-87ccfad525ed', 'Singapore'),
-    ('ddbc8ff1-1f82-43fa-81f7-e49cc141c1a9', 'Canada');
+INSERT INTO user_trips (trip_id, user_id)
+    VALUES ('00000000-0000-0000-0001-000000000001', '00000000-0000-0000-0000-000000000001'),
+    ('00000000-0000-0000-0001-000000000002', '00000000-0000-0000-0000-000000000001'),
+    ('00000000-0000-0000-0001-000000000003', '00000000-0000-0000-0000-000000000002');
 
-INSERT INTO user_trips (tripid, userid)
-    VALUES ('6a81d19f-0387-4990-9b74-f9302ba20e81', '00000000-0000-0000-0000-000000000001'),
-    ('79bac422-dae5-4e17-8833-87ccfad525ed', '00000000-0000-0000-0000-000000000001'),
-    ('ddbc8ff1-1f82-43fa-81f7-e49cc141c1a9', '00000000-0000-0000-0000-000000000002');
+CREATE TABLE trip_places (
+    trip_place_id uuid PRIMARY KEY,
+    trip_id uuid REFERENCES trips (trip_id),
+    name varchar(255) NOT NULL
+);
+
+INSERT INTO trip_places (trip_place_id, trip_id, name)
+    VALUES ('00000000-0000-0000-0002-000000000001', '00000000-0000-0000-0001-000000000001', 'Universal Studios'),
+    ('00000000-0000-0000-0002-000000000002', '00000000-0000-0000-0001-000000000001', 'Botanical Garden'),
+    ('00000000-0000-0000-0002-000000000003', '00000000-0000-0000-0001-000000000001', 'Food Stalls');
 
 -- migrate:down

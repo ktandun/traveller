@@ -3,4 +3,4 @@ SELECT
 FROM
     users
 WHERE
-    userid::text = $1
+    user_id::text = $1

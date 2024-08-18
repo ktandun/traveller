@@ -95,7 +95,7 @@ fn login_user(
     _ -> {
       let assert [row] = rows
 
-      Ok(id.to_user_id(row.userid))
+      Ok(id.to_user_id(row.user_id))
     }
   }
 }
@@ -111,7 +111,7 @@ fn create_user(
 
   let assert [row] = rows
 
-  id.to_user_id(row.userid)
+  id.to_user_id(row.user_id)
 }
 
 fn find_user_by_email(

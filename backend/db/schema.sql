@@ -37,11 +37,22 @@ CREATE TABLE public.schema_migrations (
 
 
 --
+-- Name: trip_places; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.trip_places (
+    trip_place_id uuid NOT NULL,
+    trip_id uuid,
+    name character varying(255) NOT NULL
+);
+
+
+--
 -- Name: trips; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.trips (
-    tripid uuid NOT NULL,
+    trip_id uuid NOT NULL,
     destination character varying(255) NOT NULL
 );
 
@@ -51,8 +62,8 @@ CREATE TABLE public.trips (
 --
 
 CREATE TABLE public.user_trips (
-    userid uuid NOT NULL,
-    tripid uuid NOT NULL
+    user_id uuid NOT NULL,
+    trip_id uuid NOT NULL
 );
 
 
@@ -61,7 +72,7 @@ CREATE TABLE public.user_trips (
 --
 
 CREATE TABLE public.users (
-    userid uuid NOT NULL,
+    user_id uuid NOT NULL,
     created_utc timestamp without time zone DEFAULT timezone('utc'::text, now()),
     email character varying(255) NOT NULL,
     password character varying(255) NOT NULL
@@ -77,11 +88,19 @@ ALTER TABLE ONLY public.schema_migrations
 
 
 --
+-- Name: trip_places trip_places_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.trip_places
+    ADD CONSTRAINT trip_places_pkey PRIMARY KEY (trip_place_id);
+
+
+--
 -- Name: trips trips_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.trips
-    ADD CONSTRAINT trips_pkey PRIMARY KEY (tripid);
+    ADD CONSTRAINT trips_pkey PRIMARY KEY (trip_id);
 
 
 --
@@ -89,7 +108,7 @@ ALTER TABLE ONLY public.trips
 --
 
 ALTER TABLE ONLY public.user_trips
-    ADD CONSTRAINT user_trips_pkey PRIMARY KEY (userid, tripid);
+    ADD CONSTRAINT user_trips_pkey PRIMARY KEY (user_id, trip_id);
 
 
 --
@@ -105,23 +124,31 @@ ALTER TABLE ONLY public.users
 --
 
 ALTER TABLE ONLY public.users
-    ADD CONSTRAINT users_pkey PRIMARY KEY (userid);
+    ADD CONSTRAINT users_pkey PRIMARY KEY (user_id);
 
 
 --
--- Name: user_trips user_trips_tripid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: trip_places trip_places_trip_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.trip_places
+    ADD CONSTRAINT trip_places_trip_id_fkey FOREIGN KEY (trip_id) REFERENCES public.trips(trip_id);
+
+
+--
+-- Name: user_trips user_trips_trip_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_trips
-    ADD CONSTRAINT user_trips_tripid_fkey FOREIGN KEY (tripid) REFERENCES public.trips(tripid);
+    ADD CONSTRAINT user_trips_trip_id_fkey FOREIGN KEY (trip_id) REFERENCES public.trips(trip_id);
 
 
 --
--- Name: user_trips user_trips_userid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: user_trips user_trips_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.user_trips
-    ADD CONSTRAINT user_trips_userid_fkey FOREIGN KEY (userid) REFERENCES public.users(userid);
+    ADD CONSTRAINT user_trips_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id);
 
 
 --

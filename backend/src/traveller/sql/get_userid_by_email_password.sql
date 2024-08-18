@@ -1,5 +1,5 @@
 SELECT
-    u.userid::varchar
+    u.user_id::varchar
 FROM
     users u
 WHERE
