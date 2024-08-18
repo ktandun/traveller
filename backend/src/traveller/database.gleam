@@ -11,6 +11,7 @@ pub fn with_connection(f: fn(pgo.Connection) -> a) -> a {
         port: 5432,
         database: "kenzietandun",
         user: "kenzietandun",
+        pool_size: 10,
       ),
     )
 

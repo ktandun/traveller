@@ -1,5 +1,4 @@
 import gleam/dynamic
-import gleam/io
 import gleam/json.{type DecodeError, type Json}
 import gleam/pgo.{
   ConnectionUnavailable, ConstraintViolated, PostgresqlError,

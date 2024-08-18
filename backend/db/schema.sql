@@ -62,6 +62,7 @@ CREATE TABLE public.user_trips (
 
 CREATE TABLE public.users (
     userid uuid NOT NULL,
+    created_utc timestamp without time zone DEFAULT timezone('utc'::text, now()),
     email character varying(255) NOT NULL,
     password character varying(255) NOT NULL
 );
@@ -105,6 +106,22 @@ ALTER TABLE ONLY public.users
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (userid);
+
+
+--
+-- Name: user_trips user_trips_tripid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_trips
+    ADD CONSTRAINT user_trips_tripid_fkey FOREIGN KEY (tripid) REFERENCES public.trips(tripid);
+
+
+--
+-- Name: user_trips user_trips_userid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_trips
+    ADD CONSTRAINT user_trips_userid_fkey FOREIGN KEY (userid) REFERENCES public.users(userid);
 
 
 --
