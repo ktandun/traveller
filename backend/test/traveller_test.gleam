@@ -1,5 +1,4 @@
 import gleam/io
-import youid/uuid
 import gleam/result
 import gleeunit
 import gleeunit/should
@@ -13,6 +12,7 @@ import traveller/router
 import traveller/web
 import wisp
 import wisp/testing
+import youid/uuid
 
 const testing_user_id = "ab995595-008e-4ab5-94bb-7845f5d48626"
 
@@ -23,7 +23,8 @@ pub fn main() {
 fn with_context(callback: fn(web.Context) -> t) -> t {
   use db <- database.with_connection()
 
-  let context = web.Context(db: db, uuid_provider: fn() { uuid.v4() |> uuid.to_string() })
+  let context =
+    web.Context(db: db, uuid_provider: fn() { uuid.v4() |> uuid.to_string() })
 
   callback(context)
 }
@@ -92,7 +93,10 @@ pub fn get_user_trips_test() {
     |> router.handle_request(ctx)
 
   let response =
-    json_util.try_decode(testing.string_body(response), trips.user_trips_decoder())
+    json_util.try_decode(
+      testing.string_body(response),
+      trips.user_trips_decoder(),
+    )
 
   should.be_ok(response)
 }
