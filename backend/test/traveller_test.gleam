@@ -1,36 +1,39 @@
-import gleam/io
-import gleam/result
 import gleeunit
 import gleeunit/should
 import shared/auth
-import shared/constants
-import shared/id.{type Id}
+import shared/id
 import shared/trips
-import traveller/database
+import test_utils
 import traveller/json_util
 import traveller/router
-import traveller/web
-import wisp
 import wisp/testing
-import youid/uuid
-
-const testing_user_id = "ab995595-008e-4ab5-94bb-7845f5d48626"
 
 pub fn main() {
   gleeunit.main()
 }
 
-fn with_context(callback: fn(web.Context) -> t) -> t {
-  use db <- database.with_connection()
+pub fn signup_successful_test() {
+  use ctx <- test_utils.with_context()
 
-  let context =
-    web.Context(db: db, uuid_provider: fn() { uuid.v4() |> uuid.to_string() })
+  let json =
+    auth.SignupRequest(
+      email: test_utils.gen_uuid() <> "@example.com",
+      password: "password",
+    )
+    |> auth.signup_request_encoder()
 
-  callback(context)
+  let response =
+    testing.post_json("/signup", [], json)
+    |> router.handle_request(ctx)
+
+  let response =
+    json_util.try_decode(testing.string_body(response), id.id_decoder())
+
+  should.be_ok(response)
 }
 
 pub fn login_successful_test() {
-  use ctx <- with_context()
+  use ctx <- test_utils.with_context()
 
   let json =
     auth.LoginRequest(email: "test@example.com", password: "password")
@@ -47,7 +50,7 @@ pub fn login_successful_test() {
 }
 
 pub fn login_invalid_login_test() {
-  use ctx <- with_context()
+  use ctx <- test_utils.with_context()
 
   let json =
     auth.LoginRequest(email: "test@example.com", password: "")
@@ -62,11 +65,11 @@ pub fn login_invalid_login_test() {
 }
 
 pub fn login_invalid_json_test() {
-  use ctx <- with_context()
+  use ctx <- test_utils.with_context()
 
   let response =
     testing.post("/login", [], "{hey}")
-    |> testing.set_header("content-type", "application/json")
+    |> test_utils.set_json_header
     |> router.handle_request(ctx)
 
   response.status
@@ -74,7 +77,7 @@ pub fn login_invalid_json_test() {
 }
 
 pub fn trips_unauthorised_test() {
-  use ctx <- with_context()
+  use ctx <- test_utils.with_context()
 
   let response =
     testing.get("/trips", [])
@@ -85,11 +88,11 @@ pub fn trips_unauthorised_test() {
 }
 
 pub fn get_user_trips_test() {
-  use ctx <- with_context()
+  use ctx <- test_utils.with_context()
 
   let response =
     testing.get("/trips", [])
-    |> testing.set_cookie(constants.cookie, testing_user_id, wisp.Signed)
+    |> test_utils.set_auth_cookie
     |> router.handle_request(ctx)
 
   let response =
@@ -102,16 +105,16 @@ pub fn get_user_trips_test() {
 }
 
 pub fn create_user_trips_test() {
-  use ctx <- with_context()
+  use ctx <- test_utils.with_context()
 
   let json =
-    trips.CreateTripRequest(destination: "India")
+    trips.CreateTripRequest(destination: "India " <> test_utils.gen_uuid())
     |> trips.create_trip_request_encoder
 
   let response =
     testing.post_json("/trips", [], json)
-    |> testing.set_header("content-type", "application/json")
-    |> testing.set_cookie(constants.cookie, testing_user_id, wisp.Signed)
+    |> test_utils.set_json_header
+    |> test_utils.set_auth_cookie
     |> router.handle_request(ctx)
 
   let response =

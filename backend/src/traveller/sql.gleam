@@ -1,5 +1,4 @@
 import decode
-import gleam/io
 import gleam/pgo
 import youid/uuid.{type Uuid}
 
@@ -37,6 +36,7 @@ WHERE
   |> pgo.execute(db, [pgo.text(arg_1)], decode.from(decoder, _))
 }
 
+
 /// A row you get from running the `get_userid_by_email_password` query
 /// defined in `./src/traveller/sql/get_userid_by_email_password.sql`.
 ///
@@ -69,8 +69,10 @@ WHERE
     u.email = $1
     AND u.password = crypt($2, u.password)
 "
-  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _))
+  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _),
+  )
 }
+
 
 /// A row you get from running the `create_user` query
 /// defined in `./src/traveller/sql/create_user.sql`.
@@ -101,8 +103,10 @@ pub fn create_user(db, arg_1, arg_2) {
 RETURNING
     user_id
 "
-  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _))
+  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _),
+  )
 }
+
 
 /// Runs the `create_trip` query
 /// defined in `./src/traveller/sql/create_trip.sql`.
@@ -123,6 +127,7 @@ pub fn create_trip(db, arg_1, arg_2) {
   )
 }
 
+
 /// Runs the `create_user_trip` query
 /// defined in `./src/traveller/sql/create_user_trip.sql`.
 ///
@@ -142,6 +147,7 @@ pub fn create_user_trip(db, arg_1, arg_2) {
     decode.from(decoder, _),
   )
 }
+
 
 /// A row you get from running the `get_user_trips` query
 /// defined in `./src/traveller/sql/get_user_trips.sql`.
@@ -198,6 +204,7 @@ GROUP BY
   |> pgo.execute(db, [pgo.text(uuid.to_string(arg_1))], decode.from(decoder, _))
 }
 
+
 /// A row you get from running the `find_user_by_email` query
 /// defined in `./src/traveller/sql/find_user_by_email.sql`.
 ///
@@ -232,6 +239,7 @@ WHERE
   |> pgo.execute(db, [pgo.text(arg_1)], decode.from(decoder, _))
 }
 
+
 // --- UTILS -------------------------------------------------------------------
 
 /// A decoder to decode `Uuid`s coming from a Postgres query.
@@ -240,9 +248,7 @@ fn uuid_decoder() {
   decode.then(decode.bit_array, fn(uuid) {
     case uuid.from_bit_array(uuid) {
       Ok(uuid) -> decode.into(uuid)
-      Error(e) -> {
-        decode.fail("uuid")
-      }
+      Error(_) -> decode.fail("uuid")
     }
   })
 }

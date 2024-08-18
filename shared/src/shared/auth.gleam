@@ -40,7 +40,7 @@ pub fn signup_request_decoder() {
   |> decode.field("password", decode.string)
 }
 
-pub fn signup_request_encoder(data: LoginRequest) {
+pub fn signup_request_encoder(data: SignupRequest) {
   json.object([
     #("email", json.string(data.email)),
     #("password", json.string(data.password)),
