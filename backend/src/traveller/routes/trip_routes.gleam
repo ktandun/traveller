@@ -1,7 +1,7 @@
 import gleam/http.{Get, Post}
+import gleam/json
 import gleam/list
 import gleam/pgo
-import gleam/json
 import gleam/result
 import shared/id.{type Id, type TripId, type UserId}
 import shared/trips.{type CreateTripRequest}
