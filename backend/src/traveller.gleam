@@ -13,8 +13,7 @@ pub fn main() {
 
   use db <- database.with_connection()
 
-  let context =
-    web.Context(db: db, uuid_provider: fn() { uuid.v7() |> uuid.to_string() })
+  let context = web.Context(db: db, uuid_provider: uuid.v7)
 
   let handler = router.handle_request(_, context)
 

@@ -5,10 +5,12 @@ import wisp.{type Request}
 import wisp/testing
 import youid/uuid
 
-const testing_user_id = "ab995595-008e-4ab5-94bb-7845f5d48626"
+pub const testing_user_id = "ab995595-008e-4ab5-94bb-7845f5d48626"
+
+pub const testing_trip_id = "87fccf2c-dbeb-4e6f-b116-5f46463c2ee7"
 
 pub fn gen_uuid() {
-  uuid.v4() |> uuid.to_string()
+  uuid.v4()
 }
 
 pub fn with_context(callback: fn(web.Context) -> t) -> t {

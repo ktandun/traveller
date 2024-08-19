@@ -1,6 +1,6 @@
 import gleam/pgo
 import gleam/result
-import traveller/error
+import traveller/error.{type AppError}
 
 pub fn with_connection(f: fn(pgo.Connection) -> a) -> a {
   let db =
@@ -11,13 +11,28 @@ pub fn with_connection(f: fn(pgo.Connection) -> a) -> a {
         port: 5432,
         database: "kenzietandun",
         user: "kenzietandun",
-        pool_size: 10,
+        pool_size: 2,
       ),
     )
 
   f(db)
 }
 
-pub fn map_error(over: Result(a, pgo.QueryError)) {
+pub fn to_app_error(over: Result(a, pgo.QueryError)) {
   result.map_error(over, fn(e) { error.DatabaseError(e) })
+}
+
+pub fn require_single_row(
+  result: pgo.Returned(a),
+  error_desc: String,
+  f: fn(a) -> Result(b, AppError),
+) {
+  let pgo.Returned(_, rows) = result
+
+  case rows {
+    [row] -> {
+      f(row)
+    }
+    _ -> Error(error.QueryNotReturningSingleResult(error_desc))
+  }
 }

@@ -1,4 +1,5 @@
 import gleam/dynamic
+import gleam/int
 import gleam/json.{type DecodeError, type Json}
 import gleam/pgo.{
   ConnectionUnavailable, ConstraintViolated, PostgresqlError,
@@ -10,9 +11,10 @@ import shared/id.{type Id, type UserId}
 import traveller/error.{type AppError, JsonDecodeError}
 import traveller/sql
 import wisp.{type Request, type Response}
+import youid/uuid.{type Uuid}
 
 pub type Context {
-  Context(db: pgo.Connection, uuid_provider: fn() -> String)
+  Context(db: pgo.Connection, uuid_provider: fn() -> Uuid)
 }
 
 pub fn middleware(
@@ -73,12 +75,12 @@ pub fn require_authenticated(
 }
 
 pub fn require_valid_json(
-  result: Result(a, DecodeError),
-  next: fn(a) -> b,
-) -> Result(b, AppError) {
+  result: Result(a, AppError),
+  next: fn(a) -> Response,
+) -> Response {
   case result {
-    Ok(value) -> Ok(next(value))
-    Error(e) -> Error(error.JsonCodecDecodeError(e))
+    Ok(value) -> next(value)
+    Error(e) -> error_to_response(e)
   }
 }
 
@@ -90,10 +92,14 @@ fn json_with_status(json: Json, status: Int) -> Response {
 
 pub fn error_to_response(error: AppError) -> Response {
   case error {
-    error.JsonCodecDecodeError(e) -> error.json_codec_decode_error(e)
+    error.DecodeError(e) -> error.json_codec_decode_error(e)
+    error.QueryNotReturningSingleResult(e) -> todo
     error.UserUnauthenticated -> error.user_unauthenticated()
     error.InvalidLogin -> error.invalid_login()
-
+    error.TripDoesNotExist ->
+      [#("title", json.string("TRIP_DOES_NOT_EXIST"))]
+      |> json.object()
+      |> json_with_status(400)
     error.UserAlreadyRegistered ->
       [#("title", json.string("USER_ALREADY_REGISTERED"))]
       |> json.object()
@@ -118,7 +124,7 @@ pub fn error_to_response(error: AppError) -> Response {
         }
         PostgresqlError(code, name, message) -> {
           wisp.log_error(
-            "PostgresqlError "
+            "postgresqlerror "
             <> code
             <> " name: "
             <> name
@@ -127,12 +133,33 @@ pub fn error_to_response(error: AppError) -> Response {
           )
           response
         }
-        UnexpectedArgumentCount(_expected, _got) -> todo
-        UnexpectedArgumentType(_expected, _got) -> todo
+        UnexpectedArgumentCount(expected, got) -> {
+          wisp.log_error(
+            "UnexpectedArgumentCount"
+            <> " expected: "
+            <> int.to_string(expected)
+            <> " got: "
+            <> int.to_string(got),
+          )
+          response
+        }
+        UnexpectedArgumentType(expected, got) -> {
+          wisp.log_error(
+            "UnexpectedArgumentType"
+            <> " expected: "
+            <> expected
+            <> " got: "
+            <> got,
+          )
+          response
+        }
         UnexpectedResultType(e) -> {
           error_to_response(JsonDecodeError(e))
         }
-        ConnectionUnavailable -> todo
+        ConnectionUnavailable -> {
+          wisp.log_error("ConnectionUnavailable")
+          response
+        }
       }
     }
 

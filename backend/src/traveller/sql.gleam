@@ -36,6 +36,45 @@ WHERE
   |> pgo.execute(db, [pgo.text(arg_1)], decode.from(decoder, _))
 }
 
+/// A row you get from running the `find_trip_by_trip_id` query
+/// defined in `./src/traveller/sql/find_trip_by_trip_id.sql`.
+///
+/// > 🐿️ This type definition was generated automatically using v1.4.0 of the
+/// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub type FindTripByTripIdRow {
+  FindTripByTripIdRow(count: Int)
+}
+
+/// Runs the `find_trip_by_trip_id` query
+/// defined in `./src/traveller/sql/find_trip_by_trip_id.sql`.
+///
+/// > 🐿️ This function was generated automatically using v1.4.0 of
+/// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub fn find_trip_by_trip_id(db, arg_1, arg_2) {
+  let decoder =
+    decode.into({
+      use count <- decode.parameter
+      FindTripByTripIdRow(count: count)
+    })
+    |> decode.field(0, decode.int)
+
+  "SELECT
+    count(1)
+FROM
+    user_trips
+WHERE
+    user_id = $1
+    AND trip_id = $2
+"
+  |> pgo.execute(
+    db,
+    [pgo.text(uuid.to_string(arg_1)), pgo.text(uuid.to_string(arg_2))],
+    decode.from(decoder, _),
+  )
+}
+
 /// A row you get from running the `get_userid_by_email_password` query
 /// defined in `./src/traveller/sql/get_userid_by_email_password.sql`.
 ///
@@ -129,10 +168,10 @@ pub fn get_user_trip_places(db, arg_1, arg_2) {
 
   "WITH trip_places AS (
     SELECT
-        t.trip_id::text,
-        t.destination,
-        tp.name,
-        tp.trip_place_id::text
+        t.trip_id::text AS trip_id,
+        t.destination AS destination,
+        tp.name AS name,
+        tp.trip_place_id::text AS trip_place_id
     FROM
         trips t
         INNER JOIN trip_places tp ON t.trip_id = tp.trip_id

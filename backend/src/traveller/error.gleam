@@ -5,11 +5,13 @@ import wisp
 
 pub type AppError {
   DatabaseError(QueryError)
+  QueryNotReturningSingleResult(String)
   InvalidLogin
-  JsonCodecDecodeError(DecodeError)
+  DecodeError(DecodeError)
   JsonDecodeError(DecodeErrors)
   UserAlreadyRegistered
   UserUnauthenticated
+  TripDoesNotExist
 }
 
 pub fn json_codec_decode_error(_) {
