@@ -1,4 +1,3 @@
-import gleam/io
 import decode
 import gleam/json
 import youid/uuid.{type Uuid}
@@ -32,10 +31,13 @@ pub fn id_value(id: Id(a)) {
   value
 }
 
-pub fn to_id(id: String) -> Id(a) {
-  let assert Ok(uid) = uuid.from_string(id)
-
-  Id(uid)
+pub fn to_id(id: String) -> Result(Id(a), String) {
+  let result = uuid.from_string(id)
+  
+  case result {
+    Ok(uid) -> Ok(Id(uid))
+    Error(_) -> Error("Invalid UUID")
+  }
 }
 
 pub fn to_id_from_uuid(id: Uuid) -> Id(a) {

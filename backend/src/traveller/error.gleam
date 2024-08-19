@@ -12,6 +12,7 @@ pub type AppError {
   UserAlreadyRegistered
   UserUnauthenticated
   TripDoesNotExist
+  InvalidUUIDString(String)
 }
 
 pub fn json_codec_decode_error(_) {

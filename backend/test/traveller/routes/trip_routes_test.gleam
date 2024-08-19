@@ -1,3 +1,5 @@
+import gleam/io
+import gleam/list
 import gleeunit/should
 import shared/id
 import shared/trips
@@ -95,16 +97,17 @@ pub fn get_user_trip_places_test() {
   let assert Ok(_response) = response
 }
 
-pub fn get_user_trip_places_with_invalid_trip_test() {
+pub fn get_user_trip_places_with_invalid_trip_id_test() {
   use ctx <- test_utils.with_context()
 
-  let random_uuid = "514acc18-c3cc-4abe-8bca-0df710c2553b"
+  ["514acc18-c3cc-4abe-8bca-0df710c2553b", "heyyyyyyyyyyyyyyyyyyyyyyyyyyyy"]
+  |> list.each(fn(id) {
+    let response =
+      testing.get("/trips/" <> id <> "/places", [])
+      |> test_utils.set_auth_cookie
+      |> router.handle_request(ctx)
 
-  let response =
-    testing.get("/trips/" <> random_uuid <> "/places", [])
-    |> test_utils.set_auth_cookie
-    |> router.handle_request(ctx)
-
-  response.status
-  |> should.equal(400)
+    response.status
+    |> should.equal(400)
+  })
 }

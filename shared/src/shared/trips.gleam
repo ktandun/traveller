@@ -1,5 +1,4 @@
 import decode
-import gleam/io
 import gleam/json
 import shared/uuid_utils
 import youid/uuid.{type Uuid}
@@ -7,19 +6,27 @@ import youid/uuid.{type Uuid}
 //
 
 pub type UserTrip {
-  UserTrip(destination: String)
+  UserTrip(trip_id: Uuid, destination: String, places_count: Int)
 }
 
 pub fn user_trip_decoder() {
   decode.into({
+    use trip_id <- decode.parameter
     use destination <- decode.parameter
-    UserTrip(destination:)
+    use places_count <- decode.parameter
+    UserTrip(trip_id:, destination:, places_count:)
   })
+  |> decode.field("trip_id", uuid_utils.uuid_decoder_from_string())
   |> decode.field("destination", decode.string)
+  |> decode.field("places_count", decode.int)
 }
 
 pub fn user_trip_encoder(data: UserTrip) {
-  json.object([#("destination", json.string(data.destination))])
+  json.object([
+    #("trip_id", json.string(uuid.to_string(data.trip_id))),
+    #("destination", json.string(data.destination)),
+    #("places_count", json.int(data.places_count)),
+  ])
 }
 
 pub type UserTrips {
@@ -66,7 +73,10 @@ pub fn user_trip_place_decoder() {
 }
 
 pub fn user_trip_place_encoder(data: UserTripPlace) {
-  json.object([#("name", json.string(data.name))])
+  json.object([
+    #("trip_place_id", json.string(data.trip_place_id)),
+    #("name", json.string(data.name)),
+  ])
 }
 
 pub fn user_trip_places_decoder() {
@@ -84,6 +94,7 @@ pub fn user_trip_places_decoder() {
 
 pub fn user_trip_places_encoder(data: UserTripPlaces) {
   json.object([
+    #("trip_id", json.string(data.trip_id)),
     #("destination", json.string(data.destination)),
     #(
       "user_trip_places",

@@ -13,10 +13,7 @@ pub fn handle_signup(
 ) -> Result(Id(UserId), AppError) {
   let auth.SignupRequest(email, password) = signup_request
 
-  use is_user_exists <- result.try(users_db.find_user_by_email(
-    ctx.db,
-    signup_request.email,
-  ))
+  use is_user_exists <- result.try(users_db.find_user_by_email(ctx.db, email))
 
   use <- bool.guard(is_user_exists, Error(error.UserAlreadyRegistered))
 
@@ -29,10 +26,7 @@ pub fn handle_login(
   login_request: LoginRequest,
 ) -> Result(Id(UserId), AppError) {
   let auth.LoginRequest(email, password) = login_request
-  use is_user_exists <- result.try(users_db.find_user_by_email(
-    ctx.db,
-    login_request.email,
-  ))
+  use is_user_exists <- result.try(users_db.find_user_by_email(ctx.db, email))
 
   use <- bool.guard(!is_user_exists, Error(error.InvalidLogin))
 

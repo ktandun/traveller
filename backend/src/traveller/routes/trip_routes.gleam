@@ -10,7 +10,7 @@ pub fn handle_get_trip_places(
   ctx: Context,
   user_id: Id(UserId),
   trip_id: Id(TripId),
-) -> Result(String, AppError) {
+) -> Result(trips.UserTripPlaces, AppError) {
   use _ <- result.try(trips_db.ensure_trip_id_exists(ctx, user_id, trip_id))
 
   trips_db.get_user_trip_places(ctx, user_id, trip_id)

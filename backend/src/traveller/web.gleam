@@ -69,7 +69,12 @@ pub fn require_authenticated(
   )
 
   case row_count {
-    1 -> next(id.to_id(user_id))
+    1 -> {
+      case id.to_id(user_id) {
+        Ok(id) -> next(id)
+        Error(err) -> error_to_response(error.InvalidUUIDString(err))
+      }
+    }
     _ -> error_to_response(error.UserUnauthenticated)
   }
 }
@@ -94,6 +99,10 @@ pub fn error_to_response(error: AppError) -> Response {
   case error {
     error.DecodeError(e) -> error.json_codec_decode_error(e)
     error.QueryNotReturningSingleResult(e) -> todo
+    error.InvalidUUIDString(e) ->
+      [#("title", json.string("INVALID_UUID_STRING"))]
+      |> json.object()
+      |> json_with_status(400)
     error.UserUnauthenticated -> error.user_unauthenticated()
     error.InvalidLogin -> error.invalid_login()
     error.TripDoesNotExist ->

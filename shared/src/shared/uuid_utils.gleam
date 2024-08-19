@@ -9,3 +9,12 @@ pub fn uuid_decoder() {
     }
   })
 }
+
+pub fn uuid_decoder_from_string() {
+  decode.then(decode.string, fn(uuid) {
+    case uuid.from_string(uuid) {
+      Ok(uuid) -> decode.into(uuid)
+      Error(_) -> decode.fail("uuid")
+    }
+  })
+}

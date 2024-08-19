@@ -1,10 +1,12 @@
 import gleam/http
 import gleam/json
+import gleam/result
 import gleam/string_builder
 import shared/auth
 import shared/constants
-import shared/id.{type Id, type UserId}
+import shared/id.{type Id, type TripId, type UserId}
 import shared/trips
+import traveller/error
 import traveller/json_util
 import traveller/routes/auth_routes
 import traveller/routes/trip_routes
@@ -121,13 +123,19 @@ fn get_trips_places(
   user_id: Id(UserId),
   trip_id: String,
 ) {
+  use trip_id <- web.require_ok(
+    id.to_id(trip_id)
+    |> result.map_error(fn(err) { error.InvalidUUIDString(err) }),
+  )
+
   use user_trip_places <- web.require_ok(trip_routes.handle_get_trip_places(
     ctx,
     user_id,
-    id.to_id(trip_id),
+    trip_id,
   ))
 
   user_trip_places
-  |> string_builder.from_string
+  |> trips.user_trip_places_encoder
+  |> json.to_string_builder
   |> wisp.json_response(200)
 }

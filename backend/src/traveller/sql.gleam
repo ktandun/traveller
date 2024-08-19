@@ -149,7 +149,7 @@ RETURNING
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type GetUserTripPlacesRow {
-  GetUserTripPlacesRow(data: String)
+  GetUserTripPlacesRow(trip_id: String, destination: String, places: String)
 }
 
 /// Runs the `get_user_trip_places` query
@@ -161,10 +161,18 @@ pub type GetUserTripPlacesRow {
 pub fn get_user_trip_places(db, arg_1, arg_2) {
   let decoder =
     decode.into({
-      use data <- decode.parameter
-      GetUserTripPlacesRow(data: data)
+      use trip_id <- decode.parameter
+      use destination <- decode.parameter
+      use places <- decode.parameter
+      GetUserTripPlacesRow(
+        trip_id: trip_id,
+        destination: destination,
+        places: places,
+      )
     })
     |> decode.field(0, decode.string)
+    |> decode.field(1, decode.string)
+    |> decode.field(2, decode.string)
 
   "WITH trip_places AS (
     SELECT
@@ -185,7 +193,9 @@ pub fn get_user_trip_places(db, arg_1, arg_2) {
             WHERE
                 ut.user_id = $1))
 SELECT
-    json_build_object('trip_id', trip_id, 'destination', destination, 'user_trip_places', json_agg(json_build_object('name', name, 'trip_place_id', trip_place_id))) AS data
+    trip_id,
+    destination,
+    json_agg(json_build_object('name', name, 'trip_place_id', trip_place_id)) AS places
 FROM
     trip_places
 GROUP BY
