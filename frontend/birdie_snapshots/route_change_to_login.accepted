@@ -1,0 +1,7 @@
+---
+version: 1.2.0
+title: route change to login
+file: ./test/frontend_test.gleam
+test_name: route_change_to_login_test
+---
+<div><nav><a href="/login">Go to login</a><a href="/signup">Go to signup</a></nav><div><h1>Login</h1><div><label>Email</label><input name="email" type="email"></div><div><label>Password</label><input name="password" type="password"></div><button>Submit</button></div></div>

@@ -3,4 +3,3 @@ pub type Route {
   Signup
   FourOFour
 }
-

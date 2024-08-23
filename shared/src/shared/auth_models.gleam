@@ -7,6 +7,10 @@ pub type LoginRequest {
   LoginRequest(email: String, password: String)
 }
 
+pub fn default_login_request() {
+  LoginRequest(email: "", password: "")
+}
+
 pub fn login_request_decoder() {
   decode.into({
     use email <- decode.parameter

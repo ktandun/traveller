@@ -22,7 +22,7 @@ pub fn login_user(
     _ -> {
       use row <- database.require_single_row(query_result, "create_user")
 
-      Ok(id.to_id_from_uuid(row.user_id))
+      Ok(id.to_id(row.user_id))
     }
   }
 }
@@ -38,7 +38,7 @@ pub fn create_user(
 
   use row <- database.require_single_row(query_result, "create_user")
 
-  Ok(id.to_id_from_uuid(row.user_id))
+  Ok(id.to_id(row.user_id))
 }
 
 pub fn find_user_by_email(

@@ -8,13 +8,15 @@ import traveller/database
 import traveller/error.{type AppError}
 import traveller/json_util
 import traveller/sql
+import traveller/uuid_util
 import traveller/web.{type Context}
+import youid/uuid
 
 pub fn get_user_trips(
   ctx: Context,
   user_id: Id(UserId),
 ) -> Result(trip_models.UserTrips, AppError) {
-  let user_id = id.id_value(user_id)
+  let user_id = uuid_util.from_string(id.id_value(user_id))
 
   use pgo.Returned(_, rows) <- result.map(
     sql.get_user_trips(ctx.db, user_id)
@@ -25,7 +27,11 @@ pub fn get_user_trips(
     user_trips: rows
     |> list.map(fn(row) {
       let sql.GetUserTripsRow(trip_id, destination, places_count) = row
-      trip_models.UserTrip(trip_id:, destination:, places_count:)
+      trip_models.UserTrip(
+        trip_id: uuid.to_string(trip_id),
+        destination:,
+        places_count:,
+      )
     }),
   )
 }
@@ -36,7 +42,7 @@ pub fn create_user_trip(
   create_trip_request: CreateTripRequest,
 ) -> Result(Id(TripId), AppError) {
   let new_trip_id = ctx.uuid_provider()
-  let user_id = id.id_value(user_id)
+  let user_id = uuid_util.from_string(id.id_value(user_id))
 
   use pgo.Returned(_, _) <- result.try(
     sql.create_trip(ctx.db, new_trip_id, create_trip_request.destination)
@@ -48,7 +54,7 @@ pub fn create_user_trip(
     |> database.to_app_error(),
   )
 
-  Ok(id.to_id_from_uuid(new_trip_id))
+  Ok(id.to_id(uuid.to_string(new_trip_id)))
 }
 
 pub fn get_user_trip_places(
@@ -56,8 +62,8 @@ pub fn get_user_trip_places(
   user_id: Id(UserId),
   trip_id: Id(TripId),
 ) -> Result(trip_models.UserTripPlaces, AppError) {
-  let user_id = id.id_value(user_id)
-  let trip_id = id.id_value(trip_id)
+  let user_id = uuid_util.from_string(id.id_value(user_id))
+  let trip_id = uuid_util.from_string(id.id_value(trip_id))
 
   use query_result <- result.try(
     sql.get_user_trip_places(ctx.db, user_id, trip_id)
@@ -80,8 +86,8 @@ pub fn ensure_trip_id_exists(
   user_id: Id(UserId),
   trip_id: Id(TripId),
 ) -> Result(Nil, AppError) {
-  let trip_id = id.id_value(trip_id)
-  let user_id = id.id_value(user_id)
+  let user_id = uuid_util.from_string(id.id_value(user_id))
+  let trip_id = uuid_util.from_string(id.id_value(trip_id))
 
   use query_result <- result.try(
     sql.find_trip_by_trip_id(ctx.db, user_id, trip_id)

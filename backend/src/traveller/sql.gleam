@@ -31,10 +31,11 @@ pub fn find_user_by_userid(db, arg_1) {
 FROM
     users
 WHERE
-    user_id::text = $1
+    user_id = $1
 "
-  |> pgo.execute(db, [pgo.text(arg_1)], decode.from(decoder, _))
+  |> pgo.execute(db, [pgo.text(uuid.to_string(arg_1))], decode.from(decoder, _))
 }
+
 
 /// A row you get from running the `find_trip_by_trip_id` query
 /// defined in `./src/traveller/sql/find_trip_by_trip_id.sql`.
@@ -75,6 +76,7 @@ WHERE
   )
 }
 
+
 /// A row you get from running the `get_userid_by_email_password` query
 /// defined in `./src/traveller/sql/get_userid_by_email_password.sql`.
 ///
@@ -82,7 +84,7 @@ WHERE
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type GetUseridByEmailPasswordRow {
-  GetUseridByEmailPasswordRow(user_id: Uuid)
+  GetUseridByEmailPasswordRow(user_id: String)
 }
 
 /// Runs the `get_userid_by_email_password` query
@@ -97,18 +99,20 @@ pub fn get_userid_by_email_password(db, arg_1, arg_2) {
       use user_id <- decode.parameter
       GetUseridByEmailPasswordRow(user_id: user_id)
     })
-    |> decode.field(0, uuid_decoder())
+    |> decode.field(0, decode.string)
 
   "SELECT
-    u.user_id
+    u.user_id::TEXT
 FROM
     users u
 WHERE
     u.email = $1
     AND u.password = crypt($2, u.password)
 "
-  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _))
+  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _),
+  )
 }
+
 
 /// A row you get from running the `create_user` query
 /// defined in `./src/traveller/sql/create_user.sql`.
@@ -117,7 +121,7 @@ WHERE
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type CreateUserRow {
-  CreateUserRow(user_id: Uuid)
+  CreateUserRow(user_id: String)
 }
 
 /// Runs the `create_user` query
@@ -132,15 +136,17 @@ pub fn create_user(db, arg_1, arg_2) {
       use user_id <- decode.parameter
       CreateUserRow(user_id: user_id)
     })
-    |> decode.field(0, uuid_decoder())
+    |> decode.field(0, decode.string)
 
   "INSERT INTO users (user_id, email, PASSWORD)
     VALUES (gen_random_uuid (), $1, crypt($2, gen_salt('bf', 8)))
 RETURNING
-    user_id
+    user_id::TEXT
 "
-  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _))
+  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _),
+  )
 }
+
 
 /// A row you get from running the `get_user_trip_places` query
 /// defined in `./src/traveller/sql/get_user_trip_places.sql`.
@@ -210,6 +216,7 @@ GROUP BY
   )
 }
 
+
 /// Runs the `create_trip` query
 /// defined in `./src/traveller/sql/create_trip.sql`.
 ///
@@ -228,6 +235,7 @@ pub fn create_trip(db, arg_1, arg_2) {
     decode.from(decoder, _),
   )
 }
+
 
 /// Runs the `create_user_trip` query
 /// defined in `./src/traveller/sql/create_user_trip.sql`.
@@ -248,6 +256,7 @@ pub fn create_user_trip(db, arg_1, arg_2) {
     decode.from(decoder, _),
   )
 }
+
 
 /// A row you get from running the `get_user_trips` query
 /// defined in `./src/traveller/sql/get_user_trips.sql`.
@@ -304,6 +313,7 @@ GROUP BY
   |> pgo.execute(db, [pgo.text(uuid.to_string(arg_1))], decode.from(decoder, _))
 }
 
+
 /// A row you get from running the `find_user_by_email` query
 /// defined in `./src/traveller/sql/find_user_by_email.sql`.
 ///
@@ -337,6 +347,7 @@ WHERE
 "
   |> pgo.execute(db, [pgo.text(arg_1)], decode.from(decoder, _))
 }
+
 
 // --- UTILS -------------------------------------------------------------------
 

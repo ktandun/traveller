@@ -4,6 +4,7 @@ import shared/trip_models.{type CreateTripRequest, type UserTrips}
 import traveller/database/trips_db
 import traveller/error.{type AppError}
 import traveller/web.{type Context}
+import youid/uuid
 
 /// Returns list of places for a trip set by user
 pub fn handle_get_trip_places(
@@ -11,6 +12,13 @@ pub fn handle_get_trip_places(
   user_id: Id(UserId),
   trip_id: Id(TripId),
 ) -> Result(trip_models.UserTripPlaces, AppError) {
+  let trip_id_value = id.id_value(trip_id)
+
+  use _ <- result.try(
+    uuid.from_string(trip_id_value)
+    |> result.map_error(fn(_) { error.InvalidUUIDString(trip_id_value) }),
+  )
+
   use _ <- result.try(trips_db.ensure_trip_id_exists(ctx, user_id, trip_id))
 
   trips_db.get_user_trip_places(ctx, user_id, trip_id)

@@ -1,5 +1,5 @@
 SELECT
-    u.user_id
+    u.user_id::TEXT
 FROM
     users u
 WHERE

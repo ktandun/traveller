@@ -1,4 +1,6 @@
+import cors_builder as cors
 import gleam/dynamic
+import gleam/http
 import gleam/int
 import gleam/json.{type DecodeError, type Json}
 import gleam/pgo.{
@@ -17,11 +19,23 @@ pub type Context {
   Context(db: pgo.Connection, uuid_provider: fn() -> Uuid)
 }
 
+fn cors() {
+  cors.new()
+  |> cors.allow_origin("http://localhost:1234")
+  |> cors.allow_header("content-type")
+  |> cors.allow_method(http.Get)
+  |> cors.allow_method(http.Post)
+  |> cors.allow_method(http.Put)
+  |> cors.allow_method(http.Delete)
+}
+
 pub fn middleware(
   req: Request,
   handle_request: fn(Request) -> Response,
 ) -> wisp.Response {
   let req = wisp.method_override(req)
+
+  use req <- cors.wisp_middleware(req, cors())
 
   use <- wisp.log_request(req)
 
@@ -63,18 +77,18 @@ pub fn require_authenticated(
     |> result.map_error(fn(_) { error.UserUnauthenticated }),
   )
 
+  use user_id_uuid <- require_ok(
+    uuid.from_string(user_id)
+    |> result.map_error(fn(_) { error.InvalidUUIDString(user_id) }),
+  )
+
   use pgo.Returned(row_count, _) <- require_ok(
-    sql.find_user_by_userid(ctx.db, user_id)
+    sql.find_user_by_userid(ctx.db, user_id_uuid)
     |> result.map_error(fn(e) { error.DatabaseError(e) }),
   )
 
   case row_count {
-    1 -> {
-      case id.to_id(user_id) {
-        Ok(id) -> next(id)
-        Error(err) -> error_to_response(error.InvalidUUIDString(err))
-      }
-    }
+    1 -> next(id.to_id(user_id))
     _ -> error_to_response(error.UserUnauthenticated)
   }
 }

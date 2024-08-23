@@ -1,12 +1,10 @@
 import decode
 import gleam/json
-import shared/uuid_utils
-import youid/uuid.{type Uuid}
 
 //
 
 pub type UserTrip {
-  UserTrip(trip_id: Uuid, destination: String, places_count: Int)
+  UserTrip(trip_id: String, destination: String, places_count: Int)
 }
 
 pub fn user_trip_decoder() {
@@ -16,14 +14,14 @@ pub fn user_trip_decoder() {
     use places_count <- decode.parameter
     UserTrip(trip_id:, destination:, places_count:)
   })
-  |> decode.field("trip_id", uuid_utils.uuid_decoder_from_string())
+  |> decode.field("trip_id", decode.string)
   |> decode.field("destination", decode.string)
   |> decode.field("places_count", decode.int)
 }
 
 pub fn user_trip_encoder(data: UserTrip) {
   json.object([
-    #("trip_id", json.string(uuid.to_string(data.trip_id))),
+    #("trip_id", json.string(data.trip_id)),
     #("destination", json.string(data.destination)),
     #("places_count", json.int(data.places_count)),
   ])

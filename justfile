@@ -9,7 +9,10 @@ build:
     cd backend && gleam build
     cd frontend && gleam build
 
-test:
+db:
+    cd backend && dbmate drop && dbmate up
+
+test: db
     cd backend && gleam test
     cd frontend && gleam test
 

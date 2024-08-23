@@ -1,17 +1,14 @@
 import gleam/http
 import gleam/json
-import gleam/result
 import shared/auth_models
 import shared/constants
 import shared/id.{type Id, type TripId, type UserId}
 import shared/trip_models
-import traveller/error
 import traveller/json_util
 import traveller/routes/auth_routes
 import traveller/routes/trip_routes
 import traveller/web.{type Context}
 import wisp.{type Request, type Response}
-import youid/uuid
 
 pub fn handle_request(req: Request, ctx: Context) -> Response {
   use req <- web.middleware(req)
@@ -67,7 +64,7 @@ fn post_login(req: Request, ctx: Context) {
   |> wisp.set_cookie(
     req,
     constants.cookie,
-    uuid.to_string(id.id_value(user_id)),
+    id.id_value(user_id),
     wisp.Signed,
     60 * 60 * 24,
   )
@@ -122,10 +119,7 @@ fn get_trips_places(
   user_id: Id(UserId),
   trip_id: String,
 ) {
-  use trip_id <- web.require_ok(
-    id.to_id(trip_id)
-    |> result.map_error(fn(err) { error.InvalidUUIDString(err) }),
-  )
+  let trip_id = id.to_id(trip_id)
 
   use user_trip_places <- web.require_ok(trip_routes.handle_get_trip_places(
     ctx,
