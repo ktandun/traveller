@@ -1,11 +1,10 @@
 import gleam/http
 import gleam/json
 import gleam/result
-import gleam/string_builder
-import shared/auth
+import shared/auth_models
 import shared/constants
 import shared/id.{type Id, type TripId, type UserId}
-import shared/trips
+import shared/trip_models
 import traveller/error
 import traveller/json_util
 import traveller/routes/auth_routes
@@ -56,7 +55,7 @@ fn post_login(req: Request, ctx: Context) {
   use request_body <- wisp.require_string_body(req)
   use login_request <- web.require_valid_json(json_util.try_decode(
     request_body,
-    auth.login_request_decoder(),
+    auth_models.login_request_decoder(),
   ))
 
   use user_id <- web.require_ok(auth_routes.handle_login(ctx, login_request))
@@ -78,7 +77,7 @@ fn post_signup(req: Request, ctx: Context) {
   use request_body <- wisp.require_string_body(req)
   use signup_request <- web.require_valid_json(json_util.try_decode(
     request_body,
-    auth.signup_request_decoder(),
+    auth_models.signup_request_decoder(),
   ))
 
   use user_id <- web.require_ok(auth_routes.handle_signup(ctx, signup_request))
@@ -93,7 +92,7 @@ fn get_trips(_req: Request, ctx: Context, user_id: Id(UserId)) {
   use user_trips <- web.require_ok(trip_routes.handle_get_trips(ctx, user_id))
 
   user_trips
-  |> trips.user_trips_encoder
+  |> trip_models.user_trips_encoder
   |> json.to_string_builder
   |> wisp.json_response(200)
 }
@@ -102,7 +101,7 @@ fn post_trips(req: Request, ctx: Context, user_id: Id(UserId)) {
   use request_body <- wisp.require_string_body(req)
   use create_trip_request <- web.require_valid_json(json_util.try_decode(
     request_body,
-    trips.create_trip_request_decoder(),
+    trip_models.create_trip_request_decoder(),
   ))
 
   use trip_id <- web.require_ok(trip_routes.handle_create_trip(
@@ -135,7 +134,7 @@ fn get_trips_places(
   ))
 
   user_trip_places
-  |> trips.user_trip_places_encoder
+  |> trip_models.user_trip_places_encoder
   |> json.to_string_builder
   |> wisp.json_response(200)
 }

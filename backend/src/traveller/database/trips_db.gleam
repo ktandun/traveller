@@ -3,7 +3,7 @@ import gleam/list
 import gleam/pgo
 import gleam/result
 import shared/id.{type Id, type TripId, type UserId}
-import shared/trips.{type CreateTripRequest}
+import shared/trip_models.{type CreateTripRequest}
 import traveller/database
 import traveller/error.{type AppError}
 import traveller/json_util
@@ -13,7 +13,7 @@ import traveller/web.{type Context}
 pub fn get_user_trips(
   ctx: Context,
   user_id: Id(UserId),
-) -> Result(trips.UserTrips, AppError) {
+) -> Result(trip_models.UserTrips, AppError) {
   let user_id = id.id_value(user_id)
 
   use pgo.Returned(_, rows) <- result.map(
@@ -21,11 +21,11 @@ pub fn get_user_trips(
     |> database.to_app_error(),
   )
 
-  trips.UserTrips(
+  trip_models.UserTrips(
     user_trips: rows
     |> list.map(fn(row) {
       let sql.GetUserTripsRow(trip_id, destination, places_count) = row
-      trips.UserTrip(trip_id:, destination:, places_count:)
+      trip_models.UserTrip(trip_id:, destination:, places_count:)
     }),
   )
 }
@@ -55,7 +55,7 @@ pub fn get_user_trip_places(
   ctx: Context,
   user_id: Id(UserId),
   trip_id: Id(TripId),
-) -> Result(trips.UserTripPlaces, AppError) {
+) -> Result(trip_models.UserTripPlaces, AppError) {
   let user_id = id.id_value(user_id)
   let trip_id = id.id_value(trip_id)
 
@@ -69,10 +69,10 @@ pub fn get_user_trip_places(
 
   use user_trip_places <- result.try(json_util.try_decode(
     places,
-    trips.user_trip_place_decoder() |> decode.list(),
+    trip_models.user_trip_place_decoder() |> decode.list(),
   ))
 
-  Ok(trips.UserTripPlaces(trip_id:, destination:, user_trip_places:))
+  Ok(trip_models.UserTripPlaces(trip_id:, destination:, user_trip_places:))
 }
 
 pub fn ensure_trip_id_exists(

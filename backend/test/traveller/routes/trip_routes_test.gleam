@@ -1,8 +1,7 @@
-import gleam/io
 import gleam/list
 import gleeunit/should
 import shared/id
-import shared/trips
+import shared/trip_models
 import test_utils
 import traveller/json_util
 import traveller/router
@@ -31,7 +30,7 @@ pub fn get_user_trips_test() {
   let response =
     json_util.try_decode(
       testing.string_body(response),
-      trips.user_trips_decoder(),
+      trip_models.user_trips_decoder(),
     )
 
   should.be_ok(response)
@@ -43,10 +42,10 @@ pub fn create_user_trips_test() {
   use ctx <- test_utils.with_context()
 
   let json =
-    trips.CreateTripRequest(
+    trip_models.CreateTripRequest(
       destination: "India " <> test_utils.gen_uuid() |> uuid.to_string(),
     )
-    |> trips.create_trip_request_encoder
+    |> trip_models.create_trip_request_encoder
 
   let response =
     testing.post_json("/trips", [], json)
@@ -64,10 +63,10 @@ pub fn create_user_trips_unauthenticated_test() {
   use ctx <- test_utils.with_context()
 
   let json =
-    trips.CreateTripRequest(
+    trip_models.CreateTripRequest(
       destination: "India " <> test_utils.gen_uuid() |> uuid.to_string(),
     )
-    |> trips.create_trip_request_encoder
+    |> trip_models.create_trip_request_encoder
 
   let response =
     testing.post_json("/trips", [], json)
@@ -89,7 +88,7 @@ pub fn get_user_trip_places_test() {
   let response =
     json_util.try_decode(
       testing.string_body(response),
-      trips.user_trip_places_decoder(),
+      trip_models.user_trip_places_decoder(),
     )
 
   should.be_ok(response)

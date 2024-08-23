@@ -1,5 +1,5 @@
 import gleeunit/should
-import shared/auth
+import shared/auth_models
 import shared/id
 import test_utils
 import traveller/json_util
@@ -11,11 +11,11 @@ pub fn signup_successful_test() {
   use ctx <- test_utils.with_context()
 
   let json =
-    auth.SignupRequest(
+    auth_models.SignupRequest(
       email: uuid.to_string(test_utils.gen_uuid()) <> "@example.com",
       password: "password",
     )
-    |> auth.signup_request_encoder()
+    |> auth_models.signup_request_encoder()
 
   let response =
     testing.post_json("/signup", [], json)
@@ -31,8 +31,8 @@ pub fn signup_invalid_test() {
   use ctx <- test_utils.with_context()
 
   let json =
-    auth.SignupRequest(email: "test@example.com", password: "password")
-    |> auth.signup_request_encoder()
+    auth_models.SignupRequest(email: "test@example.com", password: "password")
+    |> auth_models.signup_request_encoder()
 
   let response =
     testing.post_json("/signup", [], json)
@@ -48,8 +48,8 @@ pub fn login_successful_test() {
   use ctx <- test_utils.with_context()
 
   let json =
-    auth.LoginRequest(email: "test@example.com", password: "password")
-    |> auth.login_request_encoder
+    auth_models.LoginRequest(email: "test@example.com", password: "password")
+    |> auth_models.login_request_encoder
 
   let response =
     testing.post_json("/login", [], json)
@@ -65,8 +65,8 @@ pub fn login_invalid_login_test() {
   use ctx <- test_utils.with_context()
 
   let json =
-    auth.LoginRequest(email: "test@example.com", password: "")
-    |> auth.login_request_encoder
+    auth_models.LoginRequest(email: "test@example.com", password: "")
+    |> auth_models.login_request_encoder
 
   let response =
     testing.post_json("/login", [], json)

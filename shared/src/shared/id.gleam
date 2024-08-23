@@ -33,7 +33,7 @@ pub fn id_value(id: Id(a)) {
 
 pub fn to_id(id: String) -> Result(Id(a), String) {
   let result = uuid.from_string(id)
-  
+
   case result {
     Ok(uid) -> Ok(Id(uid))
     Error(_) -> Error("Invalid UUID")

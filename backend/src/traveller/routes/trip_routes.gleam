@@ -1,6 +1,6 @@
 import gleam/result
 import shared/id.{type Id, type TripId, type UserId}
-import shared/trips.{type CreateTripRequest, type UserTrips}
+import shared/trip_models.{type CreateTripRequest, type UserTrips}
 import traveller/database/trips_db
 import traveller/error.{type AppError}
 import traveller/web.{type Context}
@@ -10,7 +10,7 @@ pub fn handle_get_trip_places(
   ctx: Context,
   user_id: Id(UserId),
   trip_id: Id(TripId),
-) -> Result(trips.UserTripPlaces, AppError) {
+) -> Result(trip_models.UserTripPlaces, AppError) {
   use _ <- result.try(trips_db.ensure_trip_id_exists(ctx, user_id, trip_id))
 
   trips_db.get_user_trip_places(ctx, user_id, trip_id)
