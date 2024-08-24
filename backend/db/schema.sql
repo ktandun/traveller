@@ -10,13 +10,6 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: public; Type: SCHEMA; Schema: -; Owner: -
---
-
--- *not* creating schema, since initdb creates it
-
-
---
 -- Name: pgcrypto; Type: EXTENSION; Schema: -; Owner: -
 --
 
@@ -60,7 +53,9 @@ CREATE TABLE public.trip_places (
 
 CREATE TABLE public.trips (
     trip_id uuid NOT NULL,
-    destination character varying(255) NOT NULL
+    destination character varying(255) NOT NULL,
+    start_date date NOT NULL,
+    end_date date NOT NULL
 );
 
 

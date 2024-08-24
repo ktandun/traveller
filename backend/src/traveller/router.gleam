@@ -2,7 +2,7 @@ import gleam/http
 import gleam/json
 import shared/auth_models
 import shared/constants
-import shared/id.{type Id, type TripId, type UserId}
+import shared/id.{type Id, type UserId}
 import shared/trip_models
 import traveller/json_util
 import traveller/routes/auth_routes

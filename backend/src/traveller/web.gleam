@@ -1,4 +1,4 @@
-import cors_builder as cors
+import database/sql
 import gleam/dynamic
 import gleam/http
 import gleam/int
@@ -11,7 +11,6 @@ import gleam/result
 import shared/constants
 import shared/id.{type Id, type UserId}
 import traveller/error.{type AppError, JsonDecodeError}
-import traveller/sql
 import wisp.{type Request, type Response}
 import youid/uuid.{type Uuid}
 
@@ -19,23 +18,11 @@ pub type Context {
   Context(db: pgo.Connection, uuid_provider: fn() -> Uuid)
 }
 
-fn cors() {
-  cors.new()
-  |> cors.allow_origin("http://localhost:1234")
-  |> cors.allow_header("content-type")
-  |> cors.allow_method(http.Get)
-  |> cors.allow_method(http.Post)
-  |> cors.allow_method(http.Put)
-  |> cors.allow_method(http.Delete)
-}
-
 pub fn middleware(
   req: Request,
   handle_request: fn(Request) -> Response,
 ) -> wisp.Response {
   let req = wisp.method_override(req)
-
-  use req <- cors.wisp_middleware(req, cors())
 
   use <- wisp.log_request(req)
 

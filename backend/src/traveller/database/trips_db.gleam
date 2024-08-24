@@ -1,3 +1,4 @@
+import database/sql
 import decode
 import gleam/list
 import gleam/pgo
@@ -7,7 +8,6 @@ import shared/trip_models.{type CreateTripRequest}
 import traveller/database
 import traveller/error.{type AppError}
 import traveller/json_util
-import traveller/sql
 import traveller/uuid_util
 import traveller/web.{type Context}
 import youid/uuid
@@ -26,10 +26,18 @@ pub fn get_user_trips(
   trip_models.UserTrips(
     user_trips: rows
     |> list.map(fn(row) {
-      let sql.GetUserTripsRow(trip_id, destination, places_count) = row
+      let sql.GetUserTripsRow(
+        trip_id,
+        destination,
+        start_date,
+        end_date,
+        places_count,
+      ) = row
       trip_models.UserTrip(
-        trip_id: uuid.to_string(trip_id),
+        trip_id: trip_id,
         destination:,
+        start_date:,
+        end_date:,
         places_count:,
       )
     }),
@@ -71,14 +79,14 @@ pub fn get_user_trip_places(
   )
 
   use row <- database.require_single_row(query_result, "get_user_trip_places")
-  let sql.GetUserTripPlacesRow(trip_id, destination, places) = row
+  let sql.GetUserTripPlacesRow(trip_id, destination, start_date, end_date, places) = row
 
   use user_trip_places <- result.try(json_util.try_decode(
     places,
     trip_models.user_trip_place_decoder() |> decode.list(),
   ))
 
-  Ok(trip_models.UserTripPlaces(trip_id:, destination:, user_trip_places:))
+  Ok(trip_models.UserTripPlaces(trip_id:, destination:, start_date:,end_date:,user_trip_places:))
 }
 
 pub fn ensure_trip_id_exists(

@@ -1,9 +1,9 @@
+import database/sql
 import gleam/pgo
 import gleam/result
 import shared/id.{type Id, type UserId}
 import traveller/database
 import traveller/error.{type AppError}
-import traveller/sql
 
 pub fn login_user(
   conn: pgo.Connection,

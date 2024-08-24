@@ -1,17 +1,79 @@
 import decode
-import frontend/events
+import frontend/events.{
+  type AppEvent, type AppModel, type TripsDashboardPageEvent, AppModel,
+}
 import frontend/routes
+import gleam/int
+import gleam/list
 import lustre/attribute
 import lustre/effect.{type Effect}
 import lustre/element
 import lustre/element/html
-import lustre/event
 import lustre_http
-import shared/auth_models
-import shared/id
+import shared/trip_models
 
-pub fn trips_dashboard_view(app_model: events.AppModel) {
+pub fn trips_dashboard_view(app_model: AppModel) {
   html.div([], [
-    html.h1([], [element.text("Trips")])
+    html.h1([attribute.class("text-cursive")], [
+      element.text("Planned Trips 🌴"),
+    ]),
+    html.table([], [
+      html.thead([], [
+        html.tr([], [
+          html.th([], [element.text("Destination")]),
+          html.th([], [element.text("From")]),
+          html.th([], [element.text("Until")]),
+          html.th([], [element.text("Number of places")]),
+        ]),
+      ]),
+      html.tbody(
+        [],
+        app_model.trips_dashboard.user_trips
+          |> list.map(fn(user_trip) {
+            html.tr([], [
+              html.td([], [
+                html.a([attribute.href("trips/" <> user_trip.trip_id)], [
+                  element.text(user_trip.destination),
+                ]),
+              ]),
+              html.td([], [element.text(user_trip.start_date)]),
+              html.td([], [element.text(user_trip.end_date)]),
+              html.td([], [element.text(int.to_string(user_trip.places_count))]),
+            ])
+          }),
+      ),
+    ]),
   ])
+}
+
+pub fn handle_trips_dashboard_page_event(
+  model: AppModel,
+  event: TripsDashboardPageEvent,
+) {
+  case event {
+    events.TripsDashboardPageApiReturnedTrips(user_trips) -> #(
+      AppModel(..model, trips_dashboard: user_trips),
+      effect.none(),
+    )
+  }
+}
+
+pub fn load_trips_dashboard() -> Effect(AppEvent) {
+  let url = "http://localhost:8080/api/trips"
+
+  lustre_http.get(
+    url,
+    lustre_http.expect_json(
+      fn(response) { trip_models.user_trips_decoder() |> decode.from(response) },
+      fn(result) {
+        case result {
+          Ok(user_trips) ->
+            events.TripsDashboardPage(events.TripsDashboardPageApiReturnedTrips(
+              user_trips,
+            ))
+          Error(_e) -> events.OnRouteChange(routes.Login)
+        }
+      },
+    ),
+  )
 }

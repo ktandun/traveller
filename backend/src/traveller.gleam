@@ -1,11 +1,10 @@
-import cors_builder as cors
 import gleam/erlang/process
-import gleam/http
 import mist
 import traveller/database
 import traveller/router
 import traveller/web
 import wisp
+import wisp/wisp_mist
 import youid/uuid
 
 pub fn main() {
@@ -21,7 +20,7 @@ pub fn main() {
 
   let assert Ok(_) =
     handler
-    |> wisp.mist_handler(secret_key_base)
+    |> wisp_mist.handler(secret_key_base)
     |> mist.new
     |> mist.port(8000)
     |> mist.start_http

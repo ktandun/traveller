@@ -1,6 +1,7 @@
 import decode
 import frontend/events.{type AppEvent}
 import frontend/routes
+import gleam/io
 import gleam/option
 import lustre/attribute
 import lustre/effect.{type Effect}
@@ -14,7 +15,7 @@ import shared/id
 
 pub fn login_view(app_model: events.AppModel) {
   html.div([], [
-    html.h1([], [element.text("Login")]),
+    html.h3([attribute.class("text-cursive")], [element.text("Login")]),
     html.div([], [
       html.label([], [element.text("Email")]),
       html.input([
@@ -70,7 +71,7 @@ pub fn handle_login_page_event(
       model,
       handle_submit_login(model.login_request),
     )
-    events.LoginPageApiReturnedResponse(user_id) -> #(
+    events.LoginPageApiReturnedResponse(_user_id) -> #(
       model,
       modem.push("/dashboard", option.None, option.None),
     )
@@ -80,7 +81,7 @@ pub fn handle_login_page_event(
 fn handle_submit_login(
   login_request: auth_models.LoginRequest,
 ) -> Effect(AppEvent) {
-  let url = "http://localhost:8000/login"
+  let url = "http://localhost:8080/api/login"
 
   let json = auth_models.login_request_encoder(login_request)
 
@@ -93,7 +94,7 @@ fn handle_submit_login(
         case result {
           Ok(user_id) ->
             events.LoginPage(events.LoginPageApiReturnedResponse(user_id))
-          Error(e) -> events.OnRouteChange(routes.Login)
+          Error(_e) -> events.OnRouteChange(routes.Login)
         }
       },
     ),

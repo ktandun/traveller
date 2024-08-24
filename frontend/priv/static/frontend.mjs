@@ -108,11 +108,6 @@ var BitArray = class _BitArray {
     return new _BitArray(this.buffer.slice(index5));
   }
 };
-var UtfCodepoint = class {
-  constructor(value4) {
-    this.value = value4;
-  }
-};
 function byteArrayToInt(byteArray, start4, end, isBigEndian, isSigned) {
   let value4 = 0;
   if (isBigEndian) {
@@ -193,9 +188,9 @@ function isEqual(x, y) {
       } catch {
       }
     }
-    let [keys2, get2] = getters(a2);
+    let [keys2, get3] = getters(a2);
     for (let k of keys2(a2)) {
-      values.push(get2(a2, k), get2(b, k));
+      values.push(get3(a2, k), get3(b, k));
     }
   }
   return true;
@@ -319,14 +314,6 @@ function scan(regex, string4) {
   return regex_scan(regex, string4);
 }
 
-// build/dev/javascript/gleam_stdlib/gleam/int.mjs
-function parse(string4) {
-  return parse_int(string4);
-}
-function to_string2(x) {
-  return to_string(x);
-}
-
 // build/dev/javascript/gleam_stdlib/gleam/pair.mjs
 function second(pair) {
   let a2 = pair[1];
@@ -351,32 +338,58 @@ function do_reverse(loop$remaining, loop$accumulator) {
 function reverse(xs) {
   return do_reverse(xs, toList([]));
 }
-function first(list2) {
-  if (list2.hasLength(0)) {
+function first(list3) {
+  if (list3.hasLength(0)) {
     return new Error(void 0);
   } else {
-    let x = list2.head;
+    let x = list3.head;
     return new Ok(x);
   }
 }
 function do_map(loop$list, loop$fun, loop$acc) {
   while (true) {
-    let list2 = loop$list;
+    let list3 = loop$list;
     let fun = loop$fun;
     let acc = loop$acc;
-    if (list2.hasLength(0)) {
+    if (list3.hasLength(0)) {
       return reverse(acc);
     } else {
-      let x = list2.head;
-      let xs = list2.tail;
+      let x = list3.head;
+      let xs = list3.tail;
       loop$list = xs;
       loop$fun = fun;
       loop$acc = prepend(fun(x), acc);
     }
   }
 }
-function map2(list2, fun) {
-  return do_map(list2, fun, toList([]));
+function map2(list3, fun) {
+  return do_map(list3, fun, toList([]));
+}
+function do_try_map(loop$list, loop$fun, loop$acc) {
+  while (true) {
+    let list3 = loop$list;
+    let fun = loop$fun;
+    let acc = loop$acc;
+    if (list3.hasLength(0)) {
+      return new Ok(reverse(acc));
+    } else {
+      let x = list3.head;
+      let xs = list3.tail;
+      let $ = fun(x);
+      if ($.isOk()) {
+        let y = $[0];
+        loop$list = xs;
+        loop$fun = fun;
+        loop$acc = prepend(y, acc);
+      } else {
+        let error = $[0];
+        return new Error(error);
+      }
+    }
+  }
+}
+function try_map(list3, fun) {
+  return do_try_map(list3, fun, toList([]));
 }
 function do_append(loop$first, loop$second) {
   while (true) {
@@ -392,15 +405,31 @@ function do_append(loop$first, loop$second) {
     }
   }
 }
-function append2(first3, second2) {
+function append(first3, second2) {
   return do_append(reverse(first3), second2);
 }
-function fold_right(list2, initial, fun) {
-  if (list2.hasLength(0)) {
+function fold(loop$list, loop$initial, loop$fun) {
+  while (true) {
+    let list3 = loop$list;
+    let initial = loop$initial;
+    let fun = loop$fun;
+    if (list3.hasLength(0)) {
+      return initial;
+    } else {
+      let x = list3.head;
+      let rest$1 = list3.tail;
+      loop$list = rest$1;
+      loop$initial = fun(initial, x);
+      loop$fun = fun;
+    }
+  }
+}
+function fold_right(list3, initial, fun) {
+  if (list3.hasLength(0)) {
     return initial;
   } else {
-    let x = list2.head;
-    let rest$1 = list2.tail;
+    let x = list3.head;
+    let rest$1 = list3.tail;
     return fun(fold_right(rest$1, initial, fun), x);
   }
 }
@@ -419,19 +448,19 @@ function do_repeat(loop$a, loop$times, loop$acc) {
     }
   }
 }
-function repeat2(a2, times) {
+function repeat(a2, times) {
   return do_repeat(a2, times, toList([]));
 }
-function key_set(list2, key, value4) {
-  if (list2.hasLength(0)) {
+function key_set(list3, key, value4) {
+  if (list3.hasLength(0)) {
     return toList([[key, value4]]);
-  } else if (list2.atLeastLength(1) && isEqual(list2.head[0], key)) {
-    let k = list2.head[0];
-    let rest$1 = list2.tail;
+  } else if (list3.atLeastLength(1) && isEqual(list3.head[0], key)) {
+    let k = list3.head[0];
+    let rest$1 = list3.tail;
     return prepend([key, value4], rest$1);
   } else {
-    let first$1 = list2.head;
-    let rest$1 = list2.tail;
+    let first$1 = list3.head;
+    let rest$1 = list3.tail;
     return prepend(first$1, key_set(rest$1, key, value4));
   }
 }
@@ -488,11 +517,37 @@ function from_strings(strings) {
 function from_string(string4) {
   return identity(string4);
 }
-function to_string3(builder) {
+function to_string(builder) {
   return identity(builder);
 }
 function split2(iodata, pattern) {
   return split(iodata, pattern);
+}
+
+// build/dev/javascript/gleam_stdlib/gleam/string.mjs
+function lowercase2(string4) {
+  return lowercase(string4);
+}
+function starts_with2(string4, prefix) {
+  return starts_with(string4, prefix);
+}
+function concat2(strings) {
+  let _pipe = strings;
+  let _pipe$1 = from_strings(_pipe);
+  return to_string(_pipe$1);
+}
+function pop_grapheme2(string4) {
+  return pop_grapheme(string4);
+}
+function split3(x, substring) {
+  if (substring === "") {
+    return graphemes(x);
+  } else {
+    let _pipe = x;
+    let _pipe$1 = from_string(_pipe);
+    let _pipe$2 = split2(_pipe$1, substring);
+    return map2(_pipe$2, to_string);
+  }
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/dynamic.mjs
@@ -504,14 +559,14 @@ var DecodeError = class extends CustomType {
     this.path = path;
   }
 };
-function from(a2) {
-  return identity(a2);
-}
 function classify(data) {
   return classify_dynamic(data);
 }
 function int(data) {
   return decode_int(data);
+}
+function shallow_list(value4) {
+  return decode_list(value4);
 }
 function any(decoders) {
   return (data) => {
@@ -533,7 +588,7 @@ function any(decoders) {
   };
 }
 function push_path(error, name3) {
-  let name$1 = from(name3);
+  let name$1 = identity(name3);
   let decoder = any(
     toList([string, (x) => {
       return map3(int(x), to_string2);
@@ -547,10 +602,27 @@ function push_path(error, name3) {
     } else {
       let _pipe = toList(["<", classify(name$1), ">"]);
       let _pipe$1 = from_strings(_pipe);
-      return to_string3(_pipe$1);
+      return to_string(_pipe$1);
     }
   })();
   return error.withFields({ path: prepend(name$2, error.path) });
+}
+function list(decoder_type) {
+  return (dynamic) => {
+    return try$(
+      shallow_list(dynamic),
+      (list3) => {
+        let _pipe = list3;
+        let _pipe$1 = try_map(_pipe, decoder_type);
+        return map_errors(
+          _pipe$1,
+          (_capture) => {
+            return push_path(_capture, "*");
+          }
+        );
+      }
+    );
+  };
 }
 function map_errors(result, f) {
   return map_error(
@@ -1293,7 +1365,7 @@ function parse_int(value4) {
     return new Error(Nil);
   }
 }
-function to_string(term) {
+function to_string3(term) {
   return term.toString();
 }
 function graphemes(string4) {
@@ -1305,7 +1377,7 @@ function graphemes(string4) {
   }
 }
 function graphemes_iterator(string4) {
-  if (Intl && Intl.Segmenter) {
+  if (globalThis.Intl && Intl.Segmenter) {
     return new Intl.Segmenter().segment(string4)[Symbol.iterator]();
   }
 }
@@ -1358,18 +1430,9 @@ var unicode_whitespaces = [
   // Line separator
   "\u2029"
   // Paragraph separator
-].join();
+].join("");
 var left_trim_regex = new RegExp(`^([${unicode_whitespaces}]*)`, "g");
 var right_trim_regex = new RegExp(`([${unicode_whitespaces}]*)$`, "g");
-function print_debug(string4) {
-  if (typeof process === "object" && process.stderr?.write) {
-    process.stderr.write(string4 + "\n");
-  } else if (typeof Deno === "object") {
-    Deno.stderr.writeSync(new TextEncoder().encode(string4 + "\n"));
-  } else {
-    console.log(string4);
-  }
-}
 function compile_regex(pattern, options) {
   try {
     let flags = "gu";
@@ -1449,6 +1512,12 @@ function decode_string(data) {
 function decode_int(data) {
   return Number.isInteger(data) ? new Ok(data) : decoder_error("Int", data);
 }
+function decode_list(data) {
+  if (Array.isArray(data)) {
+    return new Ok(List.fromArray(data));
+  }
+  return data instanceof List ? new Ok(data) : decoder_error("List", data);
+}
 function decode_field(value4, name3) {
   const not_a_map_error = () => decoder_error("Dict", value4);
   if (value4 instanceof Dict2 || value4 instanceof WeakMap || value4 instanceof Map) {
@@ -1469,154 +1538,13 @@ function try_get_field2(value4, field3, or_else) {
     return or_else();
   }
 }
-function inspect(v) {
-  const t = typeof v;
-  if (v === true)
-    return "True";
-  if (v === false)
-    return "False";
-  if (v === null)
-    return "//js(null)";
-  if (v === void 0)
-    return "Nil";
-  if (t === "string")
-    return inspectString(v);
-  if (t === "bigint" || t === "number")
-    return v.toString();
-  if (Array.isArray(v))
-    return `#(${v.map(inspect).join(", ")})`;
-  if (v instanceof List)
-    return inspectList(v);
-  if (v instanceof UtfCodepoint)
-    return inspectUtfCodepoint(v);
-  if (v instanceof BitArray)
-    return inspectBitArray(v);
-  if (v instanceof CustomType)
-    return inspectCustomType(v);
-  if (v instanceof Dict2)
-    return inspectDict(v);
-  if (v instanceof Set)
-    return `//js(Set(${[...v].map(inspect).join(", ")}))`;
-  if (v instanceof RegExp)
-    return `//js(${v})`;
-  if (v instanceof Date)
-    return `//js(Date("${v.toISOString()}"))`;
-  if (v instanceof Function) {
-    const args = [];
-    for (const i of Array(v.length).keys())
-      args.push(String.fromCharCode(i + 97));
-    return `//fn(${args.join(", ")}) { ... }`;
-  }
-  return inspectObject(v);
-}
-function inspectString(str) {
-  let new_str = '"';
-  for (let i = 0; i < str.length; i++) {
-    let char = str[i];
-    switch (char) {
-      case "\n":
-        new_str += "\\n";
-        break;
-      case "\r":
-        new_str += "\\r";
-        break;
-      case "	":
-        new_str += "\\t";
-        break;
-      case "\f":
-        new_str += "\\f";
-        break;
-      case "\\":
-        new_str += "\\\\";
-        break;
-      case '"':
-        new_str += '\\"';
-        break;
-      default:
-        if (char < " " || char > "~" && char < "\xA0") {
-          new_str += "\\u{" + char.charCodeAt(0).toString(16).toUpperCase().padStart(4, "0") + "}";
-        } else {
-          new_str += char;
-        }
-    }
-  }
-  new_str += '"';
-  return new_str;
-}
-function inspectDict(map6) {
-  let body = "dict.from_list([";
-  let first3 = true;
-  map6.forEach((value4, key) => {
-    if (!first3)
-      body = body + ", ";
-    body = body + "#(" + inspect(key) + ", " + inspect(value4) + ")";
-    first3 = false;
-  });
-  return body + "])";
-}
-function inspectObject(v) {
-  const name3 = Object.getPrototypeOf(v)?.constructor?.name || "Object";
-  const props = [];
-  for (const k of Object.keys(v)) {
-    props.push(`${inspect(k)}: ${inspect(v[k])}`);
-  }
-  const body = props.length ? " " + props.join(", ") + " " : "";
-  const head = name3 === "Object" ? "" : name3 + " ";
-  return `//js(${head}{${body}})`;
-}
-function inspectCustomType(record) {
-  const props = Object.keys(record).map((label2) => {
-    const value4 = inspect(record[label2]);
-    return isNaN(parseInt(label2)) ? `${label2}: ${value4}` : value4;
-  }).join(", ");
-  return props ? `${record.constructor.name}(${props})` : record.constructor.name;
-}
-function inspectList(list2) {
-  return `[${list2.toArray().map(inspect).join(", ")}]`;
-}
-function inspectBitArray(bits) {
-  return `<<${Array.from(bits.buffer).join(", ")}>>`;
-}
-function inspectUtfCodepoint(codepoint2) {
-  return `//utfcodepoint(${String.fromCodePoint(codepoint2.value)})`;
-}
 
-// build/dev/javascript/gleam_stdlib/gleam/string.mjs
-function lowercase2(string4) {
-  return lowercase(string4);
+// build/dev/javascript/gleam_stdlib/gleam/int.mjs
+function parse(string4) {
+  return parse_int(string4);
 }
-function starts_with2(string4, prefix) {
-  return starts_with(string4, prefix);
-}
-function concat3(strings) {
-  let _pipe = strings;
-  let _pipe$1 = from_strings(_pipe);
-  return to_string3(_pipe$1);
-}
-function pop_grapheme2(string4) {
-  return pop_grapheme(string4);
-}
-function split3(x, substring) {
-  if (substring === "") {
-    return graphemes(x);
-  } else {
-    let _pipe = x;
-    let _pipe$1 = from_string(_pipe);
-    let _pipe$2 = split2(_pipe$1, substring);
-    return map2(_pipe$2, to_string3);
-  }
-}
-function inspect2(term) {
-  let _pipe = inspect(term);
-  return to_string3(_pipe);
-}
-
-// build/dev/javascript/gleam_stdlib/gleam/io.mjs
-function debug(term) {
-  let _pipe = term;
-  let _pipe$1 = inspect2(_pipe);
-  print_debug(_pipe$1);
-  return term;
+function to_string2(x) {
+  return to_string3(x);
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/uri.mjs
@@ -1673,24 +1601,24 @@ function noneify_empty_string(x) {
 }
 function extra_required(loop$list, loop$remaining) {
   while (true) {
-    let list2 = loop$list;
+    let list3 = loop$list;
     let remaining = loop$remaining;
     if (remaining === 0) {
       return 0;
-    } else if (list2.hasLength(0)) {
+    } else if (list3.hasLength(0)) {
       return remaining;
     } else {
-      let xs = list2.tail;
+      let xs = list3.tail;
       loop$list = xs;
       loop$remaining = remaining - 1;
     }
   }
 }
-function pad_list(list2, size) {
-  let _pipe = list2;
-  return append2(
+function pad_list(list3, size) {
+  let _pipe = list3;
+  return append(
     _pipe,
-    repeat2(new None2(), extra_required(list2, size))
+    repeat(new None2(), extra_required(list3, size))
   );
 }
 function split_authority(authority) {
@@ -1890,7 +1818,7 @@ function to_string4(uri) {
       return parts$4;
     }
   })();
-  return concat3(parts$5);
+  return concat2(parts$5);
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/bool.mjs
@@ -2049,13 +1977,25 @@ var Effect = class extends CustomType {
     this.all = all;
   }
 };
-function from2(effect) {
+function from(effect) {
   return new Effect(toList([(dispatch, _) => {
     return effect(dispatch);
   }]));
 }
 function none() {
   return new Effect(toList([]));
+}
+function batch(effects) {
+  return new Effect(
+    fold(
+      effects,
+      toList([]),
+      (b, _use1) => {
+        let a2 = _use1.all;
+        return append(b, a2);
+      }
+    )
+  );
 }
 
 // build/dev/javascript/lustre/lustre/internals/vdom.mjs
@@ -2095,10 +2035,13 @@ var Event = class extends CustomType {
 
 // build/dev/javascript/lustre/lustre/attribute.mjs
 function attribute(name3, value4) {
-  return new Attribute(name3, from(value4), false);
+  return new Attribute(name3, identity(value4), false);
 }
 function on(name3, handler) {
   return new Event("on" + name3, handler);
+}
+function class$(name3) {
+  return attribute("class", name3);
 }
 function type_(name3) {
   return attribute("type", name3);
@@ -2439,7 +2382,7 @@ function diffKeyedChild(prevChild, child, el2, stack, incomingKeyedChildren, key
 function iterateElement(element2, processElement) {
   if (element2.elements !== void 0) {
     for (const currElement of element2.elements) {
-      processElement(currElement);
+      iterateElement(currElement, processElement);
     }
   } else if (element2.subtree !== void 0) {
     iterateElement(element2.subtree(), processElement);
@@ -2614,14 +2557,47 @@ function start3(app, selector, flags) {
 function h1(attrs, children) {
   return element("h1", attrs, children);
 }
+function h3(attrs, children) {
+  return element("h3", attrs, children);
+}
 function nav(attrs, children) {
   return element("nav", attrs, children);
+}
+function dd(attrs, children) {
+  return element("dd", attrs, children);
 }
 function div(attrs, children) {
   return element("div", attrs, children);
 }
+function dl(attrs, children) {
+  return element("dl", attrs, children);
+}
+function dt(attrs, children) {
+  return element("dt", attrs, children);
+}
 function a(attrs, children) {
   return element("a", attrs, children);
+}
+function span(attrs, children) {
+  return element("span", attrs, children);
+}
+function table(attrs, children) {
+  return element("table", attrs, children);
+}
+function tbody(attrs, children) {
+  return element("tbody", attrs, children);
+}
+function td(attrs, children) {
+  return element("td", attrs, children);
+}
+function th(attrs, children) {
+  return element("th", attrs, children);
+}
+function thead(attrs, children) {
+  return element("thead", attrs, children);
+}
+function tr(attrs, children) {
+  return element("tr", attrs, children);
 }
 function button(attrs, children) {
   return element("button", attrs, children);
@@ -2638,7 +2614,7 @@ var defaults = {
   handle_external_links: false,
   handle_internal_links: true
 };
-var initial_location = globalThis.window && window?.location?.href;
+var initial_location = window?.location?.href;
 var do_initial_uri = () => {
   if (!initial_location) {
     return new Error(void 0);
@@ -2730,7 +2706,7 @@ var uri_from_url = (url) => {
 
 // build/dev/javascript/modem/modem.mjs
 function init2(handler) {
-  return from2(
+  return from(
     (dispatch) => {
       return guard(
         !is_browser(),
@@ -2758,7 +2734,7 @@ var relative = /* @__PURE__ */ new Uri(
   /* @__PURE__ */ new None2()
 );
 function push(path, query, fragment) {
-  return from2(
+  return from(
     (_) => {
       return guard(
         !is_browser(),
@@ -2775,8 +2751,8 @@ function push(path, query, fragment) {
 
 // build/dev/javascript/decode/decode_ffi.mjs
 function index2(data, key) {
-  const int3 = Number.isInteger(key);
-  if (int3 && Array.isArray(data) || data && typeof data === "object" || Object.getPrototypeOf(data) === Object.prototype) {
+  const int4 = Number.isInteger(key);
+  if (int4 && Array.isArray(data) || data && typeof data === "object" || Object.getPrototypeOf(data) === Object.prototype) {
     return new Ok(data[key]);
   }
   if (value instanceof Dict || value instanceof WeakMap || value instanceof Map) {
@@ -2786,7 +2762,7 @@ function index2(data, key) {
   if (Object.getPrototypeOf(value) == Object.prototype) {
     return try_get_field(value, name, () => new Ok(new None()));
   }
-  return new Error(int3 ? "Indexable" : "Dict");
+  return new Error(int4 ? "Indexable" : "Dict");
 }
 
 // build/dev/javascript/decode/decode.mjs
@@ -2804,12 +2780,16 @@ function into(constructor) {
 function parameter(body) {
   return body;
 }
-function from3(decoder, data) {
+function from2(decoder, data) {
   return decoder.continuation(data);
 }
 var string3 = /* @__PURE__ */ new Decoder(string);
+var int3 = /* @__PURE__ */ new Decoder(int);
+function list2(item) {
+  return new Decoder(list(item.continuation));
+}
 function push_path2(errors, key) {
-  let key$1 = from(key);
+  let key$1 = identity(key);
   let decoder = any(
     toList([
       string,
@@ -2873,7 +2853,7 @@ function subfield(decoder, field_path, field_decoder) {
   return new Decoder(
     (data) => {
       let constructor = decoder.continuation(data);
-      let data$1 = from3(at(field_path, field_decoder), data);
+      let data$1 = from2(at(field_path, field_decoder), data);
       if (constructor.isOk() && data$1.isOk()) {
         let constructor$1 = constructor[0];
         let data$2 = data$1[0];
@@ -2881,7 +2861,7 @@ function subfield(decoder, field_path, field_decoder) {
       } else if (!constructor.isOk() && !data$1.isOk()) {
         let e1 = constructor[0];
         let e2 = data$1[0];
-        return new Error(append2(e1, e2));
+        return new Error(append(e1, e2));
       } else if (!data$1.isOk()) {
         let errors = data$1[0];
         return new Error(errors);
@@ -2930,6 +2910,146 @@ function id_decoder() {
   return field2(_pipe, "id", string3);
 }
 
+// build/dev/javascript/shared/shared/trip_models.mjs
+var UserTrip = class extends CustomType {
+  constructor(trip_id, destination, start_date, end_date, places_count) {
+    super();
+    this.trip_id = trip_id;
+    this.destination = destination;
+    this.start_date = start_date;
+    this.end_date = end_date;
+    this.places_count = places_count;
+  }
+};
+var UserTrips = class extends CustomType {
+  constructor(user_trips) {
+    super();
+    this.user_trips = user_trips;
+  }
+};
+var UserTripPlace = class extends CustomType {
+  constructor(trip_place_id, name3) {
+    super();
+    this.trip_place_id = trip_place_id;
+    this.name = name3;
+  }
+};
+var UserTripPlaces = class extends CustomType {
+  constructor(trip_id, destination, start_date, end_date, user_trip_places) {
+    super();
+    this.trip_id = trip_id;
+    this.destination = destination;
+    this.start_date = start_date;
+    this.end_date = end_date;
+    this.user_trip_places = user_trip_places;
+  }
+};
+function user_trip_decoder() {
+  let _pipe = into(
+    parameter(
+      (trip_id) => {
+        return parameter(
+          (destination) => {
+            return parameter(
+              (start_date) => {
+                return parameter(
+                  (end_date) => {
+                    return parameter(
+                      (places_count) => {
+                        return new UserTrip(
+                          trip_id,
+                          destination,
+                          start_date,
+                          end_date,
+                          places_count
+                        );
+                      }
+                    );
+                  }
+                );
+              }
+            );
+          }
+        );
+      }
+    )
+  );
+  let _pipe$1 = field2(_pipe, "trip_id", string3);
+  let _pipe$2 = field2(_pipe$1, "destination", string3);
+  let _pipe$3 = field2(_pipe$2, "start_date", string3);
+  let _pipe$4 = field2(_pipe$3, "end_date", string3);
+  return field2(_pipe$4, "places_count", int3);
+}
+function default_user_trips() {
+  return new UserTrips(toList([]));
+}
+function user_trips_decoder() {
+  let _pipe = into(
+    parameter((user_trips) => {
+      return new UserTrips(user_trips);
+    })
+  );
+  return field2(_pipe, "user_trips", list2(user_trip_decoder()));
+}
+function default_user_trip_places() {
+  return new UserTripPlaces("", "", "", "", toList([]));
+}
+function user_trip_place_decoder() {
+  let _pipe = into(
+    parameter(
+      (trip_place_id) => {
+        return parameter(
+          (name3) => {
+            return new UserTripPlace(trip_place_id, name3);
+          }
+        );
+      }
+    )
+  );
+  let _pipe$1 = field2(_pipe, "trip_place_id", string3);
+  return field2(_pipe$1, "name", string3);
+}
+function user_trip_places_decoder() {
+  let _pipe = into(
+    parameter(
+      (trip_id) => {
+        return parameter(
+          (destination) => {
+            return parameter(
+              (start_date) => {
+                return parameter(
+                  (end_date) => {
+                    return parameter(
+                      (user_trip_places) => {
+                        return new UserTripPlaces(
+                          trip_id,
+                          destination,
+                          start_date,
+                          end_date,
+                          user_trip_places
+                        );
+                      }
+                    );
+                  }
+                );
+              }
+            );
+          }
+        );
+      }
+    )
+  );
+  let _pipe$1 = field2(_pipe, "trip_id", string3);
+  let _pipe$2 = field2(_pipe$1, "destination", string3);
+  let _pipe$3 = field2(_pipe$2, "start_date", string3);
+  let _pipe$4 = field2(_pipe$3, "end_date", string3);
+  return field2(
+    _pipe$4,
+    "user_trip_places",
+    list2(user_trip_place_decoder())
+  );
+}
+
 // build/dev/javascript/frontend/frontend/routes.mjs
 var Login = class extends CustomType {
 };
@@ -2937,27 +3057,47 @@ var Signup = class extends CustomType {
 };
 var TripsDashboard = class extends CustomType {
 };
+var TripDetails = class extends CustomType {
+  constructor(trip_id) {
+    super();
+    this.trip_id = trip_id;
+  }
+};
 var FourOFour = class extends CustomType {
 };
 
 // build/dev/javascript/frontend/frontend/events.mjs
-var LoginPage = class extends CustomType {
-  constructor(x0) {
-    super();
-    this[0] = x0;
-  }
-};
 var OnRouteChange = class extends CustomType {
   constructor(x0) {
     super();
     this[0] = x0;
   }
 };
+var LoginPage = class extends CustomType {
+  constructor(x0) {
+    super();
+    this[0] = x0;
+  }
+};
+var TripsDashboardPage = class extends CustomType {
+  constructor(x0) {
+    super();
+    this[0] = x0;
+  }
+};
+var TripDetailsPage = class extends CustomType {
+  constructor(x0) {
+    super();
+    this[0] = x0;
+  }
+};
 var AppModel = class extends CustomType {
-  constructor(route, login_request) {
+  constructor(route, login_request, trips_dashboard, trip_details) {
     super();
     this.route = route;
     this.login_request = login_request;
+    this.trips_dashboard = trips_dashboard;
+    this.trip_details = trip_details;
   }
 };
 var LoginPageUserUpdatedEmail = class extends CustomType {
@@ -2980,6 +3120,26 @@ var LoginPageApiReturnedResponse = class extends CustomType {
     this[0] = x0;
   }
 };
+var TripsDashboardPageApiReturnedTrips = class extends CustomType {
+  constructor(x0) {
+    super();
+    this[0] = x0;
+  }
+};
+var TripDetailsPageApiReturnedTripDetails = class extends CustomType {
+  constructor(x0) {
+    super();
+    this[0] = x0;
+  }
+};
+function default_app_model() {
+  return new AppModel(
+    new Login(),
+    default_login_request(),
+    default_user_trips(),
+    default_user_trip_places()
+  );
+}
 
 // build/dev/javascript/lustre/lustre/event.mjs
 function on2(name3, handler) {
@@ -3337,8 +3497,21 @@ function do_send(req, expect, dispatch) {
   tap(_pipe$3, dispatch);
   return void 0;
 }
+function get2(url, expect) {
+  return from(
+    (dispatch) => {
+      let $ = to(url);
+      if ($.isOk()) {
+        let req = $[0];
+        return do_send(req, expect, dispatch);
+      } else {
+        return dispatch(expect.run(new Error(new BadUrl(url))));
+      }
+    }
+  );
+}
 function post(url, body, expect) {
-  return from2(
+  return from(
     (dispatch) => {
       let $ = to(url);
       if ($.isOk()) {
@@ -3404,7 +3577,10 @@ function login_view(app_model) {
   return div(
     toList([]),
     toList([
-      h1(toList([]), toList([text("Login")])),
+      h3(
+        toList([class$("text-cursive")]),
+        toList([text("Login")])
+      ),
       div(
         toList([]),
         toList([
@@ -3457,7 +3633,7 @@ function login_view(app_model) {
   );
 }
 function handle_submit_login(login_request) {
-  let url = "http://localhost:8000/login";
+  let url = "http://localhost:8080/api/login";
   let json = login_request_encoder(login_request);
   return post(
     url,
@@ -3465,7 +3641,7 @@ function handle_submit_login(login_request) {
     expect_json(
       (response) => {
         let _pipe = id_decoder();
-        return from3(_pipe, response);
+        return from2(_pipe, response);
       },
       (result) => {
         if (result.isOk()) {
@@ -3474,7 +3650,6 @@ function handle_submit_login(login_request) {
             new LoginPageApiReturnedResponse(user_id)
           );
         } else {
-          let e = result[0];
           return new OnRouteChange(new Login());
         }
       }
@@ -3501,7 +3676,6 @@ function handle_login_page_event(model, event2) {
   } else if (event2 instanceof LoginPageUserClickedSubmit) {
     return [model, handle_submit_login(model.login_request)];
   } else {
-    let user_id = event2[0];
     return [
       model,
       push("/dashboard", new None2(), new None2())
@@ -3509,50 +3683,288 @@ function handle_login_page_event(model, event2) {
   }
 }
 
+// build/dev/javascript/frontend/frontend/pages/trip_details_page.mjs
+function trip_details_view(app_model) {
+  return div(
+    toList([]),
+    toList([
+      h1(
+        toList([]),
+        toList([
+          text("Trip to "),
+          span(
+            toList([class$("text-cursive")]),
+            toList([text(app_model.trip_details.destination)])
+          )
+        ])
+      ),
+      div(
+        toList([]),
+        toList([
+          dl(
+            toList([]),
+            toList([
+              dt(toList([]), toList([text("Dates")])),
+              dd(
+                toList([]),
+                toList([
+                  text(
+                    app_model.trip_details.start_date + " to " + app_model.trip_details.end_date
+                  )
+                ])
+              )
+            ])
+          )
+        ])
+      ),
+      table(
+        toList([]),
+        toList([
+          thead(
+            toList([]),
+            toList([
+              tr(
+                toList([]),
+                toList([
+                  th(toList([]), toList([text("Place")])),
+                  th(toList([]), toList([text("Date")])),
+                  th(toList([]), toList([text("Maps Link")]))
+                ])
+              )
+            ])
+          ),
+          tbody(
+            toList([]),
+            (() => {
+              let _pipe = app_model.trip_details.user_trip_places;
+              return map2(
+                _pipe,
+                (place) => {
+                  return tr(
+                    toList([]),
+                    toList([
+                      td(toList([]), toList([text(place.name)]))
+                    ])
+                  );
+                }
+              );
+            })()
+          )
+        ])
+      )
+    ])
+  );
+}
+function handle_trip_details_page_event(model, event2) {
+  {
+    let user_trip_places = event2[0];
+    return [
+      model.withFields({ trip_details: user_trip_places }),
+      none()
+    ];
+  }
+}
+function load_trip_details(trip_id) {
+  let url = "http://localhost:8080/api/trips/" + trip_id + "/places";
+  return get2(
+    url,
+    expect_json(
+      (response) => {
+        let _pipe = user_trip_places_decoder();
+        return from2(_pipe, response);
+      },
+      (result) => {
+        if (result.isOk()) {
+          let user_trip_places = result[0];
+          return new TripDetailsPage(
+            new TripDetailsPageApiReturnedTripDetails(user_trip_places)
+          );
+        } else {
+          return new OnRouteChange(new Login());
+        }
+      }
+    )
+  );
+}
+
 // build/dev/javascript/frontend/frontend/pages/trips_dashboard_page.mjs
 function trips_dashboard_view(app_model) {
   return div(
     toList([]),
-    toList([h1(toList([]), toList([text("Trips")]))])
+    toList([
+      h1(
+        toList([class$("text-cursive")]),
+        toList([text("Planned Trips \u{1F334}")])
+      ),
+      table(
+        toList([]),
+        toList([
+          thead(
+            toList([]),
+            toList([
+              tr(
+                toList([]),
+                toList([
+                  th(toList([]), toList([text("Destination")])),
+                  th(toList([]), toList([text("From")])),
+                  th(toList([]), toList([text("Until")])),
+                  th(
+                    toList([]),
+                    toList([text("Number of places")])
+                  )
+                ])
+              )
+            ])
+          ),
+          tbody(
+            toList([]),
+            (() => {
+              let _pipe = app_model.trips_dashboard.user_trips;
+              return map2(
+                _pipe,
+                (user_trip) => {
+                  return tr(
+                    toList([]),
+                    toList([
+                      td(
+                        toList([]),
+                        toList([
+                          a(
+                            toList([
+                              href("trips/" + user_trip.trip_id)
+                            ]),
+                            toList([text(user_trip.destination)])
+                          )
+                        ])
+                      ),
+                      td(
+                        toList([]),
+                        toList([text(user_trip.start_date)])
+                      ),
+                      td(
+                        toList([]),
+                        toList([text(user_trip.end_date)])
+                      ),
+                      td(
+                        toList([]),
+                        toList([
+                          text(to_string2(user_trip.places_count))
+                        ])
+                      )
+                    ])
+                  );
+                }
+              );
+            })()
+          )
+        ])
+      )
+    ])
+  );
+}
+function handle_trips_dashboard_page_event(model, event2) {
+  {
+    let user_trips = event2[0];
+    return [model.withFields({ trips_dashboard: user_trips }), none()];
+  }
+}
+function load_trips_dashboard() {
+  let url = "http://localhost:8080/api/trips";
+  return get2(
+    url,
+    expect_json(
+      (response) => {
+        let _pipe = user_trips_decoder();
+        return from2(_pipe, response);
+      },
+      (result) => {
+        if (result.isOk()) {
+          let user_trips = result[0];
+          return new TripsDashboardPage(
+            new TripsDashboardPageApiReturnedTrips(user_trips)
+          );
+        } else {
+          return new OnRouteChange(new Login());
+        }
+      }
+    )
   );
 }
 
 // build/dev/javascript/frontend/frontend.mjs
-function on_url_change(uri) {
-  let $ = path_segments(uri.path);
-  if ($.hasLength(1) && $.head === "login") {
-    return new OnRouteChange(new Login());
-  } else if ($.hasLength(1) && $.head === "signup") {
-    return new OnRouteChange(new Signup());
-  } else if ($.hasLength(1) && $.head === "dashboard") {
-    return new OnRouteChange(new TripsDashboard());
+function path_to_route(path_segments2) {
+  if (path_segments2.hasLength(1) && path_segments2.head === "login") {
+    return new Login();
+  } else if (path_segments2.hasLength(1) && path_segments2.head === "signup") {
+    return new Signup();
+  } else if (path_segments2.hasLength(1) && path_segments2.head === "dashboard") {
+    return new TripsDashboard();
+  } else if (path_segments2.hasLength(2) && path_segments2.head === "trips") {
+    let trip_id = path_segments2.tail.head;
+    return new TripDetails(trip_id);
   } else {
-    return new OnRouteChange(new FourOFour());
+    return new FourOFour();
   }
 }
-function init3(flags) {
+function on_url_change(uri) {
+  let route = (() => {
+    let _pipe = uri.path;
+    let _pipe$1 = path_segments(_pipe);
+    return path_to_route(_pipe$1);
+  })();
+  return new OnRouteChange(route);
+}
+function init3(_) {
   let initial_uri = (() => {
     let $ = do_initial_uri();
     if ($.isOk()) {
       let uri = $[0];
-      return new TripsDashboard();
+      let _pipe = uri.path;
+      let _pipe$1 = path_segments(_pipe);
+      return path_to_route(_pipe$1);
     } else {
       return new Login();
     }
   })();
-  debug(flags);
   return [
-    new AppModel(new Login(), default_login_request()),
-    init2(on_url_change)
+    default_app_model(),
+    batch(
+      toList([
+        init2(on_url_change),
+        from(
+          (dispatch) => {
+            return dispatch(new OnRouteChange(initial_uri));
+          }
+        )
+      ])
+    )
   ];
 }
 function update(model, msg) {
   if (msg instanceof OnRouteChange) {
     let route = msg[0];
-    return [model.withFields({ route }), none()];
-  } else {
+    return [
+      model.withFields({ route }),
+      (() => {
+        if (route instanceof TripsDashboard) {
+          return load_trips_dashboard();
+        } else if (route instanceof TripDetails) {
+          let trip_id = route.trip_id;
+          return load_trip_details(trip_id);
+        } else {
+          return none();
+        }
+      })()
+    ];
+  } else if (msg instanceof LoginPage) {
     let event2 = msg[0];
     return handle_login_page_event(model, event2);
+  } else if (msg instanceof TripsDashboardPage) {
+    let event2 = msg[0];
+    return handle_trips_dashboard_page_event(model, event2);
+  } else {
+    let event2 = msg[0];
+    return handle_trip_details_page_event(model, event2);
   }
 }
 function view(app_model) {
@@ -3565,10 +3977,6 @@ function view(app_model) {
           a(
             toList([href("/login")]),
             toList([text("Go to login")])
-          ),
-          a(
-            toList([href("/signup")]),
-            toList([text("Go to signup")])
           )
         ])
       ),
@@ -3580,6 +3988,9 @@ function view(app_model) {
           return h1(toList([]), toList([text("Signup")]));
         } else if ($ instanceof TripsDashboard) {
           return trips_dashboard_view(app_model);
+        } else if ($ instanceof TripDetails) {
+          let trip_id = $.trip_id;
+          return trip_details_view(app_model);
         } else {
           return h1(toList([]), toList([text("Not Found")]));
         }
@@ -3594,7 +4005,7 @@ function main() {
     throw makeError(
       "assignment_no_match",
       "frontend",
-      17,
+      16,
       "main",
       "Assignment pattern did not match",
       { value: $ }
