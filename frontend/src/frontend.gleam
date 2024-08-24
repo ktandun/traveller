@@ -1,6 +1,8 @@
 import frontend/events.{type AppEvent, type AppModel, AppModel}
 import frontend/pages/login_page
+import frontend/pages/trips_dashboard_page
 import frontend/routes
+import gleam/io
 import gleam/uri.{type Uri}
 import lustre
 import lustre/attribute
@@ -15,7 +17,13 @@ pub fn main() {
   let assert Ok(_) = lustre.start(app, "#app", Nil)
 }
 
-fn init(_) -> #(AppModel, Effect(AppEvent)) {
+fn init(flags) -> #(AppModel, Effect(AppEvent)) {
+  let initial_uri = case modem.initial_uri() {
+    Ok(uri) -> routes.TripsDashboard
+    Error(_) -> routes.Login
+  }
+
+  io.debug(flags)
   #(
     AppModel(
       route: routes.Login,
@@ -29,6 +37,7 @@ fn on_url_change(uri: Uri) -> AppEvent {
   case uri.path_segments(uri.path) {
     ["login"] -> events.OnRouteChange(routes.Login)
     ["signup"] -> events.OnRouteChange(routes.Signup)
+    ["dashboard"] -> events.OnRouteChange(routes.TripsDashboard)
     _ -> events.OnRouteChange(routes.FourOFour)
   }
 }
@@ -50,8 +59,10 @@ pub fn view(app_model: AppModel) -> Element(AppEvent) {
       html.a([attribute.href("/signup")], [element.text("Go to signup")]),
     ]),
     case app_model.route {
-      routes.Login -> login_page.login_view()
+      routes.Login -> login_page.login_view(app_model)
       routes.Signup -> html.h1([], [element.text("Signup")])
+      routes.TripsDashboard ->
+        trips_dashboard_page.trips_dashboard_view(app_model)
       routes.FourOFour -> html.h1([], [element.text("Not Found")])
     },
   ])

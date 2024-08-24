@@ -1,5 +1,5 @@
 run: build
-    cd backend && watchexec --restart --clear --quiet --no-process-group --stop-signal SIGKILL -- gleam run
+    cd backend && watchexec -r -e gleam -E DEVELOPMENT=true -- gleam run
 
 clean:
     cd backend && gleam clean
@@ -18,3 +18,6 @@ test: db
 
 format:
     gleam format {backend,shared,frontend}/{src,test}
+
+frontend:
+    cd frontend && gleam run -m lustre/dev start

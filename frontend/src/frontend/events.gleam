@@ -1,5 +1,6 @@
 import frontend/routes.{type Route}
 import shared/auth_models
+import shared/id.{type Id, type UserId}
 
 pub type AppEvent {
   LoginPage(LoginPageEvent)
@@ -14,5 +15,9 @@ pub type LoginPageEvent {
   LoginPageUserUpdatedEmail(email: String)
   LoginPageUserUpdatedPassword(password: String)
   LoginPageUserClickedSubmit
-  LoginPageApiReturnedResponse
+  LoginPageApiReturnedResponse(Id(UserId))
+}
+
+pub type TripsDashboardEvent {
+
 }

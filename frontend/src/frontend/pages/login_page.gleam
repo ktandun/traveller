@@ -1,15 +1,18 @@
 import decode
 import frontend/events.{type AppEvent}
+import frontend/routes
+import gleam/option
 import lustre/attribute
 import lustre/effect.{type Effect}
 import lustre/element
 import lustre/element/html
 import lustre/event
 import lustre_http
+import modem
 import shared/auth_models
 import shared/id
 
-pub fn login_view() {
+pub fn login_view(app_model: events.AppModel) {
   html.div([], [
     html.h1([], [element.text("Login")]),
     html.div([], [
@@ -18,6 +21,7 @@ pub fn login_view() {
         event.on_input(fn(input) {
           events.LoginPage(events.LoginPageUserUpdatedEmail(input))
         }),
+        attribute.value(app_model.login_request.email),
         attribute.name("email"),
         attribute.type_("email"),
       ]),
@@ -28,6 +32,7 @@ pub fn login_view() {
         event.on_input(fn(input) {
           events.LoginPage(events.LoginPageUserUpdatedPassword(input))
         }),
+        attribute.value(app_model.login_request.password),
         attribute.name("password"),
         attribute.type_("password"),
       ]),
@@ -65,12 +70,9 @@ pub fn handle_login_page_event(
       model,
       handle_submit_login(model.login_request),
     )
-    events.LoginPageApiReturnedResponse -> #(
-      events.AppModel(
-        ..model,
-        login_request: auth_models.default_login_request(),
-      ),
-      effect.none(),
+    events.LoginPageApiReturnedResponse(user_id) -> #(
+      model,
+      modem.push("/dashboard", option.None, option.None),
     )
   }
 }
@@ -87,7 +89,13 @@ fn handle_submit_login(
     json,
     lustre_http.expect_json(
       fn(response) { id.id_decoder() |> decode.from(response) },
-      fn(_result) { events.LoginPage(events.LoginPageApiReturnedResponse) },
+      fn(result) {
+        case result {
+          Ok(user_id) ->
+            events.LoginPage(events.LoginPageApiReturnedResponse(user_id))
+          Error(e) -> events.OnRouteChange(routes.Login)
+        }
+      },
     ),
   )
 }

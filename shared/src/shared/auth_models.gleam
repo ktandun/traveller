@@ -8,7 +8,7 @@ pub type LoginRequest {
 }
 
 pub fn default_login_request() {
-  LoginRequest(email: "", password: "")
+  LoginRequest(email: "test@example.com", password: "password")
 }
 
 pub fn login_request_decoder() {

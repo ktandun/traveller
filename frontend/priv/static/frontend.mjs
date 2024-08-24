@@ -108,25 +108,30 @@ var BitArray = class _BitArray {
     return new _BitArray(this.buffer.slice(index5));
   }
 };
+var UtfCodepoint = class {
+  constructor(value4) {
+    this.value = value4;
+  }
+};
 function byteArrayToInt(byteArray, start4, end, isBigEndian, isSigned) {
-  let value3 = 0;
+  let value4 = 0;
   if (isBigEndian) {
     for (let i = start4; i < end; i++) {
-      value3 = value3 * 256 + byteArray[i];
+      value4 = value4 * 256 + byteArray[i];
     }
   } else {
     for (let i = end - 1; i >= start4; i--) {
-      value3 = value3 * 256 + byteArray[i];
+      value4 = value4 * 256 + byteArray[i];
     }
   }
   if (isSigned) {
     const byteSize = end - start4;
     const highBit = 2 ** (byteSize * 8 - 1);
-    if (value3 >= highBit) {
-      value3 -= highBit * 2;
+    if (value4 >= highBit) {
+      value4 -= highBit * 2;
     }
   }
-  return value3;
+  return value4;
 }
 function byteArrayToFloat(byteArray, start4, end, isBigEndian) {
   const view2 = new DataView(byteArray.buffer);
@@ -147,9 +152,9 @@ var Result = class _Result extends CustomType {
   }
 };
 var Ok = class extends Result {
-  constructor(value3) {
+  constructor(value4) {
     super();
-    this[0] = value3;
+    this[0] = value4;
   }
   // @internal
   isOk() {
@@ -417,17 +422,17 @@ function do_repeat(loop$a, loop$times, loop$acc) {
 function repeat2(a2, times) {
   return do_repeat(a2, times, toList([]));
 }
-function key_set(list2, key, value3) {
+function key_set(list2, key, value4) {
   if (list2.hasLength(0)) {
-    return toList([[key, value3]]);
+    return toList([[key, value4]]);
   } else if (list2.atLeastLength(1) && isEqual(list2.head[0], key)) {
     let k = list2.head[0];
     let rest$1 = list2.tail;
-    return prepend([key, value3], rest$1);
+    return prepend([key, value4], rest$1);
   } else {
     let first$1 = list2.head;
     let rest$1 = list2.tail;
-    return prepend(first$1, key_set(rest$1, key, value3));
+    return prepend(first$1, key_set(rest$1, key, value4));
   }
 }
 
@@ -559,10 +564,10 @@ function string(data) {
   return decode_string(data);
 }
 function field(name3, inner_type) {
-  return (value3) => {
+  return (value4) => {
     let missing_field_error = new DecodeError("field", "nothing", toList([]));
     return try$(
-      decode_field(value3, name3),
+      decode_field(value4, name3),
       (maybe_inner) => {
         let _pipe = maybe_inner;
         let _pipe$1 = to_result(_pipe, toList([missing_field_error]));
@@ -1281,9 +1286,9 @@ var NOT_FOUND = {};
 function identity(x) {
   return x;
 }
-function parse_int(value3) {
-  if (/^[-+]?(\d+)$/.test(value3)) {
-    return new Ok(parseInt(value3));
+function parse_int(value4) {
+  if (/^[-+]?(\d+)$/.test(value4)) {
+    return new Ok(parseInt(value4));
   } else {
     return new Error(Nil);
   }
@@ -1356,6 +1361,15 @@ var unicode_whitespaces = [
 ].join();
 var left_trim_regex = new RegExp(`^([${unicode_whitespaces}]*)`, "g");
 var right_trim_regex = new RegExp(`([${unicode_whitespaces}]*)$`, "g");
+function print_debug(string4) {
+  if (typeof process === "object" && process.stderr?.write) {
+    process.stderr.write(string4 + "\n");
+  } else if (typeof Deno === "object") {
+    Deno.stderr.writeSync(new TextEncoder().encode(string4 + "\n"));
+  } else {
+    console.log(string4);
+  }
+}
 function compile_regex(pattern, options) {
   try {
     let flags = "gu";
@@ -1387,11 +1401,11 @@ function regex_scan(regex, string4) {
   return List.fromArray(matches);
 }
 function map_get2(map6, key) {
-  const value3 = map6.get(key, NOT_FOUND);
-  if (value3 === NOT_FOUND) {
+  const value4 = map6.get(key, NOT_FOUND);
+  if (value4 === NOT_FOUND) {
     return new Error(Nil);
   }
-  return new Ok(value3);
+  return new Ok(value4);
 }
 function classify_dynamic(data) {
   if (typeof data === "string") {
@@ -1435,25 +1449,136 @@ function decode_string(data) {
 function decode_int(data) {
   return Number.isInteger(data) ? new Ok(data) : decoder_error("Int", data);
 }
-function decode_field(value3, name3) {
-  const not_a_map_error = () => decoder_error("Dict", value3);
-  if (value3 instanceof Dict2 || value3 instanceof WeakMap || value3 instanceof Map) {
-    const entry = map_get2(value3, name3);
+function decode_field(value4, name3) {
+  const not_a_map_error = () => decoder_error("Dict", value4);
+  if (value4 instanceof Dict2 || value4 instanceof WeakMap || value4 instanceof Map) {
+    const entry = map_get2(value4, name3);
     return new Ok(entry.isOk() ? new Some2(entry[0]) : new None2());
-  } else if (value3 === null) {
+  } else if (value4 === null) {
     return not_a_map_error();
-  } else if (Object.getPrototypeOf(value3) == Object.prototype) {
-    return try_get_field2(value3, name3, () => new Ok(new None2()));
+  } else if (Object.getPrototypeOf(value4) == Object.prototype) {
+    return try_get_field2(value4, name3, () => new Ok(new None2()));
   } else {
-    return try_get_field2(value3, name3, not_a_map_error);
+    return try_get_field2(value4, name3, not_a_map_error);
   }
 }
-function try_get_field2(value3, field3, or_else) {
+function try_get_field2(value4, field3, or_else) {
   try {
-    return field3 in value3 ? new Ok(new Some2(value3[field3])) : or_else();
+    return field3 in value4 ? new Ok(new Some2(value4[field3])) : or_else();
   } catch {
     return or_else();
   }
+}
+function inspect(v) {
+  const t = typeof v;
+  if (v === true)
+    return "True";
+  if (v === false)
+    return "False";
+  if (v === null)
+    return "//js(null)";
+  if (v === void 0)
+    return "Nil";
+  if (t === "string")
+    return inspectString(v);
+  if (t === "bigint" || t === "number")
+    return v.toString();
+  if (Array.isArray(v))
+    return `#(${v.map(inspect).join(", ")})`;
+  if (v instanceof List)
+    return inspectList(v);
+  if (v instanceof UtfCodepoint)
+    return inspectUtfCodepoint(v);
+  if (v instanceof BitArray)
+    return inspectBitArray(v);
+  if (v instanceof CustomType)
+    return inspectCustomType(v);
+  if (v instanceof Dict2)
+    return inspectDict(v);
+  if (v instanceof Set)
+    return `//js(Set(${[...v].map(inspect).join(", ")}))`;
+  if (v instanceof RegExp)
+    return `//js(${v})`;
+  if (v instanceof Date)
+    return `//js(Date("${v.toISOString()}"))`;
+  if (v instanceof Function) {
+    const args = [];
+    for (const i of Array(v.length).keys())
+      args.push(String.fromCharCode(i + 97));
+    return `//fn(${args.join(", ")}) { ... }`;
+  }
+  return inspectObject(v);
+}
+function inspectString(str) {
+  let new_str = '"';
+  for (let i = 0; i < str.length; i++) {
+    let char = str[i];
+    switch (char) {
+      case "\n":
+        new_str += "\\n";
+        break;
+      case "\r":
+        new_str += "\\r";
+        break;
+      case "	":
+        new_str += "\\t";
+        break;
+      case "\f":
+        new_str += "\\f";
+        break;
+      case "\\":
+        new_str += "\\\\";
+        break;
+      case '"':
+        new_str += '\\"';
+        break;
+      default:
+        if (char < " " || char > "~" && char < "\xA0") {
+          new_str += "\\u{" + char.charCodeAt(0).toString(16).toUpperCase().padStart(4, "0") + "}";
+        } else {
+          new_str += char;
+        }
+    }
+  }
+  new_str += '"';
+  return new_str;
+}
+function inspectDict(map6) {
+  let body = "dict.from_list([";
+  let first3 = true;
+  map6.forEach((value4, key) => {
+    if (!first3)
+      body = body + ", ";
+    body = body + "#(" + inspect(key) + ", " + inspect(value4) + ")";
+    first3 = false;
+  });
+  return body + "])";
+}
+function inspectObject(v) {
+  const name3 = Object.getPrototypeOf(v)?.constructor?.name || "Object";
+  const props = [];
+  for (const k of Object.keys(v)) {
+    props.push(`${inspect(k)}: ${inspect(v[k])}`);
+  }
+  const body = props.length ? " " + props.join(", ") + " " : "";
+  const head = name3 === "Object" ? "" : name3 + " ";
+  return `//js(${head}{${body}})`;
+}
+function inspectCustomType(record) {
+  const props = Object.keys(record).map((label2) => {
+    const value4 = inspect(record[label2]);
+    return isNaN(parseInt(label2)) ? `${label2}: ${value4}` : value4;
+  }).join(", ");
+  return props ? `${record.constructor.name}(${props})` : record.constructor.name;
+}
+function inspectList(list2) {
+  return `[${list2.toArray().map(inspect).join(", ")}]`;
+}
+function inspectBitArray(bits) {
+  return `<<${Array.from(bits.buffer).join(", ")}>>`;
+}
+function inspectUtfCodepoint(codepoint2) {
+  return `//utfcodepoint(${String.fromCodePoint(codepoint2.value)})`;
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/string.mjs
@@ -1480,6 +1605,18 @@ function split3(x, substring) {
     let _pipe$2 = split2(_pipe$1, substring);
     return map2(_pipe$2, to_string3);
   }
+}
+function inspect2(term) {
+  let _pipe = inspect(term);
+  return to_string3(_pipe);
+}
+
+// build/dev/javascript/gleam_stdlib/gleam/io.mjs
+function debug(term) {
+  let _pipe = term;
+  let _pipe$1 = inspect2(_pipe);
+  print_debug(_pipe$1);
+  return term;
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/uri.mjs
@@ -1957,14 +2094,17 @@ var Event = class extends CustomType {
 };
 
 // build/dev/javascript/lustre/lustre/attribute.mjs
-function attribute(name3, value3) {
-  return new Attribute(name3, from(value3), false);
+function attribute(name3, value4) {
+  return new Attribute(name3, from(value4), false);
 }
 function on(name3, handler) {
   return new Event("on" + name3, handler);
 }
 function type_(name3) {
   return attribute("type", name3);
+}
+function value2(val) {
+  return attribute("value", val);
 }
 function name2(name3) {
   return attribute("name", name3);
@@ -2099,15 +2239,15 @@ function createElementNode({ prev, next, dispatch, stack }) {
   let innerHTML = null;
   for (const attr of next.attrs) {
     const name3 = attr[0];
-    const value3 = attr[1];
+    const value4 = attr[1];
     if (attr.as_property) {
-      if (el2[name3] !== value3)
-        el2[name3] = value3;
+      if (el2[name3] !== value4)
+        el2[name3] = value4;
       if (canMorph)
         prevAttributes.delete(name3);
     } else if (name3.startsWith("on")) {
       const eventName = name3.slice(2);
-      const callback = dispatch(value3);
+      const callback = dispatch(value4);
       if (!handlersForEl.has(eventName)) {
         el2.addEventListener(eventName, lustreGenericEventHandler);
       }
@@ -2121,18 +2261,18 @@ function createElementNode({ prev, next, dispatch, stack }) {
         el2.addEventListener(eventName, lustreGenericEventHandler);
       }
       handlersForEl.set(eventName, callback);
-      el2.setAttribute(name3, value3);
+      el2.setAttribute(name3, value4);
     } else if (name3 === "class") {
-      className = className === null ? value3 : className + " " + value3;
+      className = className === null ? value4 : className + " " + value4;
     } else if (name3 === "style") {
-      style = style === null ? value3 : style + value3;
+      style = style === null ? value4 : style + value4;
     } else if (name3 === "dangerous-unescaped-html") {
-      innerHTML = value3;
+      innerHTML = value4;
     } else {
-      if (el2.getAttribute(name3) !== value3)
-        el2.setAttribute(name3, value3);
+      if (el2.getAttribute(name3) !== value4)
+        el2.setAttribute(name3, value4);
       if (name3 === "value" || name3 === "selected")
-        el2[name3] = value3;
+        el2[name3] = value4;
       if (canMorph)
         prevAttributes.delete(name3);
     }
@@ -2498,7 +2638,14 @@ var defaults = {
   handle_external_links: false,
   handle_internal_links: true
 };
-var initial_location = window?.location?.href;
+var initial_location = globalThis.window && window?.location?.href;
+var do_initial_uri = () => {
+  if (!initial_location) {
+    return new Error(void 0);
+  } else {
+    return new Ok(uri_from_url(new URL(initial_location)));
+  }
+};
 var do_init = (dispatch, options = defaults) => {
   document.addEventListener("click", (event2) => {
     const a2 = find_anchor(event2.target);
@@ -2544,6 +2691,15 @@ var do_init = (dispatch, options = defaults) => {
     dispatch(detail);
   });
 };
+var do_push = (uri) => {
+  window.history.pushState({}, "", to_string4(uri));
+  window.requestAnimationFrame(() => {
+    if (uri.fragment[0]) {
+      document.getElementById(uri.fragment[0])?.scrollIntoView();
+    }
+  });
+  window.dispatchEvent(new CustomEvent("modem-push", { detail: uri }));
+};
 var find_anchor = (el2) => {
   if (!el2 || el2.tagName === "BODY") {
     return null;
@@ -2586,6 +2742,30 @@ function init2(handler) {
               let _pipe$1 = handler(_pipe);
               return dispatch(_pipe$1);
             }
+          );
+        }
+      );
+    }
+  );
+}
+var relative = /* @__PURE__ */ new Uri(
+  /* @__PURE__ */ new None2(),
+  /* @__PURE__ */ new None2(),
+  /* @__PURE__ */ new None2(),
+  /* @__PURE__ */ new None2(),
+  "",
+  /* @__PURE__ */ new None2(),
+  /* @__PURE__ */ new None2()
+);
+function push(path, query, fragment) {
+  return from2(
+    (_) => {
+      return guard(
+        !is_browser(),
+        void 0,
+        () => {
+          return do_push(
+            relative.withFields({ path, query, fragment })
           );
         }
       );
@@ -2725,7 +2905,7 @@ var LoginRequest = class extends CustomType {
   }
 };
 function default_login_request() {
-  return new LoginRequest("", "");
+  return new LoginRequest("test@example.com", "password");
 }
 function login_request_encoder(data) {
   return object2(
@@ -2736,10 +2916,26 @@ function login_request_encoder(data) {
   );
 }
 
+// build/dev/javascript/shared/shared/id.mjs
+var Id = class extends CustomType {
+  constructor(x0) {
+    super();
+    this[0] = x0;
+  }
+};
+function id_decoder() {
+  let _pipe = into(parameter((id) => {
+    return new Id(id);
+  }));
+  return field2(_pipe, "id", string3);
+}
+
 // build/dev/javascript/frontend/frontend/routes.mjs
 var Login = class extends CustomType {
 };
 var Signup = class extends CustomType {
+};
+var TripsDashboard = class extends CustomType {
 };
 var FourOFour = class extends CustomType {
 };
@@ -2779,6 +2975,10 @@ var LoginPageUserUpdatedPassword = class extends CustomType {
 var LoginPageUserClickedSubmit = class extends CustomType {
 };
 var LoginPageApiReturnedResponse = class extends CustomType {
+  constructor(x0) {
+    super();
+    this[0] = x0;
+  }
 };
 
 // build/dev/javascript/lustre/lustre/event.mjs
@@ -2790,7 +2990,7 @@ function on_click(msg) {
     return new Ok(msg);
   });
 }
-function value2(event2) {
+function value3(event2) {
   let _pipe = event2;
   return field("target", field("value", string))(
     _pipe
@@ -2800,7 +3000,7 @@ function on_input(msg) {
   return on2(
     "input",
     (event2) => {
-      let _pipe = value2(event2);
+      let _pipe = value3(event2);
       return map3(_pipe, msg);
     }
   );
@@ -2926,8 +3126,8 @@ function from_uri(uri) {
     }
   );
 }
-function set_header(request, key, value3) {
-  let headers = key_set(request.headers, lowercase2(key), value3);
+function set_header(request, key, value4) {
+  let headers = key_set(request.headers, lowercase2(key), value4);
   return request.withFields({ headers });
 }
 function set_body(req, body) {
@@ -2964,22 +3164,22 @@ var PromiseLayer = class _PromiseLayer {
   constructor(promise) {
     this.promise = promise;
   }
-  static wrap(value3) {
-    return value3 instanceof Promise ? new _PromiseLayer(value3) : value3;
+  static wrap(value4) {
+    return value4 instanceof Promise ? new _PromiseLayer(value4) : value4;
   }
-  static unwrap(value3) {
-    return value3 instanceof _PromiseLayer ? value3.promise : value3;
+  static unwrap(value4) {
+    return value4 instanceof _PromiseLayer ? value4.promise : value4;
   }
 };
-function resolve(value3) {
-  return Promise.resolve(PromiseLayer.wrap(value3));
+function resolve(value4) {
+  return Promise.resolve(PromiseLayer.wrap(value4));
 }
 function then_await(promise, fn) {
-  return promise.then((value3) => fn(PromiseLayer.unwrap(value3)));
+  return promise.then((value4) => fn(PromiseLayer.unwrap(value4)));
 }
 function map_promise(promise, fn) {
   return promise.then(
-    (value3) => PromiseLayer.wrap(fn(PromiseLayer.unwrap(value3)))
+    (value4) => PromiseLayer.wrap(fn(PromiseLayer.unwrap(value4)))
   );
 }
 function rescue(promise, fn) {
@@ -3199,22 +3399,8 @@ function expect_json(decoder, to_msg) {
   );
 }
 
-// build/dev/javascript/shared/shared/id.mjs
-var Id = class extends CustomType {
-  constructor(x0) {
-    super();
-    this[0] = x0;
-  }
-};
-function id_decoder() {
-  let _pipe = into(parameter((id) => {
-    return new Id(id);
-  }));
-  return field2(_pipe, "id", string3);
-}
-
 // build/dev/javascript/frontend/frontend/pages/login_page.mjs
-function login_view() {
+function login_view(app_model) {
   return div(
     toList([]),
     toList([
@@ -3232,6 +3418,7 @@ function login_view() {
                   );
                 }
               ),
+              value2(app_model.login_request.email),
               name2("email"),
               type_("email")
             ])
@@ -3251,6 +3438,7 @@ function login_view() {
                   );
                 }
               ),
+              value2(app_model.login_request.password),
               name2("password"),
               type_("password")
             ])
@@ -3279,8 +3467,16 @@ function handle_submit_login(login_request) {
         let _pipe = id_decoder();
         return from3(_pipe, response);
       },
-      (_) => {
-        return new LoginPage(new LoginPageApiReturnedResponse());
+      (result) => {
+        if (result.isOk()) {
+          let user_id = result[0];
+          return new LoginPage(
+            new LoginPageApiReturnedResponse(user_id)
+          );
+        } else {
+          let e = result[0];
+          return new OnRouteChange(new Login());
+        }
       }
     )
   );
@@ -3305,11 +3501,20 @@ function handle_login_page_event(model, event2) {
   } else if (event2 instanceof LoginPageUserClickedSubmit) {
     return [model, handle_submit_login(model.login_request)];
   } else {
+    let user_id = event2[0];
     return [
-      model.withFields({ login_request: default_login_request() }),
-      none()
+      model,
+      push("/dashboard", new None2(), new None2())
     ];
   }
+}
+
+// build/dev/javascript/frontend/frontend/pages/trips_dashboard_page.mjs
+function trips_dashboard_view(app_model) {
+  return div(
+    toList([]),
+    toList([h1(toList([]), toList([text("Trips")]))])
+  );
 }
 
 // build/dev/javascript/frontend/frontend.mjs
@@ -3319,11 +3524,23 @@ function on_url_change(uri) {
     return new OnRouteChange(new Login());
   } else if ($.hasLength(1) && $.head === "signup") {
     return new OnRouteChange(new Signup());
+  } else if ($.hasLength(1) && $.head === "dashboard") {
+    return new OnRouteChange(new TripsDashboard());
   } else {
     return new OnRouteChange(new FourOFour());
   }
 }
-function init3(_) {
+function init3(flags) {
+  let initial_uri = (() => {
+    let $ = do_initial_uri();
+    if ($.isOk()) {
+      let uri = $[0];
+      return new TripsDashboard();
+    } else {
+      return new Login();
+    }
+  })();
+  debug(flags);
   return [
     new AppModel(new Login(), default_login_request()),
     init2(on_url_change)
@@ -3358,9 +3575,11 @@ function view(app_model) {
       (() => {
         let $ = app_model.route;
         if ($ instanceof Login) {
-          return login_view();
+          return login_view(app_model);
         } else if ($ instanceof Signup) {
           return h1(toList([]), toList([text("Signup")]));
+        } else if ($ instanceof TripsDashboard) {
+          return trips_dashboard_view(app_model);
         } else {
           return h1(toList([]), toList([text("Not Found")]));
         }
@@ -3375,7 +3594,7 @@ function main() {
     throw makeError(
       "assignment_no_match",
       "frontend",
-      16,
+      17,
       "main",
       "Assignment pattern did not match",
       { value: $ }
