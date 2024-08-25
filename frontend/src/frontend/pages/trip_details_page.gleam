@@ -3,12 +3,18 @@ import frontend/events.{
   type AppEvent, type AppModel, type TripDetailsPageEvent, AppModel,
 }
 import frontend/routes
+import gleam/http
+import gleam/http/request
 import gleam/list
+import gleam/option
+import gleam/result
 import lustre/attribute
 import lustre/effect.{type Effect}
 import lustre/element
 import lustre/element/html
+import lustre/event
 import lustre_http
+import plinth/browser/file
 import shared/trip_models
 
 pub fn trip_details_view(app_model: AppModel) {
@@ -32,16 +38,46 @@ pub fn trip_details_view(app_model: AppModel) {
       ]),
     ]),
     html.table([], [
-      html.thead([], [html.tr([], [
-        html.th([], [element.text("Place")]),
-        html.th([], [element.text("Date")]),
-        html.th([], [element.text("Maps Link")])
-      ])]),
+      html.thead([], [
+        html.tr([], [
+          html.th([], [element.text("Place")]),
+          html.th([], [element.text("Date")]),
+          html.th([], [element.text("Maps Link")]),
+          html.th([], [element.text("Actions")]),
+        ]),
+      ]),
       html.tbody(
         [],
         app_model.trip_details.user_trip_places
           |> list.map(fn(place) {
-            html.tr([], [html.td([], [element.text(place.name)])])
+            html.tr([], [
+              html.td([], [element.text(place.name)]),
+              html.td([], [element.text(place.date)]),
+              html.td([], [
+                case place.google_maps_link {
+                  option.Some(v) ->
+                    html.a([attribute.href(v), attribute.target("_blank")], [
+                      element.text(v),
+                    ])
+
+                  _ -> element.text("")
+                },
+              ]),
+              html.td([], [
+                html.button(
+                  [
+                    event.on_click(
+                      events.TripDetailsPage(
+                        events.TripDetailsPageUserClickedRemovePlace(
+                          place.trip_place_id,
+                        ),
+                      ),
+                    ),
+                  ],
+                  [element.text("Remove")],
+                ),
+              ]),
+            ])
           }),
       ),
     ]),
@@ -57,7 +93,35 @@ pub fn handle_trip_details_page_event(
       AppModel(..model, trip_details: user_trip_places),
       effect.none(),
     )
+    events.TripDetailsPageUserClickedRemovePlace(trip_place_id) -> #(
+      model,
+      delete_trip_place(model.trip_details.trip_id, trip_place_id),
+    )
   }
+}
+
+pub fn delete_trip_place(
+  trip_id: String,
+  trip_place_id: String,
+) -> Effect(AppEvent) {
+  let url =
+    "http://localhost:8080/api/trips/" <> trip_id <> "/places/" <> trip_place_id
+
+  let req =
+    url
+    |> request.to()
+    |> result.unwrap(request.new())
+
+  req
+  |> request.set_method(http.Delete)
+  |> lustre_http.send(
+    lustre_http.expect_anything(fn(result) {
+      case result {
+        Ok(_) -> events.OnRouteChange(routes.TripDetails(trip_id))
+        Error(_e) -> events.OnRouteChange(routes.Login)
+      }
+    }),
+  )
 }
 
 pub fn load_trip_details(trip_id: String) -> Effect(AppEvent) {

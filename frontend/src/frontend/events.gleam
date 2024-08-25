@@ -41,4 +41,5 @@ pub type TripsDashboardPageEvent {
 
 pub type TripDetailsPageEvent {
   TripDetailsPageApiReturnedTripDetails(trip_models.UserTripPlaces)
+  TripDetailsPageUserClickedRemovePlace(trip_place_id: String)
 }

@@ -43,6 +43,15 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
         _ -> wisp.method_not_allowed([http.Get])
       }
     }
+    ["trips", trip_id, "places", trip_place_id] -> {
+      use user_id <- web.require_authenticated(req, ctx)
+
+      case req.method {
+        http.Delete ->
+          delete_trip_place(req, ctx, user_id, trip_id, trip_place_id)
+        _ -> wisp.method_not_allowed([http.Delete])
+      }
+    }
 
     _ -> wisp.not_found()
   }
@@ -131,4 +140,24 @@ fn get_trips_places(
   |> trip_models.user_trip_places_encoder
   |> json.to_string_builder
   |> wisp.json_response(200)
+}
+
+fn delete_trip_place(
+  _req: Request,
+  ctx: Context,
+  user_id: Id(UserId),
+  trip_id: String,
+  trip_place_id: String,
+) {
+  let trip_id = id.to_id(trip_id)
+  let trip_place_id = id.to_id(trip_place_id)
+
+  use _ <- web.require_ok(trip_routes.handle_delete_trip_place(
+    ctx,
+    user_id,
+    trip_id,
+    trip_place_id,
+  ))
+
+  wisp.ok()
 }

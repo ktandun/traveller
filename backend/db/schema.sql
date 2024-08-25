@@ -23,6 +23,147 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
 COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
 
 
+--
+-- Name: check_user_login(text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.check_user_login(email text, password text) RETURNS text
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    RETURN (
+        SELECT
+            u.user_id
+        FROM
+            users u
+        WHERE
+            u.email = check_user_login.email
+            AND u.password = CRYPT(check_user_login.PASSWORD, u.password)
+        LIMIT 1);
+END
+$$;
+
+
+--
+-- Name: create_trip(text, text, text, text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.create_trip(user_id text, trip_id text, destination text, start_date text, end_date text) RETURNS text
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    INSERT INTO trips (trip_id, destination, start_date, end_date)
+        VALUES (create_trip.trip_id::uuid, create_trip.destination, create_trip.start_date::date, create_trip.end_date::date);
+    --
+    INSERT INTO user_trips (user_id, trip_id)
+        VALUES (create_trip.user_id::uuid, create_trip.trip_id::uuid);
+    --
+    RETURN create_trip.trip_id;
+END
+$$;
+
+
+--
+-- Name: create_user(text, text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.create_user(user_id text, email text, password text) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    INSERT INTO users (user_id, email, PASSWORD)
+        VALUES (create_user.user_id::uuid, create_user.email, create_user.password);
+END
+$$;
+
+
+--
+-- Name: trips_view(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.trips_view() RETURNS TABLE(user_id text, trip_id text, destination character varying, start_date text, end_date text, places json)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    RETURN QUERY WITH trip_places AS (
+        SELECT
+            LOWER(ut.user_id::text) AS user_id,
+            LOWER(t.trip_id::text) AS trip_id,
+            t.destination AS destination,
+            to_char(t.start_date, 'DD Mon YYYY') AS start_date,
+            to_char(t.end_date, 'DD Mon YYYY') AS end_date,
+            tp.name AS name,
+            tp.trip_place_id::text AS trip_place_id,
+            to_char(tp.date, 'DD Mon YYYY') AS date,
+            tp.google_maps_link::text AS google_maps_link
+        FROM
+            user_trips ut
+        LEFT JOIN trips t ON ut.trip_id = t.trip_id
+        LEFT JOIN trip_places tp ON t.trip_id = tp.trip_id
+    ORDER BY
+        tp.date ASC
+)
+SELECT
+    tp.user_id,
+    tp.trip_id,
+    tp.destination,
+    tp.start_date,
+    tp.end_date,
+    CASE WHEN COUNT(tp.trip_place_id) = 0 THEN
+        '[]'::json
+    ELSE
+        json_agg(json_build_object('name', name, 'trip_place_id', tp.trip_place_id, 'date', tp.date, 'google_maps_link', tp.google_maps_link))
+    END AS places
+FROM
+    trip_places tp
+GROUP BY
+    tp.user_id,
+    tp.trip_id,
+    tp.destination,
+    tp.start_date,
+    tp.end_date;
+END;
+$$;
+
+
+--
+-- Name: upsert_trip_place(text, text, text, text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.upsert_trip_place(trip_place_id text, trip_id text, name text, date text, google_maps_link text) RETURNS text
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT
+            1
+        FROM
+            trip_places tp
+        WHERE
+            tp.trip_place_id = upsert_trip_place.trip_place_id::uuid) THEN
+    INSERT INTO trip_places (trip_place_id, trip_id, name, date, google_maps_link)
+    SELECT
+        upsert_trip_place.trip_place_id::uuid,
+        upsert_trip_place.trip_id::uuid,
+        upsert_trip_place.name,
+        upsert_trip_place.date::date,
+        upsert_trip_place.google_maps_link;
+ELSE
+    UPDATE
+        trip_places tp
+    SET
+        name = upsert_trip_place.name,
+        date = upsert_trip_place.date::date,
+        google_maps_link = upsert_trip_place.google_maps_link
+    WHERE
+        tp.trip_place_id = upsert_trip_place.trip_place_id::uuid;
+END IF;
+    --
+    RETURN upsert_trip_place.trip_place_id;
+END
+$$;
+
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -43,7 +184,9 @@ CREATE TABLE public.schema_migrations (
 CREATE TABLE public.trip_places (
     trip_place_id uuid NOT NULL,
     trip_id uuid,
-    name character varying(255) NOT NULL
+    name character varying(255) NOT NULL,
+    date date NOT NULL,
+    google_maps_link text
 );
 
 
@@ -163,4 +306,5 @@ ALTER TABLE ONLY public.user_trips
 --
 
 INSERT INTO public.schema_migrations (version) VALUES
-    ('20240815005645');
+    ('20240815005645'),
+    ('20240824214726');

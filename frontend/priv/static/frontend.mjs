@@ -509,6 +509,14 @@ function nil_error(result) {
     return void 0;
   });
 }
+function replace(result, value4) {
+  if (result.isOk()) {
+    return new Ok(value4);
+  } else {
+    let error = result[0];
+    return new Error(error);
+  }
+}
 
 // build/dev/javascript/gleam_stdlib/gleam/string_builder.mjs
 function from_strings(strings) {
@@ -568,6 +576,11 @@ function int(data) {
 function shallow_list(value4) {
   return decode_list(value4);
 }
+function optional(decode3) {
+  return (value4) => {
+    return decode_option(value4, decode3);
+  };
+}
 function any(decoders) {
   return (data) => {
     if (decoders.hasLength(0)) {
@@ -587,8 +600,8 @@ function any(decoders) {
     }
   };
 }
-function push_path(error, name3) {
-  let name$1 = identity(name3);
+function push_path(error, name4) {
+  let name$1 = identity(name4);
   let decoder = any(
     toList([string, (x) => {
       return map3(int(x), to_string2);
@@ -635,11 +648,11 @@ function map_errors(result, f) {
 function string(data) {
   return decode_string(data);
 }
-function field(name3, inner_type) {
+function field(name4, inner_type) {
   return (value4) => {
     let missing_field_error = new DecodeError("field", "nothing", toList([]));
     return try$(
-      decode_field(value4, name3),
+      decode_field(value4, name4),
       (maybe_inner) => {
         let _pipe = maybe_inner;
         let _pipe$1 = to_result(_pipe, toList([missing_field_error]));
@@ -647,7 +660,7 @@ function field(name3, inner_type) {
         return map_errors(
           _pipe$2,
           (_capture) => {
-            return push_path(_capture, name3);
+            return push_path(_capture, name4);
           }
         );
       }
@@ -997,12 +1010,12 @@ function assocCollision(root2, shift, hash, key, val, addedLeaf) {
         array: cloneAndSet(root2.array, idx, { type: ENTRY, k: key, v: val })
       };
     }
-    const size = root2.array.length;
+    const size2 = root2.array.length;
     addedLeaf.val = true;
     return {
       type: COLLISION_NODE,
       hash,
-      array: cloneAndSet(root2.array, size, { type: ENTRY, k: key, v: val })
+      array: cloneAndSet(root2.array, size2, { type: ENTRY, k: key, v: val })
     };
   }
   return assoc(
@@ -1019,8 +1032,8 @@ function assocCollision(root2, shift, hash, key, val, addedLeaf) {
   );
 }
 function collisionIndexOf(root2, key) {
-  const size = root2.array.length;
-  for (let i = 0; i < size; i++) {
+  const size2 = root2.array.length;
+  for (let i = 0; i < size2; i++) {
     if (isEqual(key, root2.array[i].k)) {
       return i;
     }
@@ -1203,8 +1216,8 @@ function forEach(root2, fn) {
     return;
   }
   const items = root2.array;
-  const size = items.length;
-  for (let i = 0; i < size; i++) {
+  const size2 = items.length;
+  for (let i = 0; i < size2; i++) {
     const item = items[i];
     if (item === void 0) {
       continue;
@@ -1250,9 +1263,9 @@ var Dict2 = class _Dict {
    * @param {undefined | Node<K,V>} root
    * @param {number} size
    */
-  constructor(root2, size) {
+  constructor(root2, size2) {
     this.root = root2;
-    this.size = size;
+    this.size = size2;
   }
   /**
    * @template NotFound
@@ -1518,17 +1531,29 @@ function decode_list(data) {
   }
   return data instanceof List ? new Ok(data) : decoder_error("List", data);
 }
-function decode_field(value4, name3) {
+function decode_option(data, decoder) {
+  if (data === null || data === void 0 || data instanceof None2)
+    return new Ok(new None2());
+  if (data instanceof Some2)
+    data = data[0];
+  const result = decoder(data);
+  if (result.isOk()) {
+    return new Ok(new Some2(result[0]));
+  } else {
+    return result;
+  }
+}
+function decode_field(value4, name4) {
   const not_a_map_error = () => decoder_error("Dict", value4);
   if (value4 instanceof Dict2 || value4 instanceof WeakMap || value4 instanceof Map) {
-    const entry = map_get2(value4, name3);
+    const entry = map_get2(value4, name4);
     return new Ok(entry.isOk() ? new Some2(entry[0]) : new None2());
   } else if (value4 === null) {
     return not_a_map_error();
   } else if (Object.getPrototypeOf(value4) == Object.prototype) {
-    return try_get_field2(value4, name3, () => new Ok(new None2()));
+    return try_get_field2(value4, name4, () => new Ok(new None2()));
   } else {
-    return try_get_field2(value4, name3, not_a_map_error);
+    return try_get_field2(value4, name4, not_a_map_error);
   }
 }
 function try_get_field2(value4, field3, or_else) {
@@ -1614,11 +1639,11 @@ function extra_required(loop$list, loop$remaining) {
     }
   }
 }
-function pad_list(list3, size) {
+function pad_list(list3, size2) {
   let _pipe = list3;
   return append(
     _pipe,
-    repeat(new None2(), extra_required(list3, size))
+    repeat(new None2(), extra_required(list3, size2))
   );
 }
 function split_authority(authority) {
@@ -2034,26 +2059,29 @@ var Event = class extends CustomType {
 };
 
 // build/dev/javascript/lustre/lustre/attribute.mjs
-function attribute(name3, value4) {
-  return new Attribute(name3, identity(value4), false);
+function attribute(name4, value4) {
+  return new Attribute(name4, identity(value4), false);
 }
-function on(name3, handler) {
-  return new Event("on" + name3, handler);
+function on(name4, handler) {
+  return new Event("on" + name4, handler);
 }
-function class$(name3) {
-  return attribute("class", name3);
+function class$(name4) {
+  return attribute("class", name4);
 }
-function type_(name3) {
-  return attribute("type", name3);
+function type_(name4) {
+  return attribute("type", name4);
 }
 function value2(val) {
   return attribute("value", val);
 }
-function name2(name3) {
-  return attribute("name", name3);
+function name2(name4) {
+  return attribute("name", name4);
 }
 function href(uri) {
   return attribute("href", uri);
+}
+function target(target2) {
+  return attribute("target", target2);
 }
 
 // build/dev/javascript/lustre/lustre/element.mjs
@@ -2181,15 +2209,15 @@ function createElementNode({ prev, next, dispatch, stack }) {
   let style = null;
   let innerHTML = null;
   for (const attr of next.attrs) {
-    const name3 = attr[0];
+    const name4 = attr[0];
     const value4 = attr[1];
     if (attr.as_property) {
-      if (el2[name3] !== value4)
-        el2[name3] = value4;
+      if (el2[name4] !== value4)
+        el2[name4] = value4;
       if (canMorph)
-        prevAttributes.delete(name3);
-    } else if (name3.startsWith("on")) {
-      const eventName = name3.slice(2);
+        prevAttributes.delete(name4);
+    } else if (name4.startsWith("on")) {
+      const eventName = name4.slice(2);
       const callback = dispatch(value4);
       if (!handlersForEl.has(eventName)) {
         el2.addEventListener(eventName, lustreGenericEventHandler);
@@ -2197,27 +2225,27 @@ function createElementNode({ prev, next, dispatch, stack }) {
       handlersForEl.set(eventName, callback);
       if (canMorph)
         prevHandlers.delete(eventName);
-    } else if (name3.startsWith("data-lustre-on-")) {
-      const eventName = name3.slice(15);
+    } else if (name4.startsWith("data-lustre-on-")) {
+      const eventName = name4.slice(15);
       const callback = dispatch(lustreServerEventHandler);
       if (!handlersForEl.has(eventName)) {
         el2.addEventListener(eventName, lustreGenericEventHandler);
       }
       handlersForEl.set(eventName, callback);
-      el2.setAttribute(name3, value4);
-    } else if (name3 === "class") {
+      el2.setAttribute(name4, value4);
+    } else if (name4 === "class") {
       className = className === null ? value4 : className + " " + value4;
-    } else if (name3 === "style") {
+    } else if (name4 === "style") {
       style = style === null ? value4 : style + value4;
-    } else if (name3 === "dangerous-unescaped-html") {
+    } else if (name4 === "dangerous-unescaped-html") {
       innerHTML = value4;
     } else {
-      if (el2.getAttribute(name3) !== value4)
-        el2.setAttribute(name3, value4);
-      if (name3 === "value" || name3 === "selected")
-        el2[name3] = value4;
+      if (el2.getAttribute(name4) !== value4)
+        el2.setAttribute(name4, value4);
+      if (name4 === "value" || name4 === "selected")
+        el2[name4] = value4;
       if (canMorph)
-        prevAttributes.delete(name3);
+        prevAttributes.delete(name4);
     }
   }
   if (className !== null) {
@@ -2284,14 +2312,14 @@ function createElementNode({ prev, next, dispatch, stack }) {
 }
 var registeredHandlers = /* @__PURE__ */ new WeakMap();
 function lustreGenericEventHandler(event2) {
-  const target = event2.currentTarget;
-  if (!registeredHandlers.has(target)) {
-    target.removeEventListener(event2.type, lustreGenericEventHandler);
+  const target2 = event2.currentTarget;
+  if (!registeredHandlers.has(target2)) {
+    target2.removeEventListener(event2.type, lustreGenericEventHandler);
     return;
   }
-  const handlersForEventTarget = registeredHandlers.get(target);
+  const handlersForEventTarget = registeredHandlers.get(target2);
   if (!handlersForEventTarget.has(event2.type)) {
-    target.removeEventListener(event2.type, lustreGenericEventHandler);
+    target2.removeEventListener(event2.type, lustreGenericEventHandler);
     return;
   }
   handlersForEventTarget.get(event2.type)(event2);
@@ -2788,6 +2816,9 @@ var int3 = /* @__PURE__ */ new Decoder(int);
 function list2(item) {
   return new Decoder(list(item.continuation));
 }
+function optional2(item) {
+  return new Decoder(optional(item.continuation));
+}
 function push_path2(errors, key) {
   let key$1 = identity(key);
   let decoder = any(
@@ -2928,10 +2959,12 @@ var UserTrips = class extends CustomType {
   }
 };
 var UserTripPlace = class extends CustomType {
-  constructor(trip_place_id, name3) {
+  constructor(trip_place_id, name4, date, google_maps_link) {
     super();
     this.trip_place_id = trip_place_id;
-    this.name = name3;
+    this.name = name4;
+    this.date = date;
+    this.google_maps_link = google_maps_link;
   }
 };
 var UserTripPlaces = class extends CustomType {
@@ -2999,15 +3032,34 @@ function user_trip_place_decoder() {
     parameter(
       (trip_place_id) => {
         return parameter(
-          (name3) => {
-            return new UserTripPlace(trip_place_id, name3);
+          (name4) => {
+            return parameter(
+              (date) => {
+                return parameter(
+                  (google_maps_link) => {
+                    return new UserTripPlace(
+                      trip_place_id,
+                      name4,
+                      date,
+                      google_maps_link
+                    );
+                  }
+                );
+              }
+            );
           }
         );
       }
     )
   );
   let _pipe$1 = field2(_pipe, "trip_place_id", string3);
-  return field2(_pipe$1, "name", string3);
+  let _pipe$2 = field2(_pipe$1, "name", string3);
+  let _pipe$3 = field2(_pipe$2, "date", string3);
+  return field2(
+    _pipe$3,
+    "google_maps_link",
+    optional2(string3)
+  );
 }
 function user_trip_places_decoder() {
   let _pipe = into(
@@ -3132,6 +3184,12 @@ var TripDetailsPageApiReturnedTripDetails = class extends CustomType {
     this[0] = x0;
   }
 };
+var TripDetailsPageUserClickedRemovePlace = class extends CustomType {
+  constructor(trip_place_id) {
+    super();
+    this.trip_place_id = trip_place_id;
+  }
+};
 function default_app_model() {
   return new AppModel(
     new Login(),
@@ -3142,8 +3200,8 @@ function default_app_model() {
 }
 
 // build/dev/javascript/lustre/lustre/event.mjs
-function on2(name3, handler) {
-  return on(name3, handler);
+function on2(name4, handler) {
+  return on(name4, handler);
 }
 function on_click(msg) {
   return on2("click", (_) => {
@@ -3302,6 +3360,18 @@ function set_body(req, body) {
 }
 function set_method(req, method) {
   return req.withFields({ method });
+}
+function new$4() {
+  return new Request(
+    new Get(),
+    toList([]),
+    "",
+    new Https(),
+    "localhost",
+    new None2(),
+    "",
+    new None2()
+  );
 }
 function to(url) {
   let _pipe = url;
@@ -3531,6 +3601,11 @@ function post(url, body, expect) {
     }
   );
 }
+function send2(req, expect) {
+  return from((_capture) => {
+    return do_send(req, expect, _capture);
+  });
+}
 function response_to_result(response) {
   if (response instanceof Response && (200 <= response.status && response.status <= 299)) {
     let status = response.status;
@@ -3548,6 +3623,16 @@ function response_to_result(response) {
     let body = response.body;
     return new Error(new OtherError(code, body));
   }
+}
+function expect_anything(to_msg) {
+  return new ExpectTextResponse(
+    (response) => {
+      let _pipe = response;
+      let _pipe$1 = then$(_pipe, response_to_result);
+      let _pipe$2 = replace(_pipe$1, void 0);
+      return to_msg(_pipe$2);
+    }
+  );
 }
 function expect_json(decoder, to_msg) {
   return new ExpectTextResponse(
@@ -3728,7 +3813,8 @@ function trip_details_view(app_model) {
                 toList([
                   th(toList([]), toList([text("Place")])),
                   th(toList([]), toList([text("Date")])),
-                  th(toList([]), toList([text("Maps Link")]))
+                  th(toList([]), toList([text("Maps Link")])),
+                  th(toList([]), toList([text("Actions")]))
                 ])
               )
             ])
@@ -3743,7 +3829,45 @@ function trip_details_view(app_model) {
                   return tr(
                     toList([]),
                     toList([
-                      td(toList([]), toList([text(place.name)]))
+                      td(toList([]), toList([text(place.name)])),
+                      td(toList([]), toList([text(place.date)])),
+                      td(
+                        toList([]),
+                        toList([
+                          (() => {
+                            let $ = place.google_maps_link;
+                            if ($ instanceof Some2) {
+                              let v = $[0];
+                              return a(
+                                toList([
+                                  href(v),
+                                  target("_blank")
+                                ]),
+                                toList([text(v)])
+                              );
+                            } else {
+                              return text("");
+                            }
+                          })()
+                        ])
+                      ),
+                      td(
+                        toList([]),
+                        toList([
+                          button(
+                            toList([
+                              on_click(
+                                new TripDetailsPage(
+                                  new TripDetailsPageUserClickedRemovePlace(
+                                    place.trip_place_id
+                                  )
+                                )
+                              )
+                            ]),
+                            toList([text("Remove")])
+                          )
+                        ])
+                      )
                     ])
                   );
                 }
@@ -3755,13 +3879,38 @@ function trip_details_view(app_model) {
     ])
   );
 }
+function delete_trip_place(trip_id, trip_place_id) {
+  let url = "http://localhost:8080/api/trips/" + trip_id + "/places/" + trip_place_id;
+  let req = (() => {
+    let _pipe2 = url;
+    let _pipe$12 = to(_pipe2);
+    return unwrap2(_pipe$12, new$4());
+  })();
+  let _pipe = req;
+  let _pipe$1 = set_method(_pipe, new Delete());
+  return send2(
+    _pipe$1,
+    expect_anything(
+      (result) => {
+        if (result.isOk()) {
+          return new OnRouteChange(new TripDetails(trip_id));
+        } else {
+          return new OnRouteChange(new Login());
+        }
+      }
+    )
+  );
+}
 function handle_trip_details_page_event(model, event2) {
-  {
+  if (event2 instanceof TripDetailsPageApiReturnedTripDetails) {
     let user_trip_places = event2[0];
     return [
       model.withFields({ trip_details: user_trip_places }),
       none()
     ];
+  } else {
+    let trip_place_id = event2.trip_place_id;
+    return [model, delete_trip_place(model.trip_details.trip_id, trip_place_id)];
   }
 }
 function load_trip_details(trip_id) {
@@ -3793,8 +3942,14 @@ function trips_dashboard_view(app_model) {
     toList([]),
     toList([
       h1(
-        toList([class$("text-cursive")]),
-        toList([text("Planned Trips \u{1F334}")])
+        toList([]),
+        toList([
+          text("Planned"),
+          span(
+            toList([class$("text-cursive")]),
+            toList([text(" Trips \u{1F334}")])
+          )
+        ])
       ),
       table(
         toList([]),

@@ -44,6 +44,8 @@ pub fn create_user_trips_test() {
   let json =
     trip_models.CreateTripRequest(
       destination: "India " <> test_utils.gen_uuid() |> uuid.to_string(),
+      start_date: "2024-01-01",
+      end_date: "2025-01-01",
     )
     |> trip_models.create_trip_request_encoder
 
@@ -65,6 +67,8 @@ pub fn create_user_trips_unauthenticated_test() {
   let json =
     trip_models.CreateTripRequest(
       destination: "India " <> test_utils.gen_uuid() |> uuid.to_string(),
+      start_date: "2024-01-01",
+      end_date: "2025-01-01",
     )
     |> trip_models.create_trip_request_encoder
 

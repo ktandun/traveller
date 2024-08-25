@@ -25,6 +25,8 @@ birl = ">= 1.7.1 and < 2.0.0"
 youid = ">= 1.2.0 and < 2.0.0"
 wisp = ">= 1.1.0 and < 2.0.0"
 mist = ">= 2.0.0 and < 3.0.0"
+cake = ">= 1.1.1 and < 2.0.0"
+radiate = ">= 0.4.0 and < 1.0.0"
 
 [dev-dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"

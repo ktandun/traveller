@@ -14,8 +14,11 @@ import shared/trip_models
 
 pub fn trips_dashboard_view(app_model: AppModel) {
   html.div([], [
-    html.h1([attribute.class("text-cursive")], [
-      element.text("Planned Trips 🌴"),
+    html.h1([], [
+      element.text("Planned"),
+      html.span([attribute.class("text-cursive")], [
+        element.text(" Trips 🌴"),
+      ]),
     ]),
     html.table([], [
       html.thead([], [

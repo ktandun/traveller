@@ -1,5 +1,5 @@
 import gleam/result
-import shared/id.{type Id, type TripId, type UserId}
+import shared/id.{type Id, type TripId, type TripPlaceId, type UserId}
 import shared/trip_models.{type CreateTripRequest, type UserTrips}
 import traveller/database/trips_db
 import traveller/error.{type AppError}
@@ -39,4 +39,14 @@ pub fn handle_create_trip(
   create_trip_request: CreateTripRequest,
 ) -> Result(Id(TripId), AppError) {
   trips_db.create_user_trip(ctx, user_id, create_trip_request)
+}
+
+/// Deletes a trip place for a user
+pub fn handle_delete_trip_place(
+  ctx: Context,
+  user_id: Id(UserId),
+  trip_id: Id(TripId),
+  trip_place_id: Id(TripPlaceId),
+) {
+  trips_db.delete_user_trip_place(ctx, user_id, trip_id, trip_place_id)
 }

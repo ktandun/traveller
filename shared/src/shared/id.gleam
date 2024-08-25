@@ -5,6 +5,8 @@ pub type UserId
 
 pub type TripId
 
+pub type TripPlaceId
+
 pub opaque type Id(entity) {
   Id(String)
 }

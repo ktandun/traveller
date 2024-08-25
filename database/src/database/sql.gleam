@@ -77,37 +77,33 @@ WHERE
 }
 
 
-/// A row you get from running the `get_userid_by_email_password` query
-/// defined in `./src/database/sql/get_userid_by_email_password.sql`.
+/// A row you get from running the `check_user_login` query
+/// defined in `./src/database/sql/check_user_login.sql`.
 ///
 /// > 🐿️ This type definition was generated automatically using v1.5.0 of the
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
-pub type GetUseridByEmailPasswordRow {
-  GetUseridByEmailPasswordRow(user_id: String)
+pub type CheckUserLoginRow {
+  CheckUserLoginRow(user_id: String)
 }
 
-/// Runs the `get_userid_by_email_password` query
-/// defined in `./src/database/sql/get_userid_by_email_password.sql`.
+/// Runs the `check_user_login` query
+/// defined in `./src/database/sql/check_user_login.sql`.
 ///
 /// > 🐿️ This function was generated automatically using v1.5.0 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
-pub fn get_userid_by_email_password(db, arg_1, arg_2) {
+pub fn check_user_login(db, arg_1, arg_2) {
   let decoder =
     decode.into({
       use user_id <- decode.parameter
-      GetUseridByEmailPasswordRow(user_id: user_id)
+      CheckUserLoginRow(user_id: user_id)
     })
     |> decode.field(0, decode.string)
 
   "SELECT
-    u.user_id::TEXT
-FROM
-    users u
-WHERE
-    u.email = $1
-    AND u.password = crypt($2, u.password)
+    check_user_login ($1, $2) AS user_id;
+
 "
   |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _),
   )
@@ -192,48 +188,33 @@ pub fn get_user_trip_places(db, arg_1, arg_2) {
     |> decode.field(3, decode.string)
     |> decode.field(4, decode.string)
 
-  "WITH trip_places AS (
-    SELECT
-        LOWER(t.trip_id::text) AS trip_id,
-        t.destination AS destination,
-        to_char(t.start_date, 'DD Mon YYYY') AS start_date,
-        to_char(t.end_date, 'DD Mon YYYY') AS end_date,
-        tp.name AS name,
-        tp.trip_place_id::text AS trip_place_id
-    FROM
-        trips t
-        INNER JOIN trip_places tp ON t.trip_id = tp.trip_id
-    WHERE
-        t.trip_id = $2
-        AND t.trip_id IN (
-            SELECT
-                ut.trip_id
-            FROM
-                user_trips ut
-            WHERE
-                ut.user_id = $1))
-SELECT
+  "SELECT
     trip_id,
     destination,
     start_date,
     end_date,
-    json_agg(json_build_object('name', name, 'trip_place_id', trip_place_id)) AS places
+    places
 FROM
-    trip_places
-GROUP BY
-    trip_id,
-    destination,
-    start_date,
-    end_date;
+    trips_view()
+WHERE
+    user_id = $1
+    AND trip_id = $2;
 
 "
-  |> pgo.execute(
-    db,
-    [pgo.text(uuid.to_string(arg_1)), pgo.text(uuid.to_string(arg_2))],
-    decode.from(decoder, _),
+  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _),
   )
 }
 
+
+/// A row you get from running the `create_trip` query
+/// defined in `./src/database/sql/create_trip.sql`.
+///
+/// > 🐿️ This type definition was generated automatically using v1.5.0 of the
+/// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub type CreateTripRow {
+  CreateTripRow(create_trip: String)
+}
 
 /// Runs the `create_trip` query
 /// defined in `./src/database/sql/create_trip.sql`.
@@ -241,36 +222,60 @@ GROUP BY
 /// > 🐿️ This function was generated automatically using v1.5.0 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
-pub fn create_trip(db, arg_1, arg_2) {
-  let decoder = decode.map(decode.dynamic, fn(_) { Nil })
+pub fn create_trip(db, arg_1, arg_2, arg_3, arg_4, arg_5) {
+  let decoder =
+    decode.into({
+      use create_trip <- decode.parameter
+      CreateTripRow(create_trip: create_trip)
+    })
+    |> decode.field(0, decode.string)
 
-  "INSERT INTO trips (trip_id, destination)
-    VALUES ($1, $2)
+  "SELECT
+    create_trip ($1, $2, $3, $4, $5);
+
 "
   |> pgo.execute(
     db,
-    [pgo.text(uuid.to_string(arg_1)), pgo.text(arg_2)],
+    [
+      pgo.text(arg_1),
+      pgo.text(arg_2),
+      pgo.text(arg_3),
+      pgo.text(arg_4),
+      pgo.text(arg_5),
+    ],
     decode.from(decoder, _),
   )
 }
 
 
-/// Runs the `create_user_trip` query
-/// defined in `./src/database/sql/create_user_trip.sql`.
+/// Runs the `delete_trip_place` query
+/// defined in `./src/database/sql/delete_trip_place.sql`.
 ///
 /// > 🐿️ This function was generated automatically using v1.5.0 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
-pub fn create_user_trip(db, arg_1, arg_2) {
+pub fn delete_trip_place(db, arg_1, arg_2, arg_3) {
   let decoder = decode.map(decode.dynamic, fn(_) { Nil })
 
-  "INSERT INTO user_trips (user_id, trip_id)
-    VALUES ($1, $2);
+  "DELETE FROM trip_places
+WHERE trip_id IN (
+        SELECT
+            ut.trip_id
+        FROM
+            user_trips ut
+        WHERE
+            ut.user_id = $1
+            AND ut.trip_id = $2)
+    AND trip_place_id = $3;
 
 "
   |> pgo.execute(
     db,
-    [pgo.text(uuid.to_string(arg_1)), pgo.text(uuid.to_string(arg_2))],
+    [
+      pgo.text(uuid.to_string(arg_1)),
+      pgo.text(uuid.to_string(arg_2)),
+      pgo.text(uuid.to_string(arg_3)),
+    ],
     decode.from(decoder, _),
   )
 }

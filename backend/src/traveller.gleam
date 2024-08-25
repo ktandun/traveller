@@ -1,3 +1,5 @@
+import gleam/io
+import setup
 import gleam/erlang/process
 import mist
 import traveller/database
@@ -14,6 +16,8 @@ pub fn main() {
 
   use db <- database.with_connection()
 
+  setup.radiate()
+
   let context = web.Context(db: db, uuid_provider: uuid.v7)
 
   let handler = router.handle_request(_, context)
@@ -24,6 +28,8 @@ pub fn main() {
     |> mist.new
     |> mist.port(8000)
     |> mist.start_http
+
+  io.debug("Running")
 
   process.sleep_forever()
 }

@@ -1,2 +1,3 @@
-INSERT INTO trips (trip_id, destination)
-    VALUES ($1, $2)
+SELECT
+    create_trip ($1, $2, $3, $4, $5);
+

@@ -1,5 +1,6 @@
 import decode
 import gleam/json
+import gleam/option.{type Option}
 
 //
 
@@ -65,7 +66,12 @@ pub fn user_trips_encoder(data: UserTrips) {
 //
 
 pub type UserTripPlace {
-  UserTripPlace(trip_place_id: String, name: String)
+  UserTripPlace(
+    trip_place_id: String,
+    name: String,
+    date: String,
+    google_maps_link: Option(String),
+  )
 }
 
 pub type UserTripPlaces {
@@ -92,17 +98,23 @@ pub fn user_trip_place_decoder() {
   decode.into({
     use trip_place_id <- decode.parameter
     use name <- decode.parameter
+    use date <- decode.parameter
+    use google_maps_link <- decode.parameter
 
-    UserTripPlace(trip_place_id:, name:)
+    UserTripPlace(trip_place_id:, name:, date:, google_maps_link:)
   })
   |> decode.field("trip_place_id", decode.string)
   |> decode.field("name", decode.string)
+  |> decode.field("date", decode.string)
+  |> decode.field("google_maps_link", decode.optional(decode.string))
 }
 
 pub fn user_trip_place_encoder(data: UserTripPlace) {
   json.object([
     #("trip_place_id", json.string(data.trip_place_id)),
     #("name", json.string(data.name)),
+    #("date", json.string(data.date)),
+    #("google_maps_link", json.nullable(data.google_maps_link, of: json.string)),
   ])
 }
 
@@ -145,17 +157,26 @@ pub fn user_trip_places_encoder(data: UserTripPlaces) {
 //
 
 pub type CreateTripRequest {
-  CreateTripRequest(destination: String)
+  CreateTripRequest(destination: String, start_date: String, end_date: String)
 }
 
 pub fn create_trip_request_decoder() {
   decode.into({
     use destination <- decode.parameter
-    CreateTripRequest(destination:)
+    use start_date <- decode.parameter
+    use end_date <- decode.parameter
+
+    CreateTripRequest(destination:, start_date:, end_date:)
   })
   |> decode.field("destination", decode.string)
+  |> decode.field("start_date", decode.string)
+  |> decode.field("end_date", decode.string)
 }
 
 pub fn create_trip_request_encoder(data: CreateTripRequest) {
-  json.object([#("destination", json.string(data.destination))])
+  json.object([
+    #("destination", json.string(data.destination)),
+    #("start_date", json.string(data.start_date)),
+    #("end_date", json.string(data.end_date)),
+  ])
 }
