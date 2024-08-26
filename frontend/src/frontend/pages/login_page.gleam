@@ -1,7 +1,6 @@
 import decode
 import frontend/events.{type AppEvent}
 import frontend/routes
-import gleam/io
 import gleam/option
 import lustre/attribute
 import lustre/effect.{type Effect}
@@ -68,11 +67,11 @@ pub fn handle_login_page_event(
       effect.none(),
     )
     events.LoginPageUserClickedSubmit -> #(
-      model,
+      events.AppModel(..model, show_loading: True),
       handle_submit_login(model.login_request),
     )
     events.LoginPageApiReturnedResponse(_user_id) -> #(
-      model,
+      events.AppModel(..model, show_loading: False),
       modem.push("/dashboard", option.None, option.None),
     )
   }

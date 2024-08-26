@@ -5,21 +5,30 @@ import frontend/events.{
 import frontend/routes
 import gleam/int
 import gleam/list
+import gleam/option
 import lustre/attribute
 import lustre/effect.{type Effect}
 import lustre/element
 import lustre/element/html
+import lustre/event
 import lustre_http
+import modem
 import shared/trip_models
 
 pub fn trips_dashboard_view(app_model: AppModel) {
   html.div([], [
     html.h1([], [
       element.text("Planned"),
-      html.span([attribute.class("text-cursive")], [
-        element.text(" Trips 🌴"),
-      ]),
+      html.span([attribute.class("text-cursive")], [element.text(" Trips 🌴")]),
     ]),
+    html.button(
+      [
+        event.on_click(events.TripsDashboardPage(
+          events.TripsDashboardPageUserClickedCreateTripButton,
+        )),
+      ],
+      [element.text("Create Trip")],
+    ),
     html.table([], [
       html.thead([], [
         html.tr([], [
@@ -54,8 +63,12 @@ pub fn handle_trips_dashboard_page_event(
   event: TripsDashboardPageEvent,
 ) {
   case event {
+    events.TripsDashboardPageUserClickedCreateTripButton -> #(
+      model,
+      modem.push("/trips/create", option.None, option.None),
+    )
     events.TripsDashboardPageApiReturnedTrips(user_trips) -> #(
-      AppModel(..model, trips_dashboard: user_trips),
+      AppModel(..model, trips_dashboard: user_trips, show_loading: False),
       effect.none(),
     )
   }

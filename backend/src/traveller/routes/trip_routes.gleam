@@ -1,9 +1,15 @@
+import birl
+import gleam/bool
+import gleam/io
+import gleam/order
+import gleam/string
 import gleam/result
 import shared/id.{type Id, type TripId, type TripPlaceId, type UserId}
 import shared/trip_models.{type CreateTripRequest, type UserTrips}
 import traveller/database/trips_db
 import traveller/error.{type AppError}
 import traveller/web.{type Context}
+import wisp
 import youid/uuid
 
 /// Returns list of places for a trip set by user
@@ -38,6 +44,19 @@ pub fn handle_create_trip(
   user_id: Id(UserId),
   create_trip_request: CreateTripRequest,
 ) -> Result(Id(TripId), AppError) {
+  let assert Ok(start_date_date) = birl.parse(create_trip_request.start_date)
+  let assert Ok(end_date_date) = birl.parse(create_trip_request.end_date)
+
+  use <- bool.guard(
+    birl.compare(start_date_date, end_date_date) == order.Gt,
+    Error(error.InvalidDateSpecified),
+  )
+
+  use <- bool.guard(
+    string.is_empty(create_trip_request.destination),
+    Error(error.InvalidDestinationSpecified),
+  )
+
   trips_db.create_user_trip(ctx, user_id, create_trip_request)
 }
 

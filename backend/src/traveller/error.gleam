@@ -12,6 +12,8 @@ pub type AppError {
   UserAlreadyRegistered
   UserUnauthenticated
   TripDoesNotExist
+  InvalidDateSpecified
+  InvalidDestinationSpecified
   InvalidUUIDString(String)
 }
 

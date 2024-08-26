@@ -1,3 +1,4 @@
+import frontend/pages/trip_create_page
 import frontend/events.{type AppEvent, type AppModel, AppModel}
 import frontend/pages/login_page
 import frontend/pages/trip_details_page
@@ -45,6 +46,7 @@ fn path_to_route(path_segments: List(String)) -> Route {
     ["login"] -> routes.Login
     ["signup"] -> routes.Signup
     ["dashboard"] -> routes.TripsDashboard
+    ["trips", "create"] -> routes.TripCreate
     ["trips", trip_id] -> routes.TripDetails(trip_id)
     _ -> routes.FourOFour
   }
@@ -65,6 +67,8 @@ pub fn update(model: AppModel, msg: AppEvent) -> #(AppModel, Effect(AppEvent)) {
       trips_dashboard_page.handle_trips_dashboard_page_event(model, event)
     events.TripDetailsPage(event) ->
       trip_details_page.handle_trip_details_page_event(model, event)
+    events.TripCreatePage(event) ->
+      trip_create_page.handle_trip_create_page_event(model, event)
   }
 }
 
@@ -78,9 +82,21 @@ pub fn view(app_model: AppModel) -> Element(AppEvent) {
       routes.Signup -> html.h1([], [element.text("Signup")])
       routes.TripsDashboard ->
         trips_dashboard_page.trips_dashboard_view(app_model)
-      routes.TripDetails(trip_id) ->
+      routes.TripDetails(_trip_id) ->
         trip_details_page.trip_details_view(app_model)
+      routes.TripCreate ->
+        trip_create_page.trip_create_view(app_model)
       routes.FourOFour -> html.h1([], [element.text("Not Found")])
+    },
+    case app_model.show_loading {
+      True ->
+        html.div([attribute.class("loading-overlay")], [
+          html.div([attribute.class("loading-screen")], [
+            html.div([attribute.class("spinner")], []),
+            html.p([], [element.text("Loading...")]),
+          ]),
+        ])
+      False -> html.div([attribute.class("loading-screen-placeholder")], [])
     },
   ])
 }

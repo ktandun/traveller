@@ -160,6 +160,10 @@ pub type CreateTripRequest {
   CreateTripRequest(destination: String, start_date: String, end_date: String)
 }
 
+pub fn default_create_trip_request() {
+  CreateTripRequest(destination: "", start_date: "", end_date: "")
+}
+
 pub fn create_trip_request_decoder() {
   decode.into({
     use destination <- decode.parameter

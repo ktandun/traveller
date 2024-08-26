@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>🚧 frontend</title>
+    <title>🚀 Traveller</title>
 
     <!-- Uncomment this if you add the TailwindCSS integration -->
     <!-- <link rel="stylesheet" href="/priv/static/frontend.css"> -->
@@ -21,6 +21,64 @@
   font-optical-sizing: auto;
   font-weight: 400;
   font-style: normal;
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent dark background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; /* Make sure it's on top of other content */
+  visibility: visible;
+  opacity: 1;
+  transition: visibility 0.3s, opacity 0.3s;
+}
+
+
+.loading-screen {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 8px solid var(--bg);
+  border-top: 8px solid var(--accent);
+  border-radius: 50%;
+  animation: smooth-spin 2s infinite;
+}
+
+@keyframes smooth-spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    25% {
+        transform: rotate(90deg);
+    }
+    50% {
+        transform: rotate(180deg);
+    }
+    75% {
+        transform: rotate(270deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-screen p {
+  margin-top: 10px;
+  font-size: 1.5em;
+  font-weight: 700;
+  color: var(--accent);
 }
 </style>
 

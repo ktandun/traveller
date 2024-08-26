@@ -106,6 +106,14 @@ pub fn error_to_response(error: AppError) -> Response {
       |> json_with_status(400)
     error.UserUnauthenticated -> error.user_unauthenticated()
     error.InvalidLogin -> error.invalid_login()
+    error.InvalidDestinationSpecified ->
+      [#("title", json.string("INVALID_DESTINATION_SPECIFIED"))]
+      |> json.object()
+      |> json_with_status(400)
+    error.InvalidDateSpecified ->
+      [#("title", json.string("INVALID_DATE_SPECIFIED"))]
+      |> json.object()
+      |> json_with_status(400)
     error.TripDoesNotExist ->
       [#("title", json.string("TRIP_DOES_NOT_EXIST"))]
       |> json.object()

@@ -14,7 +14,6 @@ import lustre/element
 import lustre/element/html
 import lustre/event
 import lustre_http
-import plinth/browser/file
 import shared/trip_models
 
 pub fn trip_details_view(app_model: AppModel) {
@@ -59,7 +58,6 @@ pub fn trip_details_view(app_model: AppModel) {
                     html.a([attribute.href(v), attribute.target("_blank")], [
                       element.text(v),
                     ])
-
                   _ -> element.text("")
                 },
               ]),
