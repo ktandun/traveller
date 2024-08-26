@@ -27,7 +27,12 @@ pub fn trips_dashboard_view(app_model: AppModel) {
           events.TripsDashboardPageUserClickedCreateTripButton,
         )),
       ],
-      [element.text("Create Trip")],
+      [
+        element.text(case app_model.trips_dashboard.user_trips {
+          [] -> "Create Your First Trip"
+          _ -> "Create New Trip"
+        }),
+      ],
     ),
     html.table([], [
       html.thead([], [

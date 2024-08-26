@@ -4179,7 +4179,18 @@ function trips_dashboard_view(app_model) {
             )
           )
         ]),
-        toList([text("Create Trip")])
+        toList([
+          text(
+            (() => {
+              let $ = app_model.trips_dashboard.user_trips;
+              if ($.hasLength(0)) {
+                return "Create Your First Trip";
+              } else {
+                return "Create New Trip";
+              }
+            })()
+          )
+        ])
       ),
       table(
         toList([]),
