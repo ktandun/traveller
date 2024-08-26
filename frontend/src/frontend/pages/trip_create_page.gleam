@@ -107,14 +107,18 @@ pub fn handle_trip_create_page_event(
     )
     events.TripCreatePageApiReturnedResponse(response) -> {
       case response {
-        Ok(_) -> #(
-          AppModel(
-            ..model,
-            trip_create: trip_models.default_create_trip_request(),
-            trip_create_errors: "",
-          ),
-          modem.push("/dashboard", option.None, option.None),
-        )
+        Ok(trip_id) -> {
+          let trip_id = id.id_value(trip_id)
+
+          #(
+            AppModel(
+              ..model,
+              trip_create: trip_models.default_create_trip_request(),
+              trip_create_errors: "",
+            ),
+            modem.push("/trips/" <> trip_id, option.None, option.None),
+          )
+        }
         Error(e) -> {
           case e {
             lustre_http.OtherError(400, error) -> #(

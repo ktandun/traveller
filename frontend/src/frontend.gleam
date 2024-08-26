@@ -75,7 +75,7 @@ pub fn update(model: AppModel, msg: AppEvent) -> #(AppModel, Effect(AppEvent)) {
 pub fn view(app_model: AppModel) -> Element(AppEvent) {
   html.div([], [
     html.nav([], [
-      html.a([attribute.href("/login")], [element.text("Go to login")]),
+      html.a([attribute.href("/dashboard")], [element.text("Trips")]),
     ]),
     case app_model.route {
       routes.Login -> login_page.login_view(app_model)

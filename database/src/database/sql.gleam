@@ -1,6 +1,6 @@
 import decode
 import gleam/pgo
-import youid/uuid
+import youid/uuid.{type Uuid}
 
 /// A row you get from running the `find_user_by_userid` query
 /// defined in `./src/database/sql/find_user_by_userid.sql`.
@@ -152,7 +152,7 @@ RETURNING
 ///
 pub type GetUserTripPlacesRow {
   GetUserTripPlacesRow(
-    trip_id: String,
+    trip_id: Uuid,
     destination: String,
     start_date: String,
     end_date: String,
@@ -182,7 +182,7 @@ pub fn get_user_trip_places(db, arg_1, arg_2) {
         places: places,
       )
     })
-    |> decode.field(0, decode.string)
+    |> decode.field(0, uuid_decoder())
     |> decode.field(1, decode.string)
     |> decode.field(2, decode.string)
     |> decode.field(3, decode.string)
@@ -201,7 +201,10 @@ WHERE
     AND trip_id = $2;
 
 "
-  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _),
+  |> pgo.execute(
+    db,
+    [pgo.text(uuid.to_string(arg_1)), pgo.text(uuid.to_string(arg_2))],
+    decode.from(decoder, _),
   )
 }
 
@@ -387,4 +390,18 @@ WHERE
     email = $1
 "
   |> pgo.execute(db, [pgo.text(arg_1)], decode.from(decoder, _))
+}
+
+
+// --- UTILS -------------------------------------------------------------------
+
+/// A decoder to decode `Uuid`s coming from a Postgres query.
+///
+fn uuid_decoder() {
+  decode.then(decode.bit_array, fn(uuid) {
+    case uuid.from_bit_array(uuid) {
+      Ok(uuid) -> decode.into(uuid)
+      Error(_) -> decode.fail("uuid")
+    }
+  })
 }

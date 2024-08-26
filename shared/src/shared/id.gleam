@@ -1,3 +1,4 @@
+import gleam/string
 import decode
 import gleam/json
 
@@ -31,5 +32,5 @@ pub fn id_value(id: Id(a)) {
 }
 
 pub fn to_id(id: String) -> Id(a) {
-  Id(id)
+  Id(id |> string.lowercase)
 }

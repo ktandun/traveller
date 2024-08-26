@@ -3391,6 +3391,10 @@ function id_decoder() {
   }));
   return field2(_pipe, "id", string3);
 }
+function id_value(id) {
+  let value4 = id[0];
+  return value4;
+}
 
 // build/dev/javascript/shared/shared/trip_models.mjs
 var UserTrip = class extends CustomType {
@@ -3976,12 +3980,18 @@ function handle_trip_create_page_event(model, event2) {
   } else {
     let response = event2[0];
     if (response.isOk()) {
+      let trip_id = response[0];
+      let trip_id$1 = id_value(trip_id);
       return [
         model.withFields({
           trip_create: default_create_trip_request(),
           trip_create_errors: ""
         }),
-        push("/dashboard", new None2(), new None2())
+        push(
+          "/trips/" + trip_id$1,
+          new None2(),
+          new None2()
+        )
       ];
     } else {
       let e = response[0];
@@ -4031,6 +4041,21 @@ function trip_details_view(app_model) {
                 ])
               )
             ])
+          )
+        ])
+      ),
+      button(
+        toList([]),
+        toList([
+          text(
+            (() => {
+              let $ = app_model.trip_details.user_trip_places;
+              if ($.hasLength(0)) {
+                return "Add First Place";
+              } else {
+                return "Add More Places";
+              }
+            })()
           )
         ])
       ),
@@ -4396,8 +4421,8 @@ function view(app_model) {
         toList([]),
         toList([
           a(
-            toList([href("/login")]),
-            toList([text("Go to login")])
+            toList([href("/dashboard")]),
+            toList([text("Trips")])
           )
         ])
       ),

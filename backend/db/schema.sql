@@ -81,14 +81,14 @@ $$;
 -- Name: trips_view(); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.trips_view() RETURNS TABLE(user_id text, trip_id text, destination character varying, start_date text, end_date text, places json)
+CREATE FUNCTION public.trips_view() RETURNS TABLE(user_id uuid, trip_id uuid, destination character varying, start_date text, end_date text, places json)
     LANGUAGE plpgsql
     AS $$
 BEGIN
     RETURN QUERY WITH trip_places AS (
         SELECT
-            LOWER(ut.user_id::text) AS user_id,
-            LOWER(t.trip_id::text) AS trip_id,
+            ut.user_id AS user_id,
+            t.trip_id AS trip_id,
             t.destination AS destination,
             to_char(t.start_date, 'DD Mon YYYY') AS start_date,
             to_char(t.end_date, 'DD Mon YYYY') AS end_date,

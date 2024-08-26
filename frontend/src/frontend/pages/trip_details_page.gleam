@@ -36,6 +36,12 @@ pub fn trip_details_view(app_model: AppModel) {
         ]),
       ]),
     ]),
+    html.button([], [
+      element.text(case app_model.trip_details.user_trip_places {
+        [] -> "Add First Place"
+        _ -> "Add More Places"
+      }),
+    ]),
     html.table([], [
       html.thead([], [
         html.tr([], [

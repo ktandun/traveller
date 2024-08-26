@@ -1,3 +1,4 @@
+import gleam/string
 import database/sql
 import decode
 import gleam/io
@@ -65,7 +66,10 @@ pub fn create_user_trip(
     |> database.to_app_error(),
   )
 
-  Ok(id.to_id(uuid.to_string(new_trip_id)))
+  new_trip_id
+  |> uuid.to_string
+  |> id.to_id
+  |> Ok
 }
 
 pub fn get_user_trip_places(
@@ -73,8 +77,8 @@ pub fn get_user_trip_places(
   user_id: Id(UserId),
   trip_id: Id(TripId),
 ) -> Result(trip_models.UserTripPlaces, AppError) {
-  let user_id = id.id_value(user_id)
-  let trip_id = id.id_value(trip_id)
+  let user_id = user_id |> id.id_value |> uuid_util.from_string
+  let trip_id = trip_id |> id.id_value |> uuid_util.from_string
 
   use query_result <- result.try(
     sql.get_user_trip_places(ctx.db, user_id, trip_id)
@@ -82,6 +86,7 @@ pub fn get_user_trip_places(
   )
 
   use row <- database.require_single_row(query_result, "get_user_trip_places")
+
   let sql.GetUserTripPlacesRow(
     trip_id,
     destination,
@@ -96,7 +101,7 @@ pub fn get_user_trip_places(
   ))
 
   Ok(trip_models.UserTripPlaces(
-    trip_id:,
+    trip_id: trip_id |> uuid.to_string,
     destination:,
     start_date:,
     end_date:,

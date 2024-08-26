@@ -79,8 +79,8 @@ LANGUAGE PLPGSQL;
 
 CREATE OR REPLACE FUNCTION trips_view ()
     RETURNS TABLE (
-        user_id text,
-        trip_id text,
+        user_id uuid,
+        trip_id uuid,
         destination varchar(255),
         start_date text,
         end_date text,
@@ -90,8 +90,8 @@ CREATE OR REPLACE FUNCTION trips_view ()
 BEGIN
     RETURN QUERY WITH trip_places AS (
         SELECT
-            LOWER(ut.user_id::text) AS user_id,
-            LOWER(t.trip_id::text) AS trip_id,
+            ut.user_id AS user_id,
+            t.trip_id AS trip_id,
             t.destination AS destination,
             to_char(t.start_date, 'DD Mon YYYY') AS start_date,
             to_char(t.end_date, 'DD Mon YYYY') AS end_date,

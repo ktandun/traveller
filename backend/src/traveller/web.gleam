@@ -99,7 +99,11 @@ fn json_with_status(json: Json, status: Int) -> Response {
 pub fn error_to_response(error: AppError) -> Response {
   case error {
     error.DecodeError(e) -> error.json_codec_decode_error(e)
-    error.QueryNotReturningSingleResult(e) -> todo
+    error.QueryNotReturningSingleResult(e) ->
+      [#("title", json.string("QUERY_NOT_RETURNING_SINGLE_ROW:" <> e))]
+      |> json.object()
+      |> json_with_status(400)
+
     error.InvalidUUIDString(e) ->
       [#("title", json.string("INVALID_UUID_STRING"))]
       |> json.object()
