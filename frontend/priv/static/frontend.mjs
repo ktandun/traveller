@@ -2062,6 +2062,9 @@ var Event = class extends CustomType {
 function attribute(name3, value4) {
   return new Attribute(name3, identity(value4), false);
 }
+function property(name3, value4) {
+  return new Attribute(name3, identity(value4), true);
+}
 function on(name3, handler) {
   return new Event("on" + name3, handler);
 }
@@ -2079,6 +2082,9 @@ function placeholder(text2) {
 }
 function name2(name3) {
   return attribute("name", name3);
+}
+function required(is_required) {
+  return property("required", is_required);
 }
 function min(val) {
   return attribute("min", val);
@@ -2344,8 +2350,8 @@ function lustreServerEventHandler(event2) {
   return {
     tag,
     data: include.reduce(
-      (data2, property) => {
-        const path = property.split(".");
+      (data2, property2) => {
+        const path = property2.split(".");
         for (let i = 0, o = data2, e = event2; i < path.length; i++) {
           if (i === path.length - 1) {
             o[path[i]] = e[path[i]];
@@ -3861,9 +3867,11 @@ function trip_create_view(app_model) {
                   ),
                   name2("from"),
                   type_("date"),
+                  required(true),
                   value2(app_model.trip_create.start_date)
                 ])
-              )
+              ),
+              span(toList([class$("validity")]), toList([]))
             ])
           ),
           p(
@@ -3884,9 +3892,11 @@ function trip_create_view(app_model) {
                   min(app_model.trip_create.start_date),
                   name2("to"),
                   type_("date"),
+                  required(true),
                   value2(app_model.trip_create.end_date)
                 ])
-              )
+              ),
+              span(toList([class$("validity")]), toList([]))
             ])
           ),
           p(
@@ -3909,9 +3919,11 @@ function trip_create_view(app_model) {
                   name2("destination"),
                   placeholder("Where are you going?"),
                   type_("text"),
+                  required(true),
                   value2(app_model.trip_create.destination)
                 ])
-              )
+              ),
+              span(toList([class$("validity")]), toList([]))
             ])
           )
         ])

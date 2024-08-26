@@ -1,15 +1,13 @@
 import birl
 import gleam/bool
-import gleam/io
-import gleam/order
-import gleam/string
 import gleam/result
+import gleam/string
 import shared/id.{type Id, type TripId, type TripPlaceId, type UserId}
 import shared/trip_models.{type CreateTripRequest, type UserTrips}
 import traveller/database/trips_db
+import traveller/date_util
 import traveller/error.{type AppError}
 import traveller/web.{type Context}
-import wisp
 import youid/uuid
 
 /// Returns list of places for a trip set by user
@@ -39,16 +37,26 @@ pub fn handle_get_trips(
 }
 
 /// Creates a trip for a user
+/// Ensures start_date < end_date
 pub fn handle_create_trip(
   ctx: Context,
   user_id: Id(UserId),
   create_trip_request: CreateTripRequest,
 ) -> Result(Id(TripId), AppError) {
-  let assert Ok(start_date_date) = birl.parse(create_trip_request.start_date)
-  let assert Ok(end_date_date) = birl.parse(create_trip_request.end_date)
+  let now = birl.now()
+
+  use #(start_year, start_month, start_date) <- result.try(
+    date_util.from_yyyy_mm_dd(create_trip_request.start_date),
+  )
+  use #(end_year, end_month, end_date) <- result.try(date_util.from_yyyy_mm_dd(
+    create_trip_request.end_date,
+  ))
+  let start_date =
+    birl.set_day(now, birl.Day(start_year, start_month, start_date))
+  let end_date = birl.set_day(now, birl.Day(end_year, end_month, end_date))
 
   use <- bool.guard(
-    birl.compare(start_date_date, end_date_date) == order.Gt,
+    birl.to_unix(end_date) < birl.to_unix(start_date),
     Error(error.InvalidDateSpecified),
   )
 

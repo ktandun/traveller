@@ -80,6 +80,13 @@
   font-weight: 700;
   color: var(--accent);
 }
+
+input:valid + span::after {
+  margin-left: 0.5em;
+  content: "✓";
+  color: green;
+}
+
 </style>
 
   </head>
