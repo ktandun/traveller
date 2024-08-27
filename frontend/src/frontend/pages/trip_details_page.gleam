@@ -1,4 +1,5 @@
 import decode
+import frontend/date_util
 import frontend/events.{
   type AppEvent, type AppModel, type TripDetailsPageEvent, AppModel,
 }
@@ -30,9 +31,9 @@ pub fn trip_details_view(app_model: AppModel) {
         html.dt([], [element.text("Dates")]),
         html.dd([], [
           element.text(
-            app_model.trip_details.start_date
+            date_util.to_human_readable(app_model.trip_details.start_date)
             <> " to "
-            <> app_model.trip_details.end_date,
+            <> date_util.to_human_readable(app_model.trip_details.end_date),
           ),
         ]),
       ]),
@@ -67,12 +68,14 @@ pub fn trip_details_view(app_model: AppModel) {
           |> list.map(fn(place) {
             html.tr([], [
               html.td([], [element.text(place.name)]),
-              html.td([], [element.text(place.date)]),
+              html.td([], [
+                element.text(date_util.to_human_readable(place.date)),
+              ]),
               html.td([], [
                 case place.google_maps_link {
                   option.Some(v) ->
                     html.a([attribute.href(v), attribute.target("_blank")], [
-                      element.text(v),
+                      element.text("Link to map"),
                     ])
                   _ -> element.text("")
                 },

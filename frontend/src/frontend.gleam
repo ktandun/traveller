@@ -5,6 +5,7 @@ import frontend/pages/trip_details_page
 import frontend/pages/trip_place_create_page
 import frontend/pages/trips_dashboard_page
 import frontend/routes.{type Route}
+import gleam/string
 import gleam/uri.{type Uri}
 import lustre
 import lustre/attribute
@@ -59,6 +60,11 @@ pub fn update(model: AppModel, msg: AppEvent) -> #(AppModel, Effect(AppEvent)) {
     events.OnRouteChange(route) -> {
       #(AppModel(..model, route: route), case route {
         routes.TripsDashboard -> trips_dashboard_page.load_trips_dashboard()
+        routes.TripPlaceCreate(trip_id) ->
+          case string.is_empty(model.trip_details.destination) {
+            True -> trip_details_page.load_trip_details(trip_id)
+            False -> effect.none()
+          }
         routes.TripDetails(trip_id) ->
           trip_details_page.load_trip_details(trip_id)
         _ -> effect.none()
@@ -80,6 +86,17 @@ pub fn view(app_model: AppModel) -> Element(AppEvent) {
   html.div([], [
     html.nav([], [
       html.a([attribute.href("/dashboard")], [element.text("Trips")]),
+      case string.is_empty(app_model.trip_details.destination) {
+        False ->
+          html.span([], [
+            element.text(" > "),
+            html.a(
+              [attribute.href("/trips/" <> app_model.trip_details.trip_id)],
+              [element.text(app_model.trip_details.destination)],
+            ),
+          ])
+        True -> html.span([], [])
+      },
     ]),
     html.hr([]),
     case app_model.route {

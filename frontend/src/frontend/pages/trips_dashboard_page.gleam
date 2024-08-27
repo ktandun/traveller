@@ -1,4 +1,5 @@
 import decode
+import frontend/date_util
 import frontend/events.{
   type AppEvent, type AppModel, type TripsDashboardPageEvent, AppModel,
 }
@@ -53,8 +54,12 @@ pub fn trips_dashboard_view(app_model: AppModel) {
                   element.text(user_trip.destination),
                 ]),
               ]),
-              html.td([], [element.text(user_trip.start_date)]),
-              html.td([], [element.text(user_trip.end_date)]),
+              html.td([], [
+                element.text(date_util.to_human_readable(user_trip.start_date)),
+              ]),
+              html.td([], [
+                element.text(date_util.to_human_readable(user_trip.end_date)),
+              ]),
               html.td([], [element.text(int.to_string(user_trip.places_count))]),
             ])
           }),

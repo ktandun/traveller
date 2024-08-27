@@ -314,6 +314,14 @@ function scan(regex, string4) {
   return regex_scan(regex, string4);
 }
 
+// build/dev/javascript/gleam_stdlib/gleam/int.mjs
+function parse(string4) {
+  return parse_int(string4);
+}
+function to_string2(x) {
+  return to_string(x);
+}
+
 // build/dev/javascript/gleam_stdlib/gleam/pair.mjs
 function second(pair) {
   let a2 = pair[1];
@@ -405,7 +413,7 @@ function do_append(loop$first, loop$second) {
     }
   }
 }
-function append(first3, second2) {
+function append2(first3, second2) {
   return do_append(reverse(first3), second2);
 }
 function fold(loop$list, loop$initial, loop$fun) {
@@ -448,7 +456,7 @@ function do_repeat(loop$a, loop$times, loop$acc) {
     }
   }
 }
-function repeat(a2, times) {
+function repeat2(a2, times) {
   return do_repeat(a2, times, toList([]));
 }
 function key_set(list3, key, value4) {
@@ -509,7 +517,7 @@ function nil_error(result) {
     return void 0;
   });
 }
-function replace(result, value4) {
+function replace2(result, value4) {
   if (result.isOk()) {
     return new Ok(value4);
   } else {
@@ -525,37 +533,11 @@ function from_strings(strings) {
 function from_string(string4) {
   return identity(string4);
 }
-function to_string(builder) {
+function to_string3(builder) {
   return identity(builder);
 }
 function split2(iodata, pattern) {
   return split(iodata, pattern);
-}
-
-// build/dev/javascript/gleam_stdlib/gleam/string.mjs
-function lowercase2(string4) {
-  return lowercase(string4);
-}
-function starts_with2(string4, prefix) {
-  return starts_with(string4, prefix);
-}
-function concat2(strings) {
-  let _pipe = strings;
-  let _pipe$1 = from_strings(_pipe);
-  return to_string(_pipe$1);
-}
-function pop_grapheme2(string4) {
-  return pop_grapheme(string4);
-}
-function split3(x, substring) {
-  if (substring === "") {
-    return graphemes(x);
-  } else {
-    let _pipe = x;
-    let _pipe$1 = from_string(_pipe);
-    let _pipe$2 = split2(_pipe$1, substring);
-    return map2(_pipe$2, to_string);
-  }
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/dynamic.mjs
@@ -615,7 +597,7 @@ function push_path(error, name3) {
     } else {
       let _pipe = toList(["<", classify(name$1), ">"]);
       let _pipe$1 = from_strings(_pipe);
-      return to_string(_pipe$1);
+      return to_string3(_pipe$1);
     }
   })();
   return error.withFields({ path: prepend(name$2, error.path) });
@@ -1378,7 +1360,7 @@ function parse_int(value4) {
     return new Error(Nil);
   }
 }
-function to_string3(term) {
+function to_string(term) {
   return term.toString();
 }
 function graphemes(string4) {
@@ -1564,12 +1546,33 @@ function try_get_field2(value4, field3, or_else) {
   }
 }
 
-// build/dev/javascript/gleam_stdlib/gleam/int.mjs
-function parse(string4) {
-  return parse_int(string4);
+// build/dev/javascript/gleam_stdlib/gleam/string.mjs
+function is_empty(str) {
+  return str === "";
 }
-function to_string2(x) {
-  return to_string3(x);
+function lowercase2(string4) {
+  return lowercase(string4);
+}
+function starts_with2(string4, prefix) {
+  return starts_with(string4, prefix);
+}
+function concat3(strings) {
+  let _pipe = strings;
+  let _pipe$1 = from_strings(_pipe);
+  return to_string3(_pipe$1);
+}
+function pop_grapheme2(string4) {
+  return pop_grapheme(string4);
+}
+function split3(x, substring) {
+  if (substring === "") {
+    return graphemes(x);
+  } else {
+    let _pipe = x;
+    let _pipe$1 = from_string(_pipe);
+    let _pipe$2 = split2(_pipe$1, substring);
+    return map2(_pipe$2, to_string3);
+  }
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/uri.mjs
@@ -1641,9 +1644,9 @@ function extra_required(loop$list, loop$remaining) {
 }
 function pad_list(list3, size) {
   let _pipe = list3;
-  return append(
+  return append2(
     _pipe,
-    repeat(new None2(), extra_required(list3, size))
+    repeat2(new None2(), extra_required(list3, size))
   );
 }
 function split_authority(authority) {
@@ -1843,7 +1846,7 @@ function to_string4(uri) {
       return parts$4;
     }
   })();
-  return concat2(parts$5);
+  return concat3(parts$5);
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/bool.mjs
@@ -2031,7 +2034,7 @@ function batch(effects) {
       toList([]),
       (b, _use1) => {
         let a2 = _use1.all;
-        return append(b, a2);
+        return append2(b, a2);
       }
     )
   );
@@ -3220,7 +3223,7 @@ function expect_anything(to_msg) {
     (response) => {
       let _pipe = response;
       let _pipe$1 = then$(_pipe, response_to_result);
-      let _pipe$2 = replace(_pipe$1, void 0);
+      let _pipe$2 = replace2(_pipe$1, void 0);
       return to_msg(_pipe$2);
     }
   );
@@ -3363,7 +3366,7 @@ function subfield(decoder, field_path, field_decoder) {
       } else if (!constructor.isOk() && !data$1.isOk()) {
         let e1 = constructor[0];
         let e2 = data$1[0];
-        return new Error(append(e1, e2));
+        return new Error(append2(e1, e2));
       } else if (!data$1.isOk()) {
         let errors = data$1[0];
         return new Error(errors);
@@ -4091,6 +4094,57 @@ function handle_trip_create_page_event(model, event2) {
   }
 }
 
+// build/dev/javascript/frontend/frontend/date_util.mjs
+function to_human_readable(date) {
+  let $ = (() => {
+    let _pipe = date;
+    return split3(_pipe, "-");
+  })();
+  if (!$.hasLength(3)) {
+    throw makeError(
+      "assignment_no_match",
+      "frontend/date_util",
+      5,
+      "to_human_readable",
+      "Assignment pattern did not match",
+      { value: $ }
+    );
+  }
+  let year = $.head;
+  let month = $.tail.head;
+  let day = $.tail.tail.head;
+  let month$1 = (() => {
+    if (month === "01") {
+      return "Jan";
+    } else if (month === "02") {
+      return "Feb";
+    } else if (month === "03") {
+      return "Mar";
+    } else if (month === "04") {
+      return "Apr";
+    } else if (month === "05") {
+      return "May";
+    } else if (month === "06") {
+      return "Jun";
+    } else if (month === "07") {
+      return "Jul";
+    } else if (month === "08") {
+      return "Aug";
+    } else if (month === "09") {
+      return "Sep";
+    } else if (month === "10") {
+      return "Okt";
+    } else if (month === "11") {
+      return "Nov";
+    } else if (month === "12") {
+      return "Dec";
+    } else {
+      return "";
+    }
+  })();
+  return day + " " + month$1 + " " + year;
+}
+
 // build/dev/javascript/frontend/frontend/pages/trip_details_page.mjs
 function trip_details_view(app_model) {
   return div(
@@ -4117,7 +4171,11 @@ function trip_details_view(app_model) {
                 toList([]),
                 toList([
                   text(
-                    app_model.trip_details.start_date + " to " + app_model.trip_details.end_date
+                    to_human_readable(
+                      app_model.trip_details.start_date
+                    ) + " to " + to_human_readable(
+                      app_model.trip_details.end_date
+                    )
                   )
                 ])
               )
@@ -4176,7 +4234,14 @@ function trip_details_view(app_model) {
                     toList([]),
                     toList([
                       td(toList([]), toList([text(place.name)])),
-                      td(toList([]), toList([text(place.date)])),
+                      td(
+                        toList([]),
+                        toList([
+                          text(
+                            to_human_readable(place.date)
+                          )
+                        ])
+                      ),
                       td(
                         toList([]),
                         toList([
@@ -4189,7 +4254,7 @@ function trip_details_view(app_model) {
                                   href(v),
                                   target("_blank")
                                 ]),
-                                toList([text(v)])
+                                toList([text("Link to map")])
                               );
                             } else {
                               return text("");
@@ -4542,11 +4607,19 @@ function trips_dashboard_view(app_model) {
                       ),
                       td(
                         toList([]),
-                        toList([text(user_trip.start_date)])
+                        toList([
+                          text(
+                            to_human_readable(user_trip.start_date)
+                          )
+                        ])
                       ),
                       td(
                         toList([]),
-                        toList([text(user_trip.end_date)])
+                        toList([
+                          text(
+                            to_human_readable(user_trip.end_date)
+                          )
+                        ])
                       ),
                       td(
                         toList([]),
@@ -4664,6 +4737,14 @@ function update(model, msg) {
       (() => {
         if (route instanceof TripsDashboard) {
           return load_trips_dashboard();
+        } else if (route instanceof TripPlaceCreate) {
+          let trip_id = route.trip_id;
+          let $ = is_empty(model.trip_details.destination);
+          if ($) {
+            return load_trip_details(trip_id);
+          } else {
+            return none();
+          }
         } else if (route instanceof TripDetails) {
           let trip_id = route.trip_id;
           return load_trip_details(trip_id);
@@ -4702,7 +4783,28 @@ function view(app_model) {
           a(
             toList([href("/dashboard")]),
             toList([text("Trips")])
-          )
+          ),
+          (() => {
+            let $ = is_empty(app_model.trip_details.destination);
+            if (!$) {
+              return span(
+                toList([]),
+                toList([
+                  text(" > "),
+                  a(
+                    toList([
+                      href(
+                        "/trips/" + app_model.trip_details.trip_id
+                      )
+                    ]),
+                    toList([text(app_model.trip_details.destination)])
+                  )
+                ])
+              );
+            } else {
+              return span(toList([]), toList([]));
+            }
+          })()
         ])
       ),
       hr(toList([])),
@@ -4760,7 +4862,7 @@ function main() {
     throw makeError(
       "assignment_no_match",
       "frontend",
-      18,
+      19,
       "main",
       "Assignment pattern did not match",
       { value: $ }
