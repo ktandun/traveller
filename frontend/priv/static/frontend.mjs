@@ -1865,6 +1865,9 @@ function object(entries) {
 function identity2(x) {
   return x;
 }
+function do_null() {
+  return null;
+}
 function decode(string4) {
   try {
     const result = JSON.parse(string4);
@@ -1991,6 +1994,17 @@ function to_string6(json) {
 function string2(input2) {
   return identity2(input2);
 }
+function null$() {
+  return do_null();
+}
+function nullable(input2, inner_type) {
+  if (input2 instanceof Some2) {
+    let value4 = input2[0];
+    return inner_type(value4);
+  } else {
+    return null$();
+  }
+}
 function object2(entries) {
   return object(entries);
 }
@@ -2085,6 +2099,9 @@ function name2(name3) {
 }
 function required(is_required) {
   return property("required", is_required);
+}
+function max(val) {
+  return attribute("max", val);
 }
 function min(val) {
   return attribute("min", val);
@@ -2615,6 +2632,9 @@ function dl(attrs, children) {
 function dt(attrs, children) {
   return element("dt", attrs, children);
 }
+function hr(attrs) {
+  return element("hr", attrs, toList([]));
+}
 function p(attrs, children) {
   return element("p", attrs, children);
 }
@@ -2660,7 +2680,7 @@ var defaults = {
   handle_external_links: false,
   handle_internal_links: true
 };
-var initial_location = window?.location?.href;
+var initial_location = globalThis.window && window?.location?.href;
 var do_initial_uri = () => {
   if (!initial_location) {
     return new Error(void 0);
@@ -3440,6 +3460,14 @@ var CreateTripRequest = class extends CustomType {
     this.end_date = end_date;
   }
 };
+var CreateTripPlaceRequest = class extends CustomType {
+  constructor(place, date, google_maps_link) {
+    super();
+    this.place = place;
+    this.date = date;
+    this.google_maps_link = google_maps_link;
+  }
+};
 function user_trip_decoder() {
   let _pipe = into(
     parameter(
@@ -3576,6 +3604,18 @@ function create_trip_request_encoder(data) {
     ])
   );
 }
+function default_create_trip_place_request() {
+  return new CreateTripPlaceRequest("", "", new None2());
+}
+function create_trip_place_request_encoder(data) {
+  return object2(
+    toList([
+      ["place", string2(data.place)],
+      ["date", string2(data.date)],
+      ["google_maps_link", nullable(data.google_maps_link, string2)]
+    ])
+  );
+}
 
 // build/dev/javascript/frontend/frontend/routes.mjs
 var Login = class extends CustomType {
@@ -3585,6 +3625,12 @@ var Signup = class extends CustomType {
 var TripsDashboard = class extends CustomType {
 };
 var TripDetails = class extends CustomType {
+  constructor(trip_id) {
+    super();
+    this.trip_id = trip_id;
+  }
+};
+var TripPlaceCreate = class extends CustomType {
   constructor(trip_id) {
     super();
     this.trip_id = trip_id;
@@ -3626,8 +3672,14 @@ var TripCreatePage = class extends CustomType {
     this[0] = x0;
   }
 };
+var TripPlaceCreatePage = class extends CustomType {
+  constructor(x0) {
+    super();
+    this[0] = x0;
+  }
+};
 var AppModel = class extends CustomType {
-  constructor(route, show_loading, login_request, trips_dashboard, trip_details, trip_create, trip_create_errors) {
+  constructor(route, show_loading, login_request, trips_dashboard, trip_details, trip_create, trip_create_errors, trip_place_create, trip_place_create_errors) {
     super();
     this.route = route;
     this.show_loading = show_loading;
@@ -3636,6 +3688,8 @@ var AppModel = class extends CustomType {
     this.trip_details = trip_details;
     this.trip_create = trip_create;
     this.trip_create_errors = trip_create_errors;
+    this.trip_place_create = trip_place_create;
+    this.trip_place_create_errors = trip_place_create_errors;
   }
 };
 var LoginPageUserUpdatedEmail = class extends CustomType {
@@ -3678,6 +3732,12 @@ var TripDetailsPageUserClickedRemovePlace = class extends CustomType {
     this.trip_place_id = trip_place_id;
   }
 };
+var TripDetailsPageUserClickedCreatePlace = class extends CustomType {
+  constructor(trip_place_id) {
+    super();
+    this.trip_place_id = trip_place_id;
+  }
+};
 var TripCreatePageUserInputCreateTripRequest = class extends CustomType {
   constructor(x0) {
     super();
@@ -3692,6 +3752,25 @@ var TripCreatePageApiReturnedResponse = class extends CustomType {
     this[0] = x0;
   }
 };
+var TripPlaceCreatePageApiReturnedResponse = class extends CustomType {
+  constructor(trip_id, x1) {
+    super();
+    this.trip_id = trip_id;
+    this[1] = x1;
+  }
+};
+var TripPlaceCreatePageUserInputCreateTripPlaceRequest = class extends CustomType {
+  constructor(x0) {
+    super();
+    this[0] = x0;
+  }
+};
+var TripPlaceCreatePageUserClickedSubmit = class extends CustomType {
+  constructor(trip_id) {
+    super();
+    this.trip_id = trip_id;
+  }
+};
 function default_app_model() {
   return new AppModel(
     new Login(),
@@ -3700,6 +3779,8 @@ function default_app_model() {
     default_user_trips(),
     default_user_trip_places(),
     default_create_trip_request(),
+    "",
+    default_create_trip_place_request(),
     ""
   );
 }
@@ -4045,7 +4126,15 @@ function trip_details_view(app_model) {
         ])
       ),
       button(
-        toList([]),
+        toList([
+          on_click(
+            new TripDetailsPage(
+              new TripDetailsPageUserClickedCreatePlace(
+                app_model.trip_details.trip_id
+              )
+            )
+          )
+        ]),
         toList([
           text(
             (() => {
@@ -4165,9 +4254,19 @@ function handle_trip_details_page_event(model, event2) {
       model.withFields({ trip_details: user_trip_places }),
       none()
     ];
-  } else {
+  } else if (event2 instanceof TripDetailsPageUserClickedRemovePlace) {
     let trip_place_id = event2.trip_place_id;
     return [model, delete_trip_place(model.trip_details.trip_id, trip_place_id)];
+  } else {
+    let trip_id = event2.trip_place_id;
+    return [
+      model,
+      push(
+        "/trips/" + trip_id + "/places/create",
+        new None2(),
+        new None2()
+      )
+    ];
   }
 }
 function load_trip_details(trip_id) {
@@ -4191,6 +4290,177 @@ function load_trip_details(trip_id) {
       }
     )
   );
+}
+
+// build/dev/javascript/frontend/frontend/web.mjs
+function post2(url, json, response_decoder, to_msg) {
+  return post(
+    url,
+    json,
+    expect_json(response_decoder, to_msg)
+  );
+}
+
+// build/dev/javascript/frontend/frontend/pages/trip_place_create_page.mjs
+function trip_place_create_view(app_model, trip_id) {
+  return div(
+    toList([]),
+    toList([
+      h1(toList([]), toList([text("Add a Place")])),
+      form(
+        toList([]),
+        toList([
+          p(
+            toList([]),
+            toList([
+              label(toList([]), toList([text("Place")])),
+              input(
+                toList([
+                  on_input(
+                    (place) => {
+                      return new TripPlaceCreatePage(
+                        new TripPlaceCreatePageUserInputCreateTripPlaceRequest(
+                          app_model.trip_place_create.withFields({ place })
+                        )
+                      );
+                    }
+                  ),
+                  name2("place"),
+                  required(true),
+                  placeholder("Name of place"),
+                  value2(app_model.trip_place_create.place)
+                ])
+              ),
+              span(toList([class$("validity")]), toList([]))
+            ])
+          ),
+          p(
+            toList([]),
+            toList([
+              label(toList([]), toList([text("Date")])),
+              input(
+                toList([
+                  on_input(
+                    (date) => {
+                      return new TripPlaceCreatePage(
+                        new TripPlaceCreatePageUserInputCreateTripPlaceRequest(
+                          app_model.trip_place_create.withFields({ date })
+                        )
+                      );
+                    }
+                  ),
+                  min(app_model.trip_details.start_date),
+                  max(app_model.trip_details.end_date),
+                  name2("date"),
+                  type_("date"),
+                  required(true),
+                  value2(app_model.trip_place_create.date)
+                ])
+              ),
+              span(toList([class$("validity")]), toList([]))
+            ])
+          ),
+          p(
+            toList([]),
+            toList([
+              label(
+                toList([]),
+                toList([text("Google Maps Link")])
+              ),
+              input(
+                toList([
+                  on_input(
+                    (google_maps_link) => {
+                      return new TripPlaceCreatePage(
+                        new TripPlaceCreatePageUserInputCreateTripPlaceRequest(
+                          app_model.trip_place_create.withFields({
+                            google_maps_link: new Some2(google_maps_link)
+                          })
+                        )
+                      );
+                    }
+                  ),
+                  name2("google_maps_link"),
+                  placeholder("https://..."),
+                  type_("text"),
+                  required(true),
+                  value2(
+                    (() => {
+                      let $ = app_model.trip_place_create.google_maps_link;
+                      if ($ instanceof Some2) {
+                        let val = $[0];
+                        return val;
+                      } else {
+                        return "";
+                      }
+                    })()
+                  )
+                ])
+              ),
+              span(toList([class$("validity")]), toList([]))
+            ])
+          )
+        ])
+      ),
+      div(
+        toList([]),
+        toList([text(app_model.trip_create_errors)])
+      ),
+      button(
+        toList([
+          on_click(
+            new TripPlaceCreatePage(
+              new TripPlaceCreatePageUserClickedSubmit(trip_id)
+            )
+          )
+        ]),
+        toList([text("Create Place")])
+      )
+    ])
+  );
+}
+function handle_trip_place_create_page_event(model, event2) {
+  if (event2 instanceof TripPlaceCreatePageUserInputCreateTripPlaceRequest) {
+    let create_trip_place_request = event2[0];
+    return [
+      model.withFields({ trip_place_create: create_trip_place_request }),
+      none()
+    ];
+  } else if (event2 instanceof TripPlaceCreatePageApiReturnedResponse) {
+    let trip_id = event2.trip_id;
+    let response = event2[1];
+    if (response.isOk()) {
+      return [
+        model.withFields({
+          trip_place_create: default_create_trip_place_request()
+        }),
+        push("/trips/" + trip_id, new None2(), new None2())
+      ];
+    } else {
+      return [model, none()];
+    }
+  } else {
+    let trip_id = event2.trip_id;
+    return [
+      model,
+      post2(
+        "http://localhost:8080/api/trips/" + trip_id + "/places",
+        create_trip_place_request_encoder(model.trip_place_create),
+        (response) => {
+          let _pipe = id_decoder();
+          return from2(_pipe, response);
+        },
+        (decode_result2) => {
+          return new TripPlaceCreatePage(
+            new TripPlaceCreatePageApiReturnedResponse(
+              trip_id,
+              decode_result2
+            )
+          );
+        }
+      )
+    ];
+  }
 }
 
 // build/dev/javascript/frontend/frontend/pages/trips_dashboard_page.mjs
@@ -4345,6 +4615,9 @@ function path_to_route(path_segments2) {
   } else if (path_segments2.hasLength(2) && path_segments2.head === "trips") {
     let trip_id = path_segments2.tail.head;
     return new TripDetails(trip_id);
+  } else if (path_segments2.hasLength(4) && path_segments2.head === "trips" && path_segments2.tail.tail.head === "places" && path_segments2.tail.tail.tail.head === "create") {
+    let trip_id = path_segments2.tail.head;
+    return new TripPlaceCreate(trip_id);
   } else {
     return new FourOFour();
   }
@@ -4408,9 +4681,15 @@ function update(model, msg) {
   } else if (msg instanceof TripDetailsPage) {
     let event2 = msg[0];
     return handle_trip_details_page_event(model, event2);
-  } else {
+  } else if (msg instanceof TripCreatePage) {
     let event2 = msg[0];
     return handle_trip_create_page_event(model, event2);
+  } else {
+    let event2 = msg[0];
+    return handle_trip_place_create_page_event(
+      model,
+      event2
+    );
   }
 }
 function view(app_model) {
@@ -4426,6 +4705,7 @@ function view(app_model) {
           )
         ])
       ),
+      hr(toList([])),
       (() => {
         let $ = app_model.route;
         if ($ instanceof Login) {
@@ -4438,6 +4718,12 @@ function view(app_model) {
           return trip_details_view(app_model);
         } else if ($ instanceof TripCreate) {
           return trip_create_view(app_model);
+        } else if ($ instanceof TripPlaceCreate) {
+          let trip_id = $.trip_id;
+          return trip_place_create_view(
+            app_model,
+            trip_id
+          );
         } else {
           return h1(toList([]), toList([text("Not Found")]));
         }
@@ -4474,7 +4760,7 @@ function main() {
     throw makeError(
       "assignment_no_match",
       "frontend",
-      17,
+      18,
       "main",
       "Assignment pattern did not match",
       { value: $ }

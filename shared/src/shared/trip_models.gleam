@@ -184,3 +184,38 @@ pub fn create_trip_request_encoder(data: CreateTripRequest) {
     #("end_date", json.string(data.end_date)),
   ])
 }
+
+//
+
+pub type CreateTripPlaceRequest {
+  CreateTripPlaceRequest(
+    place: String,
+    date: String,
+    google_maps_link: Option(String),
+  )
+}
+
+pub fn default_create_trip_place_request() {
+  CreateTripPlaceRequest(place: "", date: "", google_maps_link: option.None)
+}
+
+pub fn create_trip_place_request_decoder() {
+  decode.into({
+    use place <- decode.parameter
+    use date <- decode.parameter
+    use google_maps_link <- decode.parameter
+
+    CreateTripPlaceRequest(place:, date:, google_maps_link:)
+  })
+  |> decode.field("place", decode.string)
+  |> decode.field("date", decode.string)
+  |> decode.field("google_maps_link", decode.optional(decode.string))
+}
+
+pub fn create_trip_place_request_encoder(data: CreateTripPlaceRequest) {
+  json.object([
+    #("place", json.string(data.place)),
+    #("date", json.string(data.date)),
+    #("google_maps_link", json.nullable(data.google_maps_link, of: json.string)),
+  ])
+}

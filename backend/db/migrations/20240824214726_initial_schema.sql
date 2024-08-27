@@ -93,11 +93,11 @@ BEGIN
             ut.user_id AS user_id,
             t.trip_id AS trip_id,
             t.destination AS destination,
-            to_char(t.start_date, 'DD Mon YYYY') AS start_date,
-            to_char(t.end_date, 'DD Mon YYYY') AS end_date,
+            to_char(t.start_date, 'YYYY-MM-DD') AS start_date,
+            to_char(t.end_date, 'YYYY-MM-DD') AS end_date,
             tp.name AS name,
             tp.trip_place_id::text AS trip_place_id,
-            to_char(tp.date, 'DD Mon YYYY') AS date,
+            to_char(tp.date, 'YYYY-MM-DD') AS date,
             tp.google_maps_link::text AS google_maps_link
         FROM
             user_trips ut

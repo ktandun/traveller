@@ -1,12 +1,12 @@
-import gleam/string
 import database/sql
 import decode
 import gleam/io
 import gleam/list
+import gleam/option
 import gleam/pgo
 import gleam/result
 import shared/id.{type Id, type TripId, type TripPlaceId, type UserId}
-import shared/trip_models.{type CreateTripRequest}
+import shared/trip_models.{type CreateTripPlaceRequest, type CreateTripRequest}
 import traveller/database
 import traveller/error.{type AppError}
 import traveller/json_util
@@ -44,6 +44,29 @@ pub fn get_user_trips(
       )
     }),
   )
+}
+
+pub fn get_user_trip_dates_by_trip_id(
+  ctx: Context,
+  user_id: Id(UserId),
+  trip_id: Id(TripId),
+) -> Result(#(String, String), AppError) {
+  let user_id = uuid_util.from_string(id.id_value(user_id))
+  let trip_id = uuid_util.from_string(id.id_value(trip_id))
+
+  use query_result <- result.try(
+    sql.get_user_trip_dates_by_trip_id(ctx.db, user_id, trip_id)
+    |> database.to_app_error(),
+  )
+
+  use row <- database.require_single_row(
+    query_result,
+    "get_user_trip_dates_by_trip_id",
+  )
+
+  let sql.GetUserTripDatesByTripIdRow(start_date, end_date) = row
+
+  Ok(#(start_date, end_date))
 }
 
 pub fn create_user_trip(
@@ -143,6 +166,27 @@ pub fn delete_user_trip_place(
   let trip_place_id = uuid_util.from_string(id.id_value(trip_place_id))
 
   sql.delete_trip_place(ctx.db, user_id, trip_id, trip_place_id)
+  |> result.map(fn(_) { Nil })
+  |> database.to_app_error()
+}
+
+pub fn upsert_trip_place(
+  ctx: Context,
+  trip_id: Id(TripId),
+  trip_place_id: Id(TripPlaceId),
+  request: CreateTripPlaceRequest,
+) -> Result(Nil, AppError) {
+  let trip_id = id.id_value(trip_id)
+  let trip_place_id = id.id_value(trip_place_id)
+
+  sql.upsert_trip_place(
+    ctx.db,
+    trip_place_id,
+    trip_id,
+    request.place,
+    request.date,
+    request.google_maps_link |> option.unwrap(""),
+  )
   |> result.map(fn(_) { Nil })
   |> database.to_app_error()
 }

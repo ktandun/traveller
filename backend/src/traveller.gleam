@@ -1,7 +1,7 @@
-import gleam/io
-import setup
 import gleam/erlang/process
+import gleam/io
 import mist
+import setup
 import traveller/database
 import traveller/router
 import traveller/web

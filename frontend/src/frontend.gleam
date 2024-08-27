@@ -1,7 +1,8 @@
-import frontend/pages/trip_create_page
 import frontend/events.{type AppEvent, type AppModel, AppModel}
 import frontend/pages/login_page
+import frontend/pages/trip_create_page
 import frontend/pages/trip_details_page
+import frontend/pages/trip_place_create_page
 import frontend/pages/trips_dashboard_page
 import frontend/routes.{type Route}
 import gleam/uri.{type Uri}
@@ -48,6 +49,7 @@ fn path_to_route(path_segments: List(String)) -> Route {
     ["dashboard"] -> routes.TripsDashboard
     ["trips", "create"] -> routes.TripCreate
     ["trips", trip_id] -> routes.TripDetails(trip_id)
+    ["trips", trip_id, "places", "create"] -> routes.TripPlaceCreate(trip_id)
     _ -> routes.FourOFour
   }
 }
@@ -69,6 +71,8 @@ pub fn update(model: AppModel, msg: AppEvent) -> #(AppModel, Effect(AppEvent)) {
       trip_details_page.handle_trip_details_page_event(model, event)
     events.TripCreatePage(event) ->
       trip_create_page.handle_trip_create_page_event(model, event)
+    events.TripPlaceCreatePage(event) ->
+      trip_place_create_page.handle_trip_place_create_page_event(model, event)
   }
 }
 
@@ -77,6 +81,7 @@ pub fn view(app_model: AppModel) -> Element(AppEvent) {
     html.nav([], [
       html.a([attribute.href("/dashboard")], [element.text("Trips")]),
     ]),
+    html.hr([]),
     case app_model.route {
       routes.Login -> login_page.login_view(app_model)
       routes.Signup -> html.h1([], [element.text("Signup")])
@@ -84,8 +89,9 @@ pub fn view(app_model: AppModel) -> Element(AppEvent) {
         trips_dashboard_page.trips_dashboard_view(app_model)
       routes.TripDetails(_trip_id) ->
         trip_details_page.trip_details_view(app_model)
-      routes.TripCreate ->
-        trip_create_page.trip_create_view(app_model)
+      routes.TripCreate -> trip_create_page.trip_create_view(app_model)
+      routes.TripPlaceCreate(trip_id) ->
+        trip_place_create_page.trip_place_create_view(app_model, trip_id)
       routes.FourOFour -> html.h1([], [element.text("Not Found")])
     },
     case app_model.show_loading {

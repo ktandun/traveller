@@ -3,7 +3,9 @@ import gleam/bool
 import gleam/result
 import gleam/string
 import shared/id.{type Id, type TripId, type TripPlaceId, type UserId}
-import shared/trip_models.{type CreateTripRequest, type UserTrips}
+import shared/trip_models.{
+  type CreateTripPlaceRequest, type CreateTripRequest, type UserTrips,
+}
 import traveller/database/trips_db
 import traveller/date_util
 import traveller/error.{type AppError}
@@ -76,4 +78,36 @@ pub fn handle_delete_trip_place(
   trip_place_id: Id(TripPlaceId),
 ) {
   trips_db.delete_user_trip_place(ctx, user_id, trip_id, trip_place_id)
+}
+
+/// Creates a trip place for a user
+/// Ensures date is between trip start_date and end_date
+pub fn handle_create_trip_place(
+  ctx: Context,
+  user_id: Id(UserId),
+  trip_id: Id(TripId),
+  request: CreateTripPlaceRequest,
+) -> Result(Id(TripPlaceId), AppError) {
+  use #(start_date, end_date) <- result.try(
+    trips_db.get_user_trip_dates_by_trip_id(ctx, user_id, trip_id),
+  )
+
+  use is_date_valid <- result.try(date_util.is_date_within(
+    request.date,
+    start_date,
+    end_date,
+  ))
+
+  use <- bool.guard(!is_date_valid, Error(error.InvalidDateSpecified))
+
+  let trip_place_id = ctx.uuid_provider() |> uuid.to_string |> id.to_id()
+
+  use _ <- result.try(trips_db.upsert_trip_place(
+    ctx,
+    trip_id,
+    trip_place_id,
+    request,
+  ))
+
+  Ok(trip_place_id)
 }

@@ -14,6 +14,7 @@ import lustre/element
 import lustre/element/html
 import lustre/event
 import lustre_http
+import modem
 import shared/trip_models
 
 pub fn trip_details_view(app_model: AppModel) {
@@ -36,12 +37,21 @@ pub fn trip_details_view(app_model: AppModel) {
         ]),
       ]),
     ]),
-    html.button([], [
-      element.text(case app_model.trip_details.user_trip_places {
-        [] -> "Add First Place"
-        _ -> "Add More Places"
-      }),
-    ]),
+    html.button(
+      [
+        event.on_click(
+          events.TripDetailsPage(events.TripDetailsPageUserClickedCreatePlace(
+            app_model.trip_details.trip_id,
+          )),
+        ),
+      ],
+      [
+        element.text(case app_model.trip_details.user_trip_places {
+          [] -> "Add First Place"
+          _ -> "Add More Places"
+        }),
+      ],
+    ),
     html.table([], [
       html.thead([], [
         html.tr([], [
@@ -100,6 +110,14 @@ pub fn handle_trip_details_page_event(
     events.TripDetailsPageUserClickedRemovePlace(trip_place_id) -> #(
       model,
       delete_trip_place(model.trip_details.trip_id, trip_place_id),
+    )
+    events.TripDetailsPageUserClickedCreatePlace(trip_id) -> #(
+      model,
+      modem.push(
+        "/trips/" <> trip_id <> "/places/create",
+        option.None,
+        option.None,
+      ),
     )
   }
 }

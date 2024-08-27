@@ -1,8 +1,9 @@
 import frontend/routes.{type Route}
-import shared/auth_models
-import shared/id.{type Id, type UserId, type TripId}
-import shared/trip_models
+import gleam/dynamic
 import lustre_http.{type HttpError}
+import shared/auth_models
+import shared/id.{type Id, type TripId, type TripPlaceId, type UserId}
+import shared/trip_models
 
 pub type AppEvent {
   OnRouteChange(Route)
@@ -10,6 +11,7 @@ pub type AppEvent {
   TripsDashboardPage(TripsDashboardPageEvent)
   TripDetailsPage(TripDetailsPageEvent)
   TripCreatePage(TripCreatePageEvent)
+  TripPlaceCreatePage(TripPlaceCreatePageEvent)
 }
 
 pub type AppModel {
@@ -21,6 +23,8 @@ pub type AppModel {
     trip_details: trip_models.UserTripPlaces,
     trip_create: trip_models.CreateTripRequest,
     trip_create_errors: String,
+    trip_place_create: trip_models.CreateTripPlaceRequest,
+    trip_place_create_errors: String,
   )
 }
 
@@ -33,6 +37,8 @@ pub fn default_app_model() {
     trip_details: trip_models.default_user_trip_places(),
     trip_create: trip_models.default_create_trip_request(),
     trip_create_errors: "",
+    trip_place_create: trip_models.default_create_trip_place_request(),
+    trip_place_create_errors: "",
   )
 }
 
@@ -51,10 +57,22 @@ pub type TripsDashboardPageEvent {
 pub type TripDetailsPageEvent {
   TripDetailsPageApiReturnedTripDetails(trip_models.UserTripPlaces)
   TripDetailsPageUserClickedRemovePlace(trip_place_id: String)
+  TripDetailsPageUserClickedCreatePlace(trip_place_id: String)
 }
 
 pub type TripCreatePageEvent {
   TripCreatePageUserInputCreateTripRequest(trip_models.CreateTripRequest)
   TripCreatePageUserClickedCreateTrip
   TripCreatePageApiReturnedResponse(Result(Id(TripId), HttpError))
+}
+
+pub type TripPlaceCreatePageEvent {
+  TripPlaceCreatePageApiReturnedResponse(
+    trip_id: String,
+    Result(Id(TripPlaceId), HttpError),
+  )
+  TripPlaceCreatePageUserInputCreateTripPlaceRequest(
+    trip_models.CreateTripPlaceRequest,
+  )
+  TripPlaceCreatePageUserClickedSubmit(trip_id: String)
 }

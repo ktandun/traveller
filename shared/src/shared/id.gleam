@@ -1,6 +1,6 @@
-import gleam/string
 import decode
 import gleam/json
+import gleam/string
 
 pub type UserId
 

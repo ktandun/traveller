@@ -1,5 +1,7 @@
 import frontend/events.{type AppEvent, type AppModel}
 import frontend/routes
+import gleam/dynamic.{type Decoder}
+import gleam/json.{type Json}
 import lustre/effect.{type Effect}
 import lustre_http.{type HttpError}
 
@@ -20,4 +22,13 @@ pub fn require_ok(
       }
     }
   }
+}
+
+pub fn post(
+  url: String,
+  json: Json,
+  response_decoder: Decoder(b),
+  to_msg: fn(Result(b, HttpError)) -> AppEvent,
+) -> Effect(AppEvent) {
+  lustre_http.post(url, json, lustre_http.expect_json(response_decoder, to_msg))
 }

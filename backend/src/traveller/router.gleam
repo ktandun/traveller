@@ -40,7 +40,8 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
 
       case req.method {
         http.Get -> get_trips_places(req, ctx, user_id, trip_id)
-        _ -> wisp.method_not_allowed([http.Get])
+        http.Post -> post_trips_places(req, ctx, user_id, trip_id)
+        _ -> wisp.method_not_allowed([http.Get, http.Post])
       }
     }
     ["trips", trip_id, "places", trip_place_id] -> {
@@ -138,6 +139,33 @@ fn get_trips_places(
 
   user_trip_places
   |> trip_models.user_trip_places_encoder
+  |> json.to_string_builder
+  |> wisp.json_response(200)
+}
+
+fn post_trips_places(
+  req: Request,
+  ctx: Context,
+  user_id: Id(UserId),
+  trip_id: String,
+) {
+  let trip_id = id.to_id(trip_id)
+
+  use request_body <- wisp.require_string_body(req)
+  use create_trip_place_request <- web.require_valid_json(json_util.try_decode(
+    request_body,
+    trip_models.create_trip_place_request_decoder(),
+  ))
+
+  use trip_place_id <- web.require_ok(trip_routes.handle_create_trip_place(
+    ctx,
+    user_id,
+    trip_id,
+    create_trip_place_request,
+  ))
+
+  trip_place_id
+  |> id.id_encoder
   |> json.to_string_builder
   |> wisp.json_response(200)
 }

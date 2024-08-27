@@ -36,7 +36,6 @@ WHERE
   |> pgo.execute(db, [pgo.text(uuid.to_string(arg_1))], decode.from(decoder, _))
 }
 
-
 /// A row you get from running the `find_trip_by_trip_id` query
 /// defined in `./src/database/sql/find_trip_by_trip_id.sql`.
 ///
@@ -76,7 +75,6 @@ WHERE
   )
 }
 
-
 /// A row you get from running the `check_user_login` query
 /// defined in `./src/database/sql/check_user_login.sql`.
 ///
@@ -105,10 +103,50 @@ pub fn check_user_login(db, arg_1, arg_2) {
     check_user_login ($1, $2) AS user_id;
 
 "
-  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _),
-  )
+  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _))
 }
 
+/// A row you get from running the `get_user_trip_dates_by_trip_id` query
+/// defined in `./src/database/sql/get_user_trip_dates_by_trip_id.sql`.
+///
+/// > 🐿️ This type definition was generated automatically using v1.5.0 of the
+/// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub type GetUserTripDatesByTripIdRow {
+  GetUserTripDatesByTripIdRow(start_date: String, end_date: String)
+}
+
+/// Runs the `get_user_trip_dates_by_trip_id` query
+/// defined in `./src/database/sql/get_user_trip_dates_by_trip_id.sql`.
+///
+/// > 🐿️ This function was generated automatically using v1.5.0 of
+/// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub fn get_user_trip_dates_by_trip_id(db, arg_1, arg_2) {
+  let decoder =
+    decode.into({
+      use start_date <- decode.parameter
+      use end_date <- decode.parameter
+      GetUserTripDatesByTripIdRow(start_date: start_date, end_date: end_date)
+    })
+    |> decode.field(0, decode.string)
+    |> decode.field(1, decode.string)
+
+  "SELECT
+    start_date,
+    end_date
+FROM
+    trips_view()
+WHERE
+    user_id = $1
+    AND trip_id = $2;
+"
+  |> pgo.execute(
+    db,
+    [pgo.text(uuid.to_string(arg_1)), pgo.text(uuid.to_string(arg_2))],
+    decode.from(decoder, _),
+  )
+}
 
 /// A row you get from running the `create_user` query
 /// defined in `./src/database/sql/create_user.sql`.
@@ -139,10 +177,8 @@ pub fn create_user(db, arg_1, arg_2) {
 RETURNING
     user_id::TEXT
 "
-  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _),
-  )
+  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _))
 }
-
 
 /// A row you get from running the `get_user_trip_places` query
 /// defined in `./src/database/sql/get_user_trip_places.sql`.
@@ -208,7 +244,6 @@ WHERE
   )
 }
 
-
 /// A row you get from running the `create_trip` query
 /// defined in `./src/database/sql/create_trip.sql`.
 ///
@@ -250,6 +285,56 @@ pub fn create_trip(db, arg_1, arg_2, arg_3, arg_4, arg_5) {
   )
 }
 
+/// A row you get from running the `upsert_trip_place` query
+/// defined in `./src/database/sql/upsert_trip_place.sql`.
+///
+/// > 🐿️ This type definition was generated automatically using v1.5.0 of the
+/// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub type UpsertTripPlaceRow {
+  UpsertTripPlaceRow(upsert_trip_place: String)
+}
+
+/// Runs the `upsert_trip_place` query
+/// defined in `./src/database/sql/upsert_trip_place.sql`.
+///
+/// > 🐿️ This function was generated automatically using v1.5.0 of
+/// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub fn upsert_trip_place(db, arg_1, arg_2, arg_3, arg_4, arg_5) {
+  let decoder =
+    decode.into({
+      use upsert_trip_place <- decode.parameter
+      UpsertTripPlaceRow(upsert_trip_place: upsert_trip_place)
+    })
+    |> decode.field(0, decode.string)
+
+  "SELECT
+    upsert_trip_place (
+        -- trip_place_id text
+        $1,
+        --trip_id text
+        $2,
+        -- name text
+        $3,
+        -- date text
+        $4,
+        -- google_maps_link text
+        $5);
+
+"
+  |> pgo.execute(
+    db,
+    [
+      pgo.text(arg_1),
+      pgo.text(arg_2),
+      pgo.text(arg_3),
+      pgo.text(arg_4),
+      pgo.text(arg_5),
+    ],
+    decode.from(decoder, _),
+  )
+}
 
 /// Runs the `delete_trip_place` query
 /// defined in `./src/database/sql/delete_trip_place.sql`.
@@ -282,7 +367,6 @@ WHERE trip_id IN (
     decode.from(decoder, _),
   )
 }
-
 
 /// A row you get from running the `get_user_trips` query
 /// defined in `./src/database/sql/get_user_trips.sql`.
@@ -331,8 +415,8 @@ pub fn get_user_trips(db, arg_1) {
   "SELECT
     LOWER(t.trip_id::TEXT) AS trip_id,
     t.destination,
-    to_char(t.start_date, 'DD Mon YYYY') AS start_date,
-    to_char(t.end_date, 'DD Mon YYYY') AS end_date,
+    to_char(t.start_date, 'YYYY-MM-DD') AS start_date,
+    to_char(t.end_date, 'YYYY-MM-DD') AS end_date,
     COUNT(tp.trip_place_id) AS places_count
 FROM
     trips t
@@ -356,7 +440,6 @@ ORDER BY
 "
   |> pgo.execute(db, [pgo.text(uuid.to_string(arg_1))], decode.from(decoder, _))
 }
-
 
 /// A row you get from running the `find_user_by_email` query
 /// defined in `./src/database/sql/find_user_by_email.sql`.
@@ -391,7 +474,6 @@ WHERE
 "
   |> pgo.execute(db, [pgo.text(arg_1)], decode.from(decoder, _))
 }
-
 
 // --- UTILS -------------------------------------------------------------------
 

@@ -1,7 +1,7 @@
+import gleam/io
 import gleeunit/should
 import shared/auth_models
 import shared/id
-import gleam/io
 import test_utils
 import traveller/json_util
 import traveller/router

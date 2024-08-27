@@ -36,4 +36,3 @@ pub fn require_single_row(
     _ -> Error(error.QueryNotReturningSingleResult(error_desc))
   }
 }
-
