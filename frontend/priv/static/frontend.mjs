@@ -4785,18 +4785,27 @@ function view(app_model) {
             toList([text("Trips")])
           ),
           (() => {
-            let $ = is_empty(app_model.trip_details.destination);
-            if (!$) {
+            let $ = app_model.route;
+            if ($ instanceof TripDetails) {
+              let trip_id = $.trip_id;
               return span(
                 toList([]),
                 toList([
                   text(" > "),
                   a(
-                    toList([
-                      href(
-                        "/trips/" + app_model.trip_details.trip_id
-                      )
-                    ]),
+                    toList([href("/trips/" + trip_id)]),
+                    toList([text(app_model.trip_details.destination)])
+                  )
+                ])
+              );
+            } else if ($ instanceof TripPlaceCreate) {
+              let trip_id = $.trip_id;
+              return span(
+                toList([]),
+                toList([
+                  text(" > "),
+                  a(
+                    toList([href("/trips/" + trip_id)]),
                     toList([text(app_model.trip_details.destination)])
                   )
                 ])

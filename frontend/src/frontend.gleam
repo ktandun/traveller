@@ -86,16 +86,15 @@ pub fn view(app_model: AppModel) -> Element(AppEvent) {
   html.div([], [
     html.nav([], [
       html.a([attribute.href("/dashboard")], [element.text("Trips")]),
-      case string.is_empty(app_model.trip_details.destination) {
-        False ->
+      case app_model.route {
+        routes.TripDetails(trip_id) | routes.TripPlaceCreate(trip_id) ->
           html.span([], [
             element.text(" > "),
-            html.a(
-              [attribute.href("/trips/" <> app_model.trip_details.trip_id)],
-              [element.text(app_model.trip_details.destination)],
-            ),
+            html.a([attribute.href("/trips/" <> trip_id)], [
+              element.text(app_model.trip_details.destination),
+            ]),
           ])
-        True -> html.span([], [])
+        _ -> html.span([], [])
       },
     ]),
     html.hr([]),
