@@ -6,6 +6,8 @@ pub type UserId
 
 pub type TripId
 
+pub type TripCompanionId
+
 pub type TripPlaceId
 
 pub opaque type Id(entity) {

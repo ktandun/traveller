@@ -1,12 +1,14 @@
 import database/sql
 import decode
-import gleam/io
 import gleam/list
 import gleam/option
 import gleam/pgo
 import gleam/result
+import gleam/string
 import shared/id.{type Id, type TripId, type TripPlaceId, type UserId}
-import shared/trip_models.{type CreateTripPlaceRequest, type CreateTripRequest}
+import shared/trip_models.{
+  type CreateTripPlaceRequest, type CreateTripRequest, type TripCompanion,
+}
 import traveller/database
 import traveller/error.{type AppError}
 import traveller/json_util
@@ -194,6 +196,41 @@ pub fn upsert_trip_place(
     request.date,
     request.google_maps_link |> option.unwrap(""),
   )
+  |> result.map(fn(_) { Nil })
+  |> database.to_app_error()
+}
+
+pub fn upsert_trip_companion(
+  ctx: Context,
+  trip_id: Id(TripId),
+  request: List(TripCompanion),
+) -> Result(List(Nil), AppError) {
+  let trip_id = id.id_value(trip_id)
+
+  request
+  |> list.map(fn(companion) {
+    let trip_companion_id = case string.is_empty(companion.trip_companion_id) {
+      True -> ctx.uuid_provider() |> uuid.to_string
+      False -> companion.trip_companion_id
+    }
+
+    sql.upsert_trip_companion(
+      ctx.db,
+      trip_companion_id,
+      trip_id,
+      companion.name,
+      companion.email,
+    )
+    |> result.map(fn(_) { Nil })
+    |> database.to_app_error()
+  })
+  |> result.all
+}
+
+pub fn delete_trip_companions(ctx: Context, trip_id: Id(TripId)) {
+  let trip_id = id.id_value(trip_id)
+
+  sql.delete_trip_companions(ctx.db, trip_id)
   |> result.map(fn(_) { Nil })
   |> database.to_app_error()
 }

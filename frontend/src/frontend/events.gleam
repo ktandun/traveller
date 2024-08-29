@@ -1,8 +1,9 @@
 import frontend/routes.{type Route}
+import gleam/dynamic.{type Dynamic}
 import lustre_http.{type HttpError}
 import shared/auth_models
 import shared/id.{type Id, type TripId, type TripPlaceId, type UserId}
-import shared/trip_models
+import shared/trip_models.{type UserTripCompanion}
 
 pub type AppEvent {
   OnRouteChange(Route)
@@ -79,6 +80,12 @@ pub type TripPlaceCreatePageEvent {
 }
 
 pub type TripCompanionsPageEvent {
+  TripCompanionsPageUserClickedRemoveCompanion(trip_companion_id: String)
+  TripCompanionsPageUserUpdatedCompanion(UserTripCompanion)
   TripCompanionsPageUserClickedAddMoreCompanion
   TripCompanionsPageUserClickedSaveCompanions(trip_id: String)
+  TripCompanionsPageApiReturnedResponse(
+    trip_id: String,
+    Result(Dynamic, HttpError),
+  )
 }

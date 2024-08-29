@@ -50,6 +50,18 @@ END
 $f$
 LANGUAGE PLPGSQL;
 
+CREATE OR REPLACE FUNCTION delete_trip_companions (trip_id text)
+    RETURNS text
+    AS $f$
+BEGIN
+    DELETE FROM trip_companions tc
+    WHERE tc.trip_id = delete_trip_companions.trip_id::uuid;
+    --
+    RETURN 'OK';
+END
+$f$
+LANGUAGE PLPGSQL;
+
 CREATE OR REPLACE FUNCTION upsert_trip_companion (trip_companion_id text, trip_id text, name text, email text)
     RETURNS text
     AS $f$

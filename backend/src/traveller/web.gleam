@@ -1,6 +1,5 @@
 import database/sql
 import gleam/dynamic
-import gleam/http
 import gleam/int
 import gleam/json.{type DecodeError, type Json}
 import gleam/pgo.{
@@ -103,9 +102,11 @@ pub fn error_to_response(error: AppError) -> Response {
       [#("title", json.string("QUERY_NOT_RETURNING_SINGLE_ROW:" <> e))]
       |> json.object()
       |> json_with_status(400)
-
     error.InvalidUUIDString(e) ->
-      [#("title", json.string("INVALID_UUID_STRING"))]
+      [
+        #("title", json.string("INVALID_UUID_STRING")),
+        #("detail", json.string(e)),
+      ]
       |> json.object()
       |> json_with_status(400)
     error.UserUnauthenticated -> error.user_unauthenticated()

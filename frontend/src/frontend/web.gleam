@@ -18,7 +18,7 @@ pub fn require_ok(
           events.AppModel(..model, route: routes.Login),
           effect.none(),
         )
-        _ -> todo
+        _ -> #(model, effect.none())
       }
     }
   }

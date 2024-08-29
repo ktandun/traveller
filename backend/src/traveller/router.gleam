@@ -44,6 +44,14 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
         _ -> wisp.method_not_allowed([http.Get, http.Post])
       }
     }
+    ["trips", trip_id, "companions"] -> {
+      use user_id <- web.require_authenticated(req, ctx)
+
+      case req.method {
+        http.Post -> post_trip_companions(req, ctx, user_id, trip_id)
+        _ -> wisp.method_not_allowed([http.Post])
+      }
+    }
     ["trips", trip_id, "places", trip_place_id] -> {
       use user_id <- web.require_authenticated(req, ctx)
 
@@ -185,6 +193,32 @@ fn delete_trip_place(
     user_id,
     trip_id,
     trip_place_id,
+  ))
+
+  wisp.ok()
+}
+
+fn post_trip_companions(
+  req: Request,
+  ctx: Context,
+  user_id: Id(UserId),
+  trip_id: String,
+) {
+  let trip_id = id.to_id(trip_id)
+
+  use request_body <- wisp.require_string_body(req)
+  use trip_companions_update_request <- web.require_valid_json(
+    json_util.try_decode(
+      request_body,
+      trip_models.update_trip_companions_request_decoder(),
+    ),
+  )
+
+  use _ <- web.require_ok(trip_routes.handle_update_trip_companions(
+    ctx,
+    user_id,
+    trip_id,
+    trip_companions_update_request,
   ))
 
   wisp.ok()

@@ -97,8 +97,8 @@ pub fn view(app_model: AppModel) -> Element(AppEvent) {
         trips_dashboard_page.trips_dashboard_view(app_model)
       routes.TripDetails(_trip_id) ->
         trip_details_page.trip_details_view(app_model)
-      routes.TripCompanions(_trip_id) ->
-        trip_companions_page.trip_companions_view(app_model)
+      routes.TripCompanions(trip_id) ->
+        trip_companions_page.trip_companions_view(app_model, trip_id)
       routes.TripCreate -> trip_create_page.trip_create_view(app_model)
       routes.TripPlaceCreate(trip_id) ->
         trip_place_create_page.trip_place_create_view(app_model, trip_id)

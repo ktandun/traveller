@@ -346,6 +346,9 @@ function do_reverse(loop$remaining, loop$accumulator) {
 function reverse(xs) {
   return do_reverse(xs, toList([]));
 }
+function is_empty(list3) {
+  return isEqual(list3, toList([]));
+}
 function first(list3) {
   if (list3.hasLength(0)) {
     return new Error(void 0);
@@ -353,6 +356,33 @@ function first(list3) {
     let x = list3.head;
     return new Ok(x);
   }
+}
+function do_filter(loop$list, loop$fun, loop$acc) {
+  while (true) {
+    let list3 = loop$list;
+    let fun = loop$fun;
+    let acc = loop$acc;
+    if (list3.hasLength(0)) {
+      return reverse(acc);
+    } else {
+      let x = list3.head;
+      let xs = list3.tail;
+      let new_acc = (() => {
+        let $ = fun(x);
+        if ($) {
+          return prepend(x, acc);
+        } else {
+          return acc;
+        }
+      })();
+      loop$list = xs;
+      loop$fun = fun;
+      loop$acc = new_acc;
+    }
+  }
+}
+function filter(list3, predicate) {
+  return do_filter(list3, predicate, toList([]));
 }
 function do_map(loop$list, loop$fun, loop$acc) {
   while (true) {
@@ -584,6 +614,9 @@ var DecodeError = class extends CustomType {
     this.path = path;
   }
 };
+function dynamic(value4) {
+  return new Ok(value4);
+}
 function classify(data) {
   return classify_dynamic(data);
 }
@@ -638,9 +671,9 @@ function push_path(error, name3) {
   return error.withFields({ path: prepend(name$2, error.path) });
 }
 function list(decoder_type) {
-  return (dynamic) => {
+  return (dynamic2) => {
     return try$(
-      shallow_list(dynamic),
+      shallow_list(dynamic2),
       (list3) => {
         let _pipe = list3;
         let _pipe$1 = try_map(_pipe, decoder_type);
@@ -1582,7 +1615,7 @@ function try_get_field2(value4, field3, or_else) {
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/string.mjs
-function is_empty(str) {
+function is_empty2(str) {
   return str === "";
 }
 function lowercase2(string4) {
@@ -1903,6 +1936,9 @@ function object(entries) {
 function identity2(x) {
   return x;
 }
+function array(list3) {
+  return list3.toArray();
+}
 function do_null() {
   return null;
 }
@@ -2045,6 +2081,14 @@ function nullable(input2, inner_type) {
 }
 function object2(entries) {
   return object(entries);
+}
+function preprocessed_array(from3) {
+  return array(from3);
+}
+function array2(entries, inner_type) {
+  let _pipe = entries;
+  let _pipe$1 = map2(_pipe, inner_type);
+  return preprocessed_array(_pipe$1);
 }
 
 // build/dev/javascript/lustre/lustre/effect.mjs
@@ -2718,7 +2762,7 @@ var defaults = {
   handle_external_links: false,
   handle_internal_links: true
 };
-var initial_location = globalThis.window && window?.location?.href;
+var initial_location = window?.location?.href;
 var do_initial_uri = () => {
   if (!initial_location) {
     return new Error(void 0);
@@ -3515,6 +3559,20 @@ var CreateTripPlaceRequest = class extends CustomType {
     this.google_maps_link = google_maps_link;
   }
 };
+var UpdateTripCompanionsRequest = class extends CustomType {
+  constructor(trip_companions) {
+    super();
+    this.trip_companions = trip_companions;
+  }
+};
+var TripCompanion = class extends CustomType {
+  constructor(trip_companion_id, name3, email) {
+    super();
+    this.trip_companion_id = trip_companion_id;
+    this.name = name3;
+    this.email = email;
+  }
+};
 function user_trip_decoder() {
   let _pipe = into(
     parameter(
@@ -3696,6 +3754,25 @@ function create_trip_place_request_encoder(data) {
     ])
   );
 }
+function trip_companion_encoder(data) {
+  return object2(
+    toList([
+      ["trip_companion_id", string2(data.trip_companion_id)],
+      ["name", string2(data.name)],
+      ["email", string2(data.email)]
+    ])
+  );
+}
+function update_trip_companions_request_encoder(data) {
+  return object2(
+    toList([
+      [
+        "trip_companions",
+        array2(data.trip_companions, trip_companion_encoder)
+      ]
+    ])
+  );
+}
 
 // build/dev/javascript/frontend/frontend/routes.mjs
 var Login = class extends CustomType {
@@ -3869,9 +3946,32 @@ var TripPlaceCreatePageUserClickedSubmit = class extends CustomType {
     this.trip_id = trip_id;
   }
 };
+var TripCompanionsPageUserClickedRemoveCompanion = class extends CustomType {
+  constructor(trip_companion_id) {
+    super();
+    this.trip_companion_id = trip_companion_id;
+  }
+};
+var TripCompanionsPageUserUpdatedCompanion = class extends CustomType {
+  constructor(x0) {
+    super();
+    this[0] = x0;
+  }
+};
 var TripCompanionsPageUserClickedAddMoreCompanion = class extends CustomType {
 };
 var TripCompanionsPageUserClickedSaveCompanions = class extends CustomType {
+  constructor(trip_id) {
+    super();
+    this.trip_id = trip_id;
+  }
+};
+var TripCompanionsPageApiReturnedResponse = class extends CustomType {
+  constructor(trip_id, x1) {
+    super();
+    this.trip_id = trip_id;
+    this[1] = x1;
+  }
 };
 function default_app_model() {
   return new AppModel(
@@ -4026,19 +4126,130 @@ function handle_login_page_event(model, event2) {
   }
 }
 
+// build/dev/javascript/frontend/frontend/uuid_util.mjs
+function gen_uuid() {
+  return crypto.randomUUID();
+}
+
+// build/dev/javascript/frontend/frontend/web.mjs
+function post2(url, json, response_decoder, to_msg) {
+  return post(
+    url,
+    json,
+    expect_json(response_decoder, to_msg)
+  );
+}
+
 // build/dev/javascript/frontend/frontend/pages/trip_companions_page.mjs
 function handle_trip_companions_page_event(model, event2) {
   if (event2 instanceof TripCompanionsPageUserClickedSaveCompanions) {
-    return [model, none()];
-  } else {
-    let companions = model.trip_details.user_trip_companions;
+    let trip_id = event2.trip_id;
+    let update_trip_companions_request = new UpdateTripCompanionsRequest(
+      (() => {
+        let _pipe = model.trip_details.user_trip_companions;
+        return map2(
+          _pipe,
+          (companion) => {
+            return new TripCompanion(
+              companion.trip_companion_id,
+              companion.name,
+              companion.email
+            );
+          }
+        );
+      })()
+    );
+    return [
+      model,
+      post2(
+        "http://localhost:8080/api/trips/" + trip_id + "/companions",
+        update_trip_companions_request_encoder(
+          update_trip_companions_request
+        ),
+        (response) => {
+          return dynamic(response);
+        },
+        (decode_result2) => {
+          return new TripCompanionsPage(
+            new TripCompanionsPageApiReturnedResponse(
+              trip_id,
+              decode_result2
+            )
+          );
+        }
+      )
+    ];
+  } else if (event2 instanceof TripCompanionsPageApiReturnedResponse) {
+    let trip_id = event2.trip_id;
+    let response = event2[1];
+    if (response.isOk()) {
+      return [
+        model,
+        push("/trips/" + trip_id, new None2(), new None2())
+      ];
+    } else {
+      let e = response[0];
+      if (e instanceof OtherError && e[0] === 400) {
+        return [model, none()];
+      } else if (e instanceof OtherError && e[0] === 401) {
+        return [
+          model,
+          push("/login", new None2(), new None2())
+        ];
+      } else {
+        return [model, none()];
+      }
+    }
+  } else if (event2 instanceof TripCompanionsPageUserUpdatedCompanion) {
+    let companion = event2[0];
     return [
       model.withFields({
         trip_details: model.trip_details.withFields({
-          user_trip_companions: prepend(
-            default_user_trip_companion(),
-            companions
-          )
+          user_trip_companions: (() => {
+            let _pipe = model.trip_details.user_trip_companions;
+            return map2(
+              _pipe,
+              (trip_companion) => {
+                let $ = trip_companion.trip_companion_id === companion.trip_companion_id;
+                if ($) {
+                  return companion;
+                } else {
+                  return trip_companion;
+                }
+              }
+            );
+          })()
+        })
+      }),
+      none()
+    ];
+  } else if (event2 instanceof TripCompanionsPageUserClickedRemoveCompanion) {
+    let trip_companion_id = event2.trip_companion_id;
+    return [
+      model.withFields({
+        trip_details: model.trip_details.withFields({
+          user_trip_companions: (() => {
+            let _pipe = model.trip_details.user_trip_companions;
+            return filter(
+              _pipe,
+              (companion) => {
+                return companion.trip_companion_id !== trip_companion_id;
+              }
+            );
+          })()
+        })
+      }),
+      none()
+    ];
+  } else {
+    let companions = model.trip_details.user_trip_companions;
+    let new_companion = default_user_trip_companion().withFields({
+      trip_companion_id: gen_uuid()
+    });
+    return [
+      model.withFields({
+        trip_details: model.trip_details.withFields({
+          user_trip_companions: prepend(new_companion, companions)
         })
       }),
       none()
@@ -4054,14 +4265,11 @@ function companion_input(companion) {
         input(
           toList([
             on_input(
-              (_) => {
-                throw makeError(
-                  "todo",
-                  "frontend/pages/trip_companions_page",
-                  82,
-                  "",
-                  "This has not yet been implemented",
-                  {}
+              (name3) => {
+                return new TripCompanionsPage(
+                  new TripCompanionsPageUserUpdatedCompanion(
+                    companion.withFields({ name: name3 })
+                  )
                 );
               }
             ),
@@ -4081,14 +4289,11 @@ function companion_input(companion) {
         input(
           toList([
             on_input(
-              (_) => {
-                throw makeError(
-                  "todo",
-                  "frontend/pages/trip_companions_page",
-                  93,
-                  "",
-                  "This has not yet been implemented",
-                  {}
+              (email) => {
+                return new TripCompanionsPage(
+                  new TripCompanionsPageUserUpdatedCompanion(
+                    companion.withFields({ email })
+                  )
                 );
               }
             ),
@@ -4100,10 +4305,28 @@ function companion_input(companion) {
         ),
         span(toList([class$("validity")]), toList([]))
       ])
+    ),
+    div(
+      toList([]),
+      toList([
+        button(
+          toList([
+            type_("button"),
+            on_click(
+              new TripCompanionsPage(
+                new TripCompanionsPageUserClickedRemoveCompanion(
+                  companion.trip_companion_id
+                )
+              )
+            )
+          ]),
+          toList([text("\u274C")])
+        )
+      ])
     )
   ]);
 }
-function trip_companions_view(app_model) {
+function trip_companions_view(app_model, trip_id) {
   return div(
     toList([]),
     toList([
@@ -4119,13 +4342,28 @@ function trip_companions_view(app_model) {
                 )
               )
             ]),
-            toList([text("Add More")])
+            toList([
+              text(
+                (() => {
+                  let $ = is_empty(
+                    app_model.trip_details.user_trip_companions
+                  );
+                  if ($) {
+                    return "Add First Companion";
+                  } else {
+                    return "Add More Companions";
+                  }
+                })()
+              )
+            ])
           ),
           button(
             toList([
               on_click(
                 new TripCompanionsPage(
-                  new TripCompanionsPageUserClickedSaveCompanions()
+                  new TripCompanionsPageUserClickedSaveCompanions(
+                    trip_id
+                  )
                 )
               )
             ]),
@@ -4603,15 +4841,6 @@ function load_trip_details(trip_id) {
   );
 }
 
-// build/dev/javascript/frontend/frontend/web.mjs
-function post2(url, json, response_decoder, to_msg) {
-  return post(
-    url,
-    json,
-    expect_json(response_decoder, to_msg)
-  );
-}
-
 // build/dev/javascript/frontend/frontend/pages/trip_place_create_page.mjs
 function trip_place_create_view(app_model, trip_id) {
   return div(
@@ -4988,7 +5217,7 @@ function update(model, msg) {
           return load_trips_dashboard();
         } else if (route instanceof TripPlaceCreate) {
           let trip_id = route.trip_id;
-          let $ = is_empty(model.trip_details.destination);
+          let $ = is_empty2(model.trip_details.destination);
           if ($) {
             return load_trip_details(trip_id);
           } else {
@@ -4996,7 +5225,7 @@ function update(model, msg) {
           }
         } else if (route instanceof TripCompanions) {
           let trip_id = route.trip_id;
-          let $ = is_empty(model.trip_details.destination);
+          let $ = is_empty2(model.trip_details.destination);
           if ($) {
             return load_trip_details(trip_id);
           } else {
@@ -5103,7 +5332,8 @@ function view(app_model) {
         } else if ($ instanceof TripDetails) {
           return trip_details_view(app_model);
         } else if ($ instanceof TripCompanions) {
-          return trip_companions_view(app_model);
+          let trip_id = $.trip_id;
+          return trip_companions_view(app_model, trip_id);
         } else if ($ instanceof TripCreate) {
           return trip_create_view(app_model);
         } else if ($ instanceof TripPlaceCreate) {

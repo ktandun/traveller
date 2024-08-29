@@ -1,10 +1,12 @@
 import birl
 import gleam/bool
+import gleam/list
 import gleam/result
 import gleam/string
 import shared/id.{type Id, type TripId, type TripPlaceId, type UserId}
 import shared/trip_models.{
-  type CreateTripPlaceRequest, type CreateTripRequest, type UserTrips,
+  type CreateTripPlaceRequest, type CreateTripRequest,
+  type UpdateTripCompanionsRequest, type UserTrips,
 }
 import traveller/database/trips_db
 import traveller/date_util
@@ -110,4 +112,23 @@ pub fn handle_create_trip_place(
   ))
 
   Ok(trip_place_id)
+}
+
+pub fn handle_update_trip_companions(
+  ctx: Context,
+  user_id: Id(UserId),
+  trip_id: Id(TripId),
+  request: UpdateTripCompanionsRequest,
+) -> Result(List(Nil), AppError) {
+  use _ <- result.try(trips_db.ensure_trip_id_exists(ctx, user_id, trip_id))
+
+  let request =
+    request.trip_companions
+    |> list.filter(fn(companion) {
+      !string.is_empty(companion.name) && !string.is_empty(companion.email)
+    })
+
+  use _ <- result.try(trips_db.delete_trip_companions(ctx, trip_id))
+
+  trips_db.upsert_trip_companion(ctx, trip_id, request)
 }

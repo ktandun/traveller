@@ -1,5 +1,6 @@
 import decode
 import gleam/json
+import gleam/list
 import gleam/option.{type Option}
 
 //
@@ -262,4 +263,53 @@ pub fn create_trip_place_request_encoder(data: CreateTripPlaceRequest) {
     #("date", json.string(data.date)),
     #("google_maps_link", json.nullable(data.google_maps_link, of: json.string)),
   ])
+}
+
+//
+
+pub type UpdateTripCompanionsRequest {
+  UpdateTripCompanionsRequest(trip_companions: List(TripCompanion))
+}
+
+pub type TripCompanion {
+  TripCompanion(trip_companion_id: String, name: String, email: String)
+}
+
+pub fn update_trip_companions_request_encoder(data: UpdateTripCompanionsRequest) {
+  json.object([
+    #(
+      "trip_companions",
+      json.array(from: data.trip_companions, of: trip_companion_encoder),
+    ),
+  ])
+}
+
+pub fn trip_companion_encoder(data: TripCompanion) {
+  json.object([
+    #("trip_companion_id", json.string(data.trip_companion_id)),
+    #("name", json.string(data.name)),
+    #("email", json.string(data.email)),
+  ])
+}
+
+pub fn update_trip_companions_request_decoder() {
+  decode.into({
+    use trip_companions <- decode.parameter
+
+    UpdateTripCompanionsRequest(trip_companions:)
+  })
+  |> decode.field("trip_companions", decode.list(trip_companion_decoder()))
+}
+
+pub fn trip_companion_decoder() {
+  decode.into({
+    use trip_companion_id <- decode.parameter
+    use name <- decode.parameter
+    use email <- decode.parameter
+
+    TripCompanion(trip_companion_id:, name:, email:)
+  })
+  |> decode.field("trip_companion_id", decode.string)
+  |> decode.field("name", decode.string)
+  |> decode.field("email", decode.string)
 }

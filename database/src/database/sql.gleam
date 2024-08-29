@@ -110,6 +110,50 @@ pub fn check_user_login(db, arg_1, arg_2) {
 }
 
 
+/// A row you get from running the `upsert_trip_companion` query
+/// defined in `./src/database/sql/upsert_trip_companion.sql`.
+///
+/// > 🐿️ This type definition was generated automatically using v1.5.0 of the
+/// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub type UpsertTripCompanionRow {
+  UpsertTripCompanionRow(upsert_trip_companion: String)
+}
+
+/// Runs the `upsert_trip_companion` query
+/// defined in `./src/database/sql/upsert_trip_companion.sql`.
+///
+/// > 🐿️ This function was generated automatically using v1.5.0 of
+/// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub fn upsert_trip_companion(db, arg_1, arg_2, arg_3, arg_4) {
+  let decoder =
+    decode.into({
+      use upsert_trip_companion <- decode.parameter
+      UpsertTripCompanionRow(upsert_trip_companion: upsert_trip_companion)
+    })
+    |> decode.field(0, decode.string)
+
+  "SELECT
+    upsert_trip_companion (
+        -- trip_companion_id TEXT
+        $1,
+        -- trip_id TEXT
+        $2,
+        -- name TEXT
+        $3,
+        -- email TEXT
+        $4);
+
+"
+  |> pgo.execute(
+    db,
+    [pgo.text(arg_1), pgo.text(arg_2), pgo.text(arg_3), pgo.text(arg_4)],
+    decode.from(decoder, _),
+  )
+}
+
+
 /// A row you get from running the `get_user_trip_dates_by_trip_id` query
 /// defined in `./src/database/sql/get_user_trip_dates_by_trip_id.sql`.
 ///
@@ -151,6 +195,40 @@ WHERE
     [pgo.text(uuid.to_string(arg_1)), pgo.text(uuid.to_string(arg_2))],
     decode.from(decoder, _),
   )
+}
+
+
+/// A row you get from running the `delete_trip_companions` query
+/// defined in `./src/database/sql/delete_trip_companions.sql`.
+///
+/// > 🐿️ This type definition was generated automatically using v1.5.0 of the
+/// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub type DeleteTripCompanionsRow {
+  DeleteTripCompanionsRow(delete_trip_companions: String)
+}
+
+/// Runs the `delete_trip_companions` query
+/// defined in `./src/database/sql/delete_trip_companions.sql`.
+///
+/// > 🐿️ This function was generated automatically using v1.5.0 of
+/// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub fn delete_trip_companions(db, arg_1) {
+  let decoder =
+    decode.into({
+      use delete_trip_companions <- decode.parameter
+      DeleteTripCompanionsRow(delete_trip_companions: delete_trip_companions)
+    })
+    |> decode.field(0, decode.string)
+
+  "SELECT
+    delete_trip_companions (
+        -- trip_id
+        $1);
+
+"
+  |> pgo.execute(db, [pgo.text(arg_1)], decode.from(decoder, _))
 }
 
 

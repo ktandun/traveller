@@ -10,13 +10,6 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: public; Type: SCHEMA; Schema: -; Owner: -
---
-
--- *not* creating schema, since initdb creates it
-
-
---
 -- Name: pgcrypto; Type: EXTENSION; Schema: -; Owner: -
 --
 
@@ -80,6 +73,22 @@ CREATE FUNCTION public.create_user(user_id text, email text, password text) RETU
 BEGIN
     INSERT INTO users (user_id, email, PASSWORD)
         VALUES (create_user.user_id::uuid, create_user.email, create_user.password);
+END
+$$;
+
+
+--
+-- Name: delete_trip_companions(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.delete_trip_companions(trip_id text) RETURNS text
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    DELETE FROM trip_companions tc
+    WHERE tc.trip_id = delete_trip_companions.trip_id::uuid;
+    --
+    RETURN 'OK';
 END
 $$;
 
