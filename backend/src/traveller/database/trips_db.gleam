@@ -116,11 +116,17 @@ pub fn get_user_trip_places(
     start_date,
     end_date,
     places,
+    companions,
   ) = row
 
   use user_trip_places <- result.try(json_util.try_decode(
     places,
     trip_models.user_trip_place_decoder() |> decode.list(),
+  ))
+
+  use user_trip_companions <- result.try(json_util.try_decode(
+    companions,
+    trip_models.user_trip_companion_decoder() |> decode.list(),
   ))
 
   Ok(trip_models.UserTripPlaces(
@@ -129,6 +135,7 @@ pub fn get_user_trip_places(
     start_date:,
     end_date:,
     user_trip_places:,
+    user_trip_companions:,
   ))
 }
 

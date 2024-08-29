@@ -4,6 +4,7 @@ pub type Route {
   TripsDashboard
   TripDetails(trip_id: String)
   TripPlaceCreate(trip_id: String)
+  TripCompanions(trip_id: String)
   TripCreate
   FourOFour
 }

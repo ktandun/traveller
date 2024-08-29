@@ -88,27 +88,40 @@ $$;
 -- Name: trips_view(); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.trips_view() RETURNS TABLE(user_id uuid, trip_id uuid, destination character varying, start_date text, end_date text, places json)
+CREATE FUNCTION public.trips_view() RETURNS TABLE(user_id uuid, trip_id uuid, destination character varying, start_date text, end_date text, places json, companions json)
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    RETURN QUERY WITH trip_places AS (
+    RETURN QUERY WITH companions AS (
         SELECT
-            ut.user_id AS user_id,
-            t.trip_id AS trip_id,
-            t.destination AS destination,
-            to_char(t.start_date, 'YYYY-MM-DD') AS start_date,
-            to_char(t.end_date, 'YYYY-MM-DD') AS end_date,
-            tp.name AS name,
-            tp.trip_place_id::text AS trip_place_id,
-            to_char(tp.date, 'YYYY-MM-DD') AS date,
-            tp.google_maps_link::text AS google_maps_link
+            tc.trip_id,
+            json_agg(json_build_object('trip_companion_id', tc.trip_companion_id, 'name', name, 'email', tc.email)) AS companions
         FROM
-            user_trips ut
+            trip_companions tc
+        GROUP BY
+            tc.trip_id
+),
+places AS (
+    SELECT
+        tp.trip_id,
+        json_agg(json_build_object('trip_place_id', tp.trip_place_id, 'name', tp.name, 'date', to_char(tp.date, 'YYYY-MM-DD'), 'google_maps_link', tp.google_maps_link)) AS places
+    FROM
+        trip_places tp
+    GROUP BY
+        tp.trip_id
+),
+trips AS (
+    SELECT
+        ut.user_id AS user_id,
+        t.trip_id AS trip_id,
+        t.destination AS destination,
+        to_char(t.start_date, 'YYYY-MM-DD') AS start_date,
+        to_char(t.end_date, 'YYYY-MM-DD') AS end_date
+    FROM
+        user_trips ut
         LEFT JOIN trips t ON ut.trip_id = t.trip_id
-        LEFT JOIN trip_places tp ON t.trip_id = tp.trip_id
     ORDER BY
-        tp.date ASC
+        t.start_date ASC
 )
 SELECT
     tp.user_id,
@@ -116,20 +129,49 @@ SELECT
     tp.destination,
     tp.start_date,
     tp.end_date,
-    CASE WHEN COUNT(tp.trip_place_id) = 0 THEN
-        '[]'::json
-    ELSE
-        json_agg(json_build_object('name', name, 'trip_place_id', tp.trip_place_id, 'date', tp.date, 'google_maps_link', tp.google_maps_link))
-    END AS places
+    coalesce(p.places, '[]'::json) AS places,
+    COALESCE(c.companions, '[]'::json) AS companions
 FROM
-    trip_places tp
-GROUP BY
-    tp.user_id,
-    tp.trip_id,
-    tp.destination,
-    tp.start_date,
-    tp.end_date;
+    trips tp
+    LEFT JOIN companions c ON tp.trip_id = c.trip_id
+    LEFT JOIN places p ON tp.trip_id = p.trip_id;
 END;
+$$;
+
+
+--
+-- Name: upsert_trip_companion(text, text, text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.upsert_trip_companion(trip_companion_id text, trip_id text, name text, email text) RETURNS text
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT
+            1
+        FROM
+            trip_companions tc
+        WHERE
+            tc.trip_companion_id = upsert_trip_companion.trip_companion_id::uuid) THEN
+    INSERT INTO trip_companions (trip_companion_id, trip_id, name, email)
+    SELECT
+        upsert_trip_companion.trip_companion_id::uuid,
+        upsert_trip_companion.trip_id::uuid,
+        upsert_trip_companion.name,
+        upsert_trip_companion.email;
+ELSE
+    UPDATE
+        trip_companions tc
+    SET
+        name = upsert_trip_companion.name,
+        email = upsert_trip_companion.email
+    WHERE
+        tc.trip_companion_id = upsert_trip_companion.trip_companion_id::uuid;
+END IF;
+    --
+    RETURN upsert_trip_companion.trip_companion_id;
+END
 $$;
 
 
@@ -185,12 +227,24 @@ CREATE TABLE public.schema_migrations (
 
 
 --
+-- Name: trip_companions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.trip_companions (
+    trip_companion_id uuid NOT NULL,
+    trip_id uuid NOT NULL,
+    name character varying(255) NOT NULL,
+    email character varying(255) NOT NULL
+);
+
+
+--
 -- Name: trip_places; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.trip_places (
     trip_place_id uuid NOT NULL,
-    trip_id uuid,
+    trip_id uuid NOT NULL,
     name character varying(255) NOT NULL,
     date date NOT NULL,
     google_maps_link text
@@ -240,6 +294,14 @@ ALTER TABLE ONLY public.schema_migrations
 
 
 --
+-- Name: trip_companions trip_companions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.trip_companions
+    ADD CONSTRAINT trip_companions_pkey PRIMARY KEY (trip_companion_id);
+
+
+--
 -- Name: trip_places trip_places_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -277,6 +339,14 @@ ALTER TABLE ONLY public.users
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (user_id);
+
+
+--
+-- Name: trip_companions trip_companions_trip_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.trip_companions
+    ADD CONSTRAINT trip_companions_trip_id_fkey FOREIGN KEY (trip_id) REFERENCES public.trips(trip_id);
 
 
 --

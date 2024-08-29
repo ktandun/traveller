@@ -1,3 +1,4 @@
+import gleam/io
 import gleam/dynamic.{type DecodeErrors}
 import gleam/json.{type DecodeError}
 import gleam/pgo.{type QueryError}
@@ -17,7 +18,9 @@ pub type AppError {
   InvalidUUIDString(String)
 }
 
-pub fn json_codec_decode_error(_) {
+pub fn json_codec_decode_error(e) {
+  io.debug(e)
+
   let response =
     [#("title", json.string("JSON_CODEC_DECODE_ERROR"))]
     |> json.object()

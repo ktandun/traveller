@@ -41,7 +41,7 @@ pub fn trips_dashboard_view(app_model: AppModel) {
           html.th([], [element.text("Destination")]),
           html.th([], [element.text("From")]),
           html.th([], [element.text("Until")]),
-          html.th([], [element.text("Number of places")]),
+          html.th([], [element.text("Planned Places")]),
         ]),
       ]),
       html.tbody(

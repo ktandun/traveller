@@ -38,21 +38,33 @@ pub fn trip_details_view(app_model: AppModel) {
         ]),
       ]),
     ]),
-    html.button(
-      [
-        event.on_click(
-          events.TripDetailsPage(events.TripDetailsPageUserClickedCreatePlace(
-            app_model.trip_details.trip_id,
-          )),
-        ),
-      ],
-      [
-        element.text(case app_model.trip_details.user_trip_places {
-          [] -> "Add First Place"
-          _ -> "Add More Places"
-        }),
-      ],
-    ),
+    html.div([attribute.class("buttons")], [
+      html.button(
+        [
+          event.on_click(
+            events.TripDetailsPage(events.TripDetailsPageUserClickedCreatePlace(
+              app_model.trip_details.trip_id,
+            )),
+          ),
+        ],
+        [
+          element.text(case app_model.trip_details.user_trip_places {
+            [] -> "Add First Place"
+            _ -> "Add More Places"
+          }),
+        ],
+      ),
+      html.button(
+        [
+          event.on_click(
+            events.TripDetailsPage(events.TripDetailsPageUserClickedAddCompanions(
+              app_model.trip_details.trip_id,
+            )),
+          ),
+        ],
+        [element.text("Add Travel Companions")],
+      ),
+    ]),
     html.table([], [
       html.thead([], [
         html.tr([], [
@@ -113,6 +125,14 @@ pub fn handle_trip_details_page_event(
     events.TripDetailsPageUserClickedRemovePlace(trip_place_id) -> #(
       model,
       delete_trip_place(model.trip_details.trip_id, trip_place_id),
+    )
+    events.TripDetailsPageUserClickedAddCompanions(trip_id) -> #(
+      model,
+      modem.push(
+        "/trips/" <> trip_id <> "/add-companions",
+        option.None,
+        option.None,
+      ),
     )
     events.TripDetailsPageUserClickedCreatePlace(trip_id) -> #(
       model,

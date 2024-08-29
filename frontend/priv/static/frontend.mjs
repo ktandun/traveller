@@ -416,6 +416,41 @@ function do_append(loop$first, loop$second) {
 function append2(first3, second2) {
   return do_append(reverse(first3), second2);
 }
+function reverse_and_prepend(loop$prefix, loop$suffix) {
+  while (true) {
+    let prefix = loop$prefix;
+    let suffix = loop$suffix;
+    if (prefix.hasLength(0)) {
+      return suffix;
+    } else {
+      let first$1 = prefix.head;
+      let rest$1 = prefix.tail;
+      loop$prefix = rest$1;
+      loop$suffix = prepend(first$1, suffix);
+    }
+  }
+}
+function do_concat(loop$lists, loop$acc) {
+  while (true) {
+    let lists = loop$lists;
+    let acc = loop$acc;
+    if (lists.hasLength(0)) {
+      return reverse(acc);
+    } else {
+      let list3 = lists.head;
+      let further_lists = lists.tail;
+      loop$lists = further_lists;
+      loop$acc = reverse_and_prepend(list3, acc);
+    }
+  }
+}
+function concat(lists) {
+  return do_concat(lists, toList([]));
+}
+function flat_map(list3, fun) {
+  let _pipe = map2(list3, fun);
+  return concat(_pipe);
+}
 function fold(loop$list, loop$initial, loop$fun) {
   while (true) {
     let list3 = loop$list;
@@ -528,7 +563,7 @@ function replace2(result, value4) {
 
 // build/dev/javascript/gleam_stdlib/gleam/string_builder.mjs
 function from_strings(strings) {
-  return concat(strings);
+  return concat2(strings);
 }
 function from_string(string4) {
   return identity(string4);
@@ -1396,7 +1431,7 @@ function lowercase(string4) {
 function split(xs, pattern) {
   return List.fromArray(xs.split(pattern));
 }
-function concat(xs) {
+function concat2(xs) {
   let result = "";
   for (const x of xs) {
     result = result + x;
@@ -3446,13 +3481,22 @@ var UserTripPlace = class extends CustomType {
   }
 };
 var UserTripPlaces = class extends CustomType {
-  constructor(trip_id, destination, start_date, end_date, user_trip_places) {
+  constructor(trip_id, destination, start_date, end_date, user_trip_places, user_trip_companions) {
     super();
     this.trip_id = trip_id;
     this.destination = destination;
     this.start_date = start_date;
     this.end_date = end_date;
     this.user_trip_places = user_trip_places;
+    this.user_trip_companions = user_trip_companions;
+  }
+};
+var UserTripCompanion = class extends CustomType {
+  constructor(trip_companion_id, name3, email) {
+    super();
+    this.trip_companion_id = trip_companion_id;
+    this.name = name3;
+    this.email = email;
   }
 };
 var CreateTripRequest = class extends CustomType {
@@ -3519,7 +3563,7 @@ function user_trips_decoder() {
   return field2(_pipe, "user_trips", list2(user_trip_decoder()));
 }
 function default_user_trip_places() {
-  return new UserTripPlaces("", "", "", "", toList([]));
+  return new UserTripPlaces("", "", "", "", toList([]), toList([]));
 }
 function user_trip_place_decoder() {
   let _pipe = into(
@@ -3555,6 +3599,29 @@ function user_trip_place_decoder() {
     optional2(string3)
   );
 }
+function default_user_trip_companion() {
+  return new UserTripCompanion("", "", "");
+}
+function user_trip_companion_decoder() {
+  let _pipe = into(
+    parameter(
+      (trip_companion_id) => {
+        return parameter(
+          (name3) => {
+            return parameter(
+              (email) => {
+                return new UserTripCompanion(trip_companion_id, name3, email);
+              }
+            );
+          }
+        );
+      }
+    )
+  );
+  let _pipe$1 = field2(_pipe, "trip_companion_id", string3);
+  let _pipe$2 = field2(_pipe$1, "name", string3);
+  return field2(_pipe$2, "email", string3);
+}
 function user_trip_places_decoder() {
   let _pipe = into(
     parameter(
@@ -3567,12 +3634,17 @@ function user_trip_places_decoder() {
                   (end_date) => {
                     return parameter(
                       (user_trip_places) => {
-                        return new UserTripPlaces(
-                          trip_id,
-                          destination,
-                          start_date,
-                          end_date,
-                          user_trip_places
+                        return parameter(
+                          (user_trip_companions) => {
+                            return new UserTripPlaces(
+                              trip_id,
+                              destination,
+                              start_date,
+                              end_date,
+                              user_trip_places,
+                              user_trip_companions
+                            );
+                          }
                         );
                       }
                     );
@@ -3589,10 +3661,15 @@ function user_trip_places_decoder() {
   let _pipe$2 = field2(_pipe$1, "destination", string3);
   let _pipe$3 = field2(_pipe$2, "start_date", string3);
   let _pipe$4 = field2(_pipe$3, "end_date", string3);
-  return field2(
+  let _pipe$5 = field2(
     _pipe$4,
     "user_trip_places",
     list2(user_trip_place_decoder())
+  );
+  return field2(
+    _pipe$5,
+    "user_trip_companions",
+    list2(user_trip_companion_decoder())
   );
 }
 function default_create_trip_request() {
@@ -3639,6 +3716,12 @@ var TripPlaceCreate = class extends CustomType {
     this.trip_id = trip_id;
   }
 };
+var TripCompanions = class extends CustomType {
+  constructor(trip_id) {
+    super();
+    this.trip_id = trip_id;
+  }
+};
 var TripCreate = class extends CustomType {
 };
 var FourOFour = class extends CustomType {
@@ -3664,6 +3747,12 @@ var TripsDashboardPage = class extends CustomType {
   }
 };
 var TripDetailsPage = class extends CustomType {
+  constructor(x0) {
+    super();
+    this[0] = x0;
+  }
+};
+var TripCompanionsPage = class extends CustomType {
   constructor(x0) {
     super();
     this[0] = x0;
@@ -3736,9 +3825,15 @@ var TripDetailsPageUserClickedRemovePlace = class extends CustomType {
   }
 };
 var TripDetailsPageUserClickedCreatePlace = class extends CustomType {
-  constructor(trip_place_id) {
+  constructor(trip_id) {
     super();
-    this.trip_place_id = trip_place_id;
+    this.trip_id = trip_id;
+  }
+};
+var TripDetailsPageUserClickedAddCompanions = class extends CustomType {
+  constructor(trip_id) {
+    super();
+    this.trip_id = trip_id;
   }
 };
 var TripCreatePageUserInputCreateTripRequest = class extends CustomType {
@@ -3773,6 +3868,10 @@ var TripPlaceCreatePageUserClickedSubmit = class extends CustomType {
     super();
     this.trip_id = trip_id;
   }
+};
+var TripCompanionsPageUserClickedAddMoreCompanion = class extends CustomType {
+};
+var TripCompanionsPageUserClickedSaveCompanions = class extends CustomType {
 };
 function default_app_model() {
   return new AppModel(
@@ -3925,6 +4024,126 @@ function handle_login_page_event(model, event2) {
       push("/dashboard", new None2(), new None2())
     ];
   }
+}
+
+// build/dev/javascript/frontend/frontend/pages/trip_companions_page.mjs
+function handle_trip_companions_page_event(model, event2) {
+  if (event2 instanceof TripCompanionsPageUserClickedSaveCompanions) {
+    return [model, none()];
+  } else {
+    let companions = model.trip_details.user_trip_companions;
+    return [
+      model.withFields({
+        trip_details: model.trip_details.withFields({
+          user_trip_companions: prepend(
+            default_user_trip_companion(),
+            companions
+          )
+        })
+      }),
+      none()
+    ];
+  }
+}
+function companion_input(companion) {
+  return toList([
+    p(
+      toList([]),
+      toList([
+        label(toList([]), toList([text("Name")])),
+        input(
+          toList([
+            on_input(
+              (_) => {
+                throw makeError(
+                  "todo",
+                  "frontend/pages/trip_companions_page",
+                  82,
+                  "",
+                  "This has not yet been implemented",
+                  {}
+                );
+              }
+            ),
+            name2("companion-name-" + companion.trip_companion_id),
+            type_("text"),
+            required(true),
+            value2(companion.name)
+          ])
+        ),
+        span(toList([class$("validity")]), toList([]))
+      ])
+    ),
+    p(
+      toList([]),
+      toList([
+        label(toList([]), toList([text("Email")])),
+        input(
+          toList([
+            on_input(
+              (_) => {
+                throw makeError(
+                  "todo",
+                  "frontend/pages/trip_companions_page",
+                  93,
+                  "",
+                  "This has not yet been implemented",
+                  {}
+                );
+              }
+            ),
+            name2("companion-email-" + companion.trip_companion_id),
+            type_("email"),
+            required(true),
+            value2(companion.email)
+          ])
+        ),
+        span(toList([class$("validity")]), toList([]))
+      ])
+    )
+  ]);
+}
+function trip_companions_view(app_model) {
+  return div(
+    toList([]),
+    toList([
+      h1(toList([]), toList([text("Add Companions")])),
+      div(
+        toList([class$("buttons")]),
+        toList([
+          button(
+            toList([
+              on_click(
+                new TripCompanionsPage(
+                  new TripCompanionsPageUserClickedAddMoreCompanion()
+                )
+              )
+            ]),
+            toList([text("Add More")])
+          ),
+          button(
+            toList([
+              on_click(
+                new TripCompanionsPage(
+                  new TripCompanionsPageUserClickedSaveCompanions()
+                )
+              )
+            ]),
+            toList([text("Save Companions")])
+          )
+        ])
+      ),
+      form(
+        toList([class$("companion-input")]),
+        flat_map(
+          app_model.trip_details.user_trip_companions,
+          (companion) => {
+            return companion_input(companion);
+          }
+        )
+      )
+    ])
+  );
 }
 
 // build/dev/javascript/frontend/frontend/pages/trip_create_page.mjs
@@ -4183,26 +4402,43 @@ function trip_details_view(app_model) {
           )
         ])
       ),
-      button(
+      div(
+        toList([class$("buttons")]),
         toList([
-          on_click(
-            new TripDetailsPage(
-              new TripDetailsPageUserClickedCreatePlace(
-                app_model.trip_details.trip_id
+          button(
+            toList([
+              on_click(
+                new TripDetailsPage(
+                  new TripDetailsPageUserClickedCreatePlace(
+                    app_model.trip_details.trip_id
+                  )
+                )
               )
-            )
-          )
-        ]),
-        toList([
-          text(
-            (() => {
-              let $ = app_model.trip_details.user_trip_places;
-              if ($.hasLength(0)) {
-                return "Add First Place";
-              } else {
-                return "Add More Places";
-              }
-            })()
+            ]),
+            toList([
+              text(
+                (() => {
+                  let $ = app_model.trip_details.user_trip_places;
+                  if ($.hasLength(0)) {
+                    return "Add First Place";
+                  } else {
+                    return "Add More Places";
+                  }
+                })()
+              )
+            ])
+          ),
+          button(
+            toList([
+              on_click(
+                new TripDetailsPage(
+                  new TripDetailsPageUserClickedAddCompanions(
+                    app_model.trip_details.trip_id
+                  )
+                )
+              )
+            ]),
+            toList([text("Add Travel Companions")])
           )
         ])
       ),
@@ -4322,8 +4558,18 @@ function handle_trip_details_page_event(model, event2) {
   } else if (event2 instanceof TripDetailsPageUserClickedRemovePlace) {
     let trip_place_id = event2.trip_place_id;
     return [model, delete_trip_place(model.trip_details.trip_id, trip_place_id)];
+  } else if (event2 instanceof TripDetailsPageUserClickedAddCompanions) {
+    let trip_id = event2.trip_id;
+    return [
+      model,
+      push(
+        "/trips/" + trip_id + "/add-companions",
+        new None2(),
+        new None2()
+      )
+    ];
   } else {
-    let trip_id = event2.trip_place_id;
+    let trip_id = event2.trip_id;
     return [
       model,
       push(
@@ -4479,7 +4725,7 @@ function trip_place_create_view(app_model, trip_id) {
             )
           )
         ]),
-        toList([text("Create Place")])
+        toList([text("Add Place")])
       )
     ])
   );
@@ -4578,7 +4824,7 @@ function trips_dashboard_view(app_model) {
                   th(toList([]), toList([text("Until")])),
                   th(
                     toList([]),
-                    toList([text("Number of places")])
+                    toList([text("Planned Places")])
                   )
                 ])
               )
@@ -4688,6 +4934,9 @@ function path_to_route(path_segments2) {
   } else if (path_segments2.hasLength(2) && path_segments2.head === "trips") {
     let trip_id = path_segments2.tail.head;
     return new TripDetails(trip_id);
+  } else if (path_segments2.hasLength(3) && path_segments2.head === "trips" && path_segments2.tail.tail.head === "add-companions") {
+    let trip_id = path_segments2.tail.head;
+    return new TripCompanions(trip_id);
   } else if (path_segments2.hasLength(4) && path_segments2.head === "trips" && path_segments2.tail.tail.head === "places" && path_segments2.tail.tail.tail.head === "create") {
     let trip_id = path_segments2.tail.head;
     return new TripPlaceCreate(trip_id);
@@ -4745,6 +4994,14 @@ function update(model, msg) {
           } else {
             return none();
           }
+        } else if (route instanceof TripCompanions) {
+          let trip_id = route.trip_id;
+          let $ = is_empty(model.trip_details.destination);
+          if ($) {
+            return load_trip_details(trip_id);
+          } else {
+            return none();
+          }
         } else if (route instanceof TripDetails) {
           let trip_id = route.trip_id;
           return load_trip_details(trip_id);
@@ -4765,57 +5022,75 @@ function update(model, msg) {
   } else if (msg instanceof TripCreatePage) {
     let event2 = msg[0];
     return handle_trip_create_page_event(model, event2);
-  } else {
+  } else if (msg instanceof TripPlaceCreatePage) {
     let event2 = msg[0];
     return handle_trip_place_create_page_event(
       model,
       event2
     );
+  } else {
+    let event2 = msg[0];
+    return handle_trip_companions_page_event(model, event2);
   }
+}
+function breadcrumbs(app_model) {
+  return nav(
+    toList([]),
+    toList([
+      a(
+        toList([href("/dashboard")]),
+        toList([text("Trips")])
+      ),
+      (() => {
+        let $ = app_model.route;
+        if ($ instanceof TripDetails) {
+          let trip_id = $.trip_id;
+          return span(
+            toList([]),
+            toList([
+              text(" > "),
+              a(
+                toList([href("/trips/" + trip_id)]),
+                toList([text(app_model.trip_details.destination)])
+              )
+            ])
+          );
+        } else if ($ instanceof TripPlaceCreate) {
+          let trip_id = $.trip_id;
+          return span(
+            toList([]),
+            toList([
+              text(" > "),
+              a(
+                toList([href("/trips/" + trip_id)]),
+                toList([text(app_model.trip_details.destination)])
+              )
+            ])
+          );
+        } else if ($ instanceof TripCompanions) {
+          let trip_id = $.trip_id;
+          return span(
+            toList([]),
+            toList([
+              text(" > "),
+              a(
+                toList([href("/trips/" + trip_id)]),
+                toList([text(app_model.trip_details.destination)])
+              )
+            ])
+          );
+        } else {
+          return span(toList([]), toList([]));
+        }
+      })()
+    ])
+  );
 }
 function view(app_model) {
   return div(
     toList([]),
     toList([
-      nav(
-        toList([]),
-        toList([
-          a(
-            toList([href("/dashboard")]),
-            toList([text("Trips")])
-          ),
-          (() => {
-            let $ = app_model.route;
-            if ($ instanceof TripDetails) {
-              let trip_id = $.trip_id;
-              return span(
-                toList([]),
-                toList([
-                  text(" > "),
-                  a(
-                    toList([href("/trips/" + trip_id)]),
-                    toList([text(app_model.trip_details.destination)])
-                  )
-                ])
-              );
-            } else if ($ instanceof TripPlaceCreate) {
-              let trip_id = $.trip_id;
-              return span(
-                toList([]),
-                toList([
-                  text(" > "),
-                  a(
-                    toList([href("/trips/" + trip_id)]),
-                    toList([text(app_model.trip_details.destination)])
-                  )
-                ])
-              );
-            } else {
-              return span(toList([]), toList([]));
-            }
-          })()
-        ])
-      ),
+      breadcrumbs(app_model),
       hr(toList([])),
       (() => {
         let $ = app_model.route;
@@ -4827,6 +5102,8 @@ function view(app_model) {
           return trips_dashboard_view(app_model);
         } else if ($ instanceof TripDetails) {
           return trip_details_view(app_model);
+        } else if ($ instanceof TripCompanions) {
+          return trip_companions_view(app_model);
         } else if ($ instanceof TripCreate) {
           return trip_create_view(app_model);
         } else if ($ instanceof TripPlaceCreate) {
@@ -4871,7 +5148,7 @@ function main() {
     throw makeError(
       "assignment_no_match",
       "frontend",
-      19,
+      20,
       "main",
       "Assignment pattern did not match",
       { value: $ }

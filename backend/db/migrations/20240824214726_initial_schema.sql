@@ -22,10 +22,17 @@ CREATE TABLE user_trips (
 
 CREATE TABLE trip_places (
     trip_place_id uuid PRIMARY KEY,
-    trip_id uuid REFERENCES trips (trip_id),
+    trip_id uuid REFERENCES trips (trip_id) NOT NULL,
     name varchar(255) NOT NULL,
     date date NOT NULL,
     google_maps_link text
+);
+
+CREATE TABLE trip_companions (
+    trip_companion_id uuid PRIMARY KEY,
+    trip_id uuid REFERENCES trips (trip_id) NOT NULL,
+    name varchar(255) NOT NULL,
+    email varchar(255) NOT NULL
 );
 
 CREATE OR REPLACE FUNCTION create_trip (user_id text, trip_id text, destination text, start_date text, end_date text)
@@ -39,6 +46,38 @@ BEGIN
         VALUES (create_trip.user_id::uuid, create_trip.trip_id::uuid);
     --
     RETURN create_trip.trip_id;
+END
+$f$
+LANGUAGE PLPGSQL;
+
+CREATE OR REPLACE FUNCTION upsert_trip_companion (trip_companion_id text, trip_id text, name text, email text)
+    RETURNS text
+    AS $f$
+BEGIN
+    IF NOT EXISTS (
+        SELECT
+            1
+        FROM
+            trip_companions tc
+        WHERE
+            tc.trip_companion_id = upsert_trip_companion.trip_companion_id::uuid) THEN
+    INSERT INTO trip_companions (trip_companion_id, trip_id, name, email)
+    SELECT
+        upsert_trip_companion.trip_companion_id::uuid,
+        upsert_trip_companion.trip_id::uuid,
+        upsert_trip_companion.name,
+        upsert_trip_companion.email;
+ELSE
+    UPDATE
+        trip_companions tc
+    SET
+        name = upsert_trip_companion.name,
+        email = upsert_trip_companion.email
+    WHERE
+        tc.trip_companion_id = upsert_trip_companion.trip_companion_id::uuid;
+END IF;
+    --
+    RETURN upsert_trip_companion.trip_companion_id;
 END
 $f$
 LANGUAGE PLPGSQL;
@@ -84,27 +123,41 @@ CREATE OR REPLACE FUNCTION trips_view ()
         destination varchar(255),
         start_date text,
         end_date text,
-        places json
+        places json,
+        companions json
     )
     AS $f$
 BEGIN
-    RETURN QUERY WITH trip_places AS (
+    RETURN QUERY WITH companions AS (
         SELECT
-            ut.user_id AS user_id,
-            t.trip_id AS trip_id,
-            t.destination AS destination,
-            to_char(t.start_date, 'YYYY-MM-DD') AS start_date,
-            to_char(t.end_date, 'YYYY-MM-DD') AS end_date,
-            tp.name AS name,
-            tp.trip_place_id::text AS trip_place_id,
-            to_char(tp.date, 'YYYY-MM-DD') AS date,
-            tp.google_maps_link::text AS google_maps_link
+            tc.trip_id,
+            json_agg(json_build_object('trip_companion_id', tc.trip_companion_id, 'name', name, 'email', tc.email)) AS companions
         FROM
-            user_trips ut
+            trip_companions tc
+        GROUP BY
+            tc.trip_id
+),
+places AS (
+    SELECT
+        tp.trip_id,
+        json_agg(json_build_object('trip_place_id', tp.trip_place_id, 'name', tp.name, 'date', to_char(tp.date, 'YYYY-MM-DD'), 'google_maps_link', tp.google_maps_link)) AS places
+    FROM
+        trip_places tp
+    GROUP BY
+        tp.trip_id
+),
+trips AS (
+    SELECT
+        ut.user_id AS user_id,
+        t.trip_id AS trip_id,
+        t.destination AS destination,
+        to_char(t.start_date, 'YYYY-MM-DD') AS start_date,
+        to_char(t.end_date, 'YYYY-MM-DD') AS end_date
+    FROM
+        user_trips ut
         LEFT JOIN trips t ON ut.trip_id = t.trip_id
-        LEFT JOIN trip_places tp ON t.trip_id = tp.trip_id
     ORDER BY
-        tp.date ASC
+        t.start_date ASC
 )
 SELECT
     tp.user_id,
@@ -112,19 +165,12 @@ SELECT
     tp.destination,
     tp.start_date,
     tp.end_date,
-    CASE WHEN COUNT(tp.trip_place_id) = 0 THEN
-        '[]'::json
-    ELSE
-        json_agg(json_build_object('name', name, 'trip_place_id', tp.trip_place_id, 'date', tp.date, 'google_maps_link', tp.google_maps_link))
-    END AS places
+    coalesce(p.places, '[]'::json) AS places,
+    COALESCE(c.companions, '[]'::json) AS companions
 FROM
-    trip_places tp
-GROUP BY
-    tp.user_id,
-    tp.trip_id,
-    tp.destination,
-    tp.start_date,
-    tp.end_date;
+    trips tp
+    LEFT JOIN companions c ON tp.trip_id = c.trip_id
+    LEFT JOIN places p ON tp.trip_id = p.trip_id;
 END;
 $f$
 LANGUAGE PLPGSQL;
@@ -182,6 +228,12 @@ SELECT
 
 SELECT
     upsert_trip_place (trip_place_id => 'a99f7893-632a-41fb-bd40-2f8fe8dd1d7e', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Food Stalls', date => '2024-01-03', google_maps_link => NULL);
+
+SELECT
+    upsert_trip_companion (trip_companion_id => '7fccacf1-1f38-49ad-b9de-b3a9788508e1', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Noel', email => 'noel@gmail.com');
+
+SELECT
+    upsert_trip_companion (trip_companion_id => '8D9102DD-747C-4E2A-B867-00C3A701D30C', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Senchou', email => 'senchou@gmail.com');
 
 -- migrate:down
 DROP TABLE trip_places;

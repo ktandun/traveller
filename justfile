@@ -14,7 +14,7 @@ build:
     cd frontend && gleam build
 
 db:
-    cd backend && dbmate drop && dbmate up
+    cd backend && pkill psql; dbmate drop && dbmate up
     cd database && PGUSER=kenzietandun PGDATABASE=kenzietandun gleam run -m squirrel
 
 test: db

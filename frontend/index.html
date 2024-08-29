@@ -87,10 +87,31 @@ input:valid + span::after {
   color: green;
 }
 
-nav a:hover {
-  background-color: var(--accent);
-  color: var(--bg);
+nav {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+
+  a:hover {
+    background-color: var(--accent);
+    color: var(--bg);
+  }
 }
+
+.buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.companion-input {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-bottom: 1.5rem;
+
+  p {
+    margin-bottom: 0rem;
+  }
+}
+
 </style>
 
   </head>

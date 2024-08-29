@@ -36,6 +36,7 @@ WHERE
   |> pgo.execute(db, [pgo.text(uuid.to_string(arg_1))], decode.from(decoder, _))
 }
 
+
 /// A row you get from running the `find_trip_by_trip_id` query
 /// defined in `./src/database/sql/find_trip_by_trip_id.sql`.
 ///
@@ -75,6 +76,7 @@ WHERE
   )
 }
 
+
 /// A row you get from running the `check_user_login` query
 /// defined in `./src/database/sql/check_user_login.sql`.
 ///
@@ -103,8 +105,10 @@ pub fn check_user_login(db, arg_1, arg_2) {
     check_user_login ($1, $2) AS user_id;
 
 "
-  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _))
+  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _),
+  )
 }
+
 
 /// A row you get from running the `get_user_trip_dates_by_trip_id` query
 /// defined in `./src/database/sql/get_user_trip_dates_by_trip_id.sql`.
@@ -136,10 +140,11 @@ pub fn get_user_trip_dates_by_trip_id(db, arg_1, arg_2) {
     start_date,
     end_date
 FROM
-    trips_view()
+    trips_view ()
 WHERE
     user_id = $1
     AND trip_id = $2;
+
 "
   |> pgo.execute(
     db,
@@ -147,6 +152,7 @@ WHERE
     decode.from(decoder, _),
   )
 }
+
 
 /// A row you get from running the `create_user` query
 /// defined in `./src/database/sql/create_user.sql`.
@@ -177,8 +183,10 @@ pub fn create_user(db, arg_1, arg_2) {
 RETURNING
     user_id::TEXT
 "
-  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _))
+  |> pgo.execute(db, [pgo.text(arg_1), pgo.text(arg_2)], decode.from(decoder, _),
+  )
 }
+
 
 /// A row you get from running the `get_user_trip_places` query
 /// defined in `./src/database/sql/get_user_trip_places.sql`.
@@ -193,6 +201,7 @@ pub type GetUserTripPlacesRow {
     start_date: String,
     end_date: String,
     places: String,
+    companions: String,
   )
 }
 
@@ -210,12 +219,14 @@ pub fn get_user_trip_places(db, arg_1, arg_2) {
       use start_date <- decode.parameter
       use end_date <- decode.parameter
       use places <- decode.parameter
+      use companions <- decode.parameter
       GetUserTripPlacesRow(
         trip_id: trip_id,
         destination: destination,
         start_date: start_date,
         end_date: end_date,
         places: places,
+        companions: companions,
       )
     })
     |> decode.field(0, uuid_decoder())
@@ -223,15 +234,17 @@ pub fn get_user_trip_places(db, arg_1, arg_2) {
     |> decode.field(2, decode.string)
     |> decode.field(3, decode.string)
     |> decode.field(4, decode.string)
+    |> decode.field(5, decode.string)
 
   "SELECT
     trip_id,
     destination,
     start_date,
     end_date,
-    places
+    places,
+    companions
 FROM
-    trips_view()
+    trips_view ()
 WHERE
     user_id = $1
     AND trip_id = $2;
@@ -243,6 +256,7 @@ WHERE
     decode.from(decoder, _),
   )
 }
+
 
 /// A row you get from running the `create_trip` query
 /// defined in `./src/database/sql/create_trip.sql`.
@@ -284,6 +298,7 @@ pub fn create_trip(db, arg_1, arg_2, arg_3, arg_4, arg_5) {
     decode.from(decoder, _),
   )
 }
+
 
 /// A row you get from running the `upsert_trip_place` query
 /// defined in `./src/database/sql/upsert_trip_place.sql`.
@@ -336,6 +351,7 @@ pub fn upsert_trip_place(db, arg_1, arg_2, arg_3, arg_4, arg_5) {
   )
 }
 
+
 /// Runs the `delete_trip_place` query
 /// defined in `./src/database/sql/delete_trip_place.sql`.
 ///
@@ -367,6 +383,7 @@ WHERE trip_id IN (
     decode.from(decoder, _),
   )
 }
+
 
 /// A row you get from running the `get_user_trips` query
 /// defined in `./src/database/sql/get_user_trips.sql`.
@@ -441,6 +458,7 @@ ORDER BY
   |> pgo.execute(db, [pgo.text(uuid.to_string(arg_1))], decode.from(decoder, _))
 }
 
+
 /// A row you get from running the `find_user_by_email` query
 /// defined in `./src/database/sql/find_user_by_email.sql`.
 ///
@@ -474,6 +492,7 @@ WHERE
 "
   |> pgo.execute(db, [pgo.text(arg_1)], decode.from(decoder, _))
 }
+
 
 // --- UTILS -------------------------------------------------------------------
 

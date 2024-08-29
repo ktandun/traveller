@@ -81,6 +81,7 @@ pub type UserTripPlaces {
     start_date: String,
     end_date: String,
     user_trip_places: List(UserTripPlace),
+    user_trip_companions: List(UserTripCompanion),
   )
 }
 
@@ -91,6 +92,7 @@ pub fn default_user_trip_places() {
     start_date: "",
     end_date: "",
     user_trip_places: [],
+    user_trip_companions: [],
   )
 }
 
@@ -125,6 +127,7 @@ pub fn user_trip_places_decoder() {
     use start_date <- decode.parameter
     use end_date <- decode.parameter
     use user_trip_places <- decode.parameter
+    use user_trip_companions <- decode.parameter
 
     UserTripPlaces(
       trip_id:,
@@ -132,6 +135,7 @@ pub fn user_trip_places_decoder() {
       start_date:,
       end_date:,
       user_trip_places:,
+      user_trip_companions:,
     )
   })
   |> decode.field("trip_id", decode.string)
@@ -139,6 +143,10 @@ pub fn user_trip_places_decoder() {
   |> decode.field("start_date", decode.string)
   |> decode.field("end_date", decode.string)
   |> decode.field("user_trip_places", decode.list(user_trip_place_decoder()))
+  |> decode.field(
+    "user_trip_companions",
+    decode.list(user_trip_companion_decoder()),
+  )
 }
 
 pub fn user_trip_places_encoder(data: UserTripPlaces) {
@@ -151,6 +159,42 @@ pub fn user_trip_places_encoder(data: UserTripPlaces) {
       "user_trip_places",
       json.array(from: data.user_trip_places, of: user_trip_place_encoder),
     ),
+    #(
+      "user_trip_companions",
+      json.array(
+        from: data.user_trip_companions,
+        of: user_trip_companion_encoder,
+      ),
+    ),
+  ])
+}
+
+pub type UserTripCompanion {
+  UserTripCompanion(trip_companion_id: String, name: String, email: String)
+}
+
+pub fn default_user_trip_companion() {
+  UserTripCompanion(trip_companion_id: "", name: "", email: "")
+}
+
+pub fn user_trip_companion_decoder() {
+  decode.into({
+    use trip_companion_id <- decode.parameter
+    use name <- decode.parameter
+    use email <- decode.parameter
+
+    UserTripCompanion(trip_companion_id:, name:, email:)
+  })
+  |> decode.field("trip_companion_id", decode.string)
+  |> decode.field("name", decode.string)
+  |> decode.field("email", decode.string)
+}
+
+pub fn user_trip_companion_encoder(data: UserTripCompanion) {
+  json.object([
+    #("trip_companion_id", json.string(data.trip_companion_id)),
+    #("name", json.string(data.name)),
+    #("email", json.string(data.email)),
   ])
 }
 

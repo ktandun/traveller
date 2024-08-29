@@ -1,5 +1,4 @@
 import frontend/routes.{type Route}
-import gleam/dynamic
 import lustre_http.{type HttpError}
 import shared/auth_models
 import shared/id.{type Id, type TripId, type TripPlaceId, type UserId}
@@ -10,6 +9,7 @@ pub type AppEvent {
   LoginPage(LoginPageEvent)
   TripsDashboardPage(TripsDashboardPageEvent)
   TripDetailsPage(TripDetailsPageEvent)
+  TripCompanionsPage(TripCompanionsPageEvent)
   TripCreatePage(TripCreatePageEvent)
   TripPlaceCreatePage(TripPlaceCreatePageEvent)
 }
@@ -57,7 +57,8 @@ pub type TripsDashboardPageEvent {
 pub type TripDetailsPageEvent {
   TripDetailsPageApiReturnedTripDetails(trip_models.UserTripPlaces)
   TripDetailsPageUserClickedRemovePlace(trip_place_id: String)
-  TripDetailsPageUserClickedCreatePlace(trip_place_id: String)
+  TripDetailsPageUserClickedCreatePlace(trip_id: String)
+  TripDetailsPageUserClickedAddCompanions(trip_id: String)
 }
 
 pub type TripCreatePageEvent {
@@ -75,4 +76,9 @@ pub type TripPlaceCreatePageEvent {
     trip_models.CreateTripPlaceRequest,
   )
   TripPlaceCreatePageUserClickedSubmit(trip_id: String)
+}
+
+pub type TripCompanionsPageEvent {
+  TripCompanionsPageUserClickedAddMoreCompanion
+  TripCompanionsPageUserClickedSaveCompanions(trip_id: String)
 }

@@ -92,7 +92,7 @@ pub fn trip_place_create_view(app_model: AppModel, trip_id: String) {
           ),
         ),
       ],
-      [element.text("Create Place")],
+      [element.text("Add Place")],
     ),
   ])
 }

@@ -1,5 +1,6 @@
 import frontend/events.{type AppEvent, type AppModel, AppModel}
 import frontend/pages/login_page
+import frontend/pages/trip_companions_page
 import frontend/pages/trip_create_page
 import frontend/pages/trip_details_page
 import frontend/pages/trip_place_create_page
@@ -50,6 +51,7 @@ fn path_to_route(path_segments: List(String)) -> Route {
     ["dashboard"] -> routes.TripsDashboard
     ["trips", "create"] -> routes.TripCreate
     ["trips", trip_id] -> routes.TripDetails(trip_id)
+    ["trips", trip_id, "add-companions"] -> routes.TripCompanions(trip_id)
     ["trips", trip_id, "places", "create"] -> routes.TripPlaceCreate(trip_id)
     _ -> routes.FourOFour
   }
@@ -60,7 +62,7 @@ pub fn update(model: AppModel, msg: AppEvent) -> #(AppModel, Effect(AppEvent)) {
     events.OnRouteChange(route) -> {
       #(AppModel(..model, route: route), case route {
         routes.TripsDashboard -> trips_dashboard_page.load_trips_dashboard()
-        routes.TripPlaceCreate(trip_id) ->
+        routes.TripPlaceCreate(trip_id) | routes.TripCompanions(trip_id) ->
           case string.is_empty(model.trip_details.destination) {
             True -> trip_details_page.load_trip_details(trip_id)
             False -> effect.none()
@@ -79,24 +81,14 @@ pub fn update(model: AppModel, msg: AppEvent) -> #(AppModel, Effect(AppEvent)) {
       trip_create_page.handle_trip_create_page_event(model, event)
     events.TripPlaceCreatePage(event) ->
       trip_place_create_page.handle_trip_place_create_page_event(model, event)
+    events.TripCompanionsPage(event) ->
+      trip_companions_page.handle_trip_companions_page_event(model, event)
   }
 }
 
 pub fn view(app_model: AppModel) -> Element(AppEvent) {
   html.div([], [
-    html.nav([], [
-      html.a([attribute.href("/dashboard")], [element.text("Trips")]),
-      case app_model.route {
-        routes.TripDetails(trip_id) | routes.TripPlaceCreate(trip_id) ->
-          html.span([], [
-            element.text(" > "),
-            html.a([attribute.href("/trips/" <> trip_id)], [
-              element.text(app_model.trip_details.destination),
-            ]),
-          ])
-        _ -> html.span([], [])
-      },
-    ]),
+    breadcrumbs(app_model),
     html.hr([]),
     case app_model.route {
       routes.Login -> login_page.login_view(app_model)
@@ -105,6 +97,8 @@ pub fn view(app_model: AppModel) -> Element(AppEvent) {
         trips_dashboard_page.trips_dashboard_view(app_model)
       routes.TripDetails(_trip_id) ->
         trip_details_page.trip_details_view(app_model)
+      routes.TripCompanions(_trip_id) ->
+        trip_companions_page.trip_companions_view(app_model)
       routes.TripCreate -> trip_create_page.trip_create_view(app_model)
       routes.TripPlaceCreate(trip_id) ->
         trip_place_create_page.trip_place_create_view(app_model, trip_id)
@@ -119,6 +113,24 @@ pub fn view(app_model: AppModel) -> Element(AppEvent) {
           ]),
         ])
       False -> html.div([attribute.class("loading-screen-placeholder")], [])
+    },
+  ])
+}
+
+fn breadcrumbs(app_model: AppModel) {
+  html.nav([], [
+    html.a([attribute.href("/dashboard")], [element.text("Trips")]),
+    case app_model.route {
+      routes.TripDetails(trip_id)
+      | routes.TripPlaceCreate(trip_id)
+      | routes.TripCompanions(trip_id) ->
+        html.span([], [
+          element.text(" > "),
+          html.a([attribute.href("/trips/" <> trip_id)], [
+            element.text(app_model.trip_details.destination),
+          ]),
+        ])
+      _ -> html.span([], [])
     },
   ])
 }
