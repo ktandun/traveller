@@ -43,12 +43,23 @@ pub fn trip_companions_view(app_model: AppModel, trip_id: String) {
         [element.text("Save")],
       ),
     ]),
-    html.form(
-      [attribute.class("companion-input")],
-      list.flat_map(app_model.trip_details.user_trip_companions, fn(companion) {
-        companion_input(companion)
-      }),
-    ),
+    html.form([attribute.class("companion-input")], [
+      html.table([], [
+        html.thead([], [
+          html.tr([], [
+            html.th([], [element.text("Name")]),
+            html.th([], [element.text("Email")]),
+            html.th([], [element.text("")]),
+          ]),
+        ]),
+        html.tbody(
+          [],
+          list.map(app_model.trip_details.user_trip_companions, fn(companion) {
+            companion_input(companion)
+          }),
+        ),
+      ]),
+    ]),
   ])
 }
 
@@ -71,7 +82,7 @@ pub fn handle_trip_companions_page_event(
         )
 
       #(
-        model,
+        AppModel(..model, show_loading: True),
         web.post(
           "http://localhost:8080/api/trips/" <> trip_id <> "/companions",
           trip_models.update_trip_companions_request_encoder(
@@ -90,6 +101,7 @@ pub fn handle_trip_companions_page_event(
       )
     }
     events.TripCompanionsPageApiReturnedResponse(trip_id, response) -> {
+      let model = AppModel(..model, show_loading: False)
       case response {
         Ok(_) -> #(
           model,
@@ -166,9 +178,8 @@ pub fn handle_trip_companions_page_event(
 }
 
 fn companion_input(companion: trip_models.UserTripCompanion) {
-  [
-    html.p([], [
-      html.label([], [element.text("Name")]),
+  html.tr([], [
+    html.td([], [
       html.input([
         event.on_input(fn(name) {
           events.TripCompanionsPage(
@@ -184,8 +195,7 @@ fn companion_input(companion: trip_models.UserTripCompanion) {
       ]),
       html.span([attribute.class("validity")], []),
     ]),
-    html.p([], [
-      html.label([], [element.text("Email")]),
+    html.td([], [
       html.input([
         event.on_input(fn(email) {
           events.TripCompanionsPage(
@@ -201,7 +211,7 @@ fn companion_input(companion: trip_models.UserTripCompanion) {
       ]),
       html.span([attribute.class("validity")], []),
     ]),
-    html.div([], [
+    html.td([], [
       html.button(
         [
           attribute.type_("button"),
@@ -213,8 +223,8 @@ fn companion_input(companion: trip_models.UserTripCompanion) {
             ),
           ),
         ],
-        [element.text("❌")],
+        [element.text("Remove")],
       ),
     ]),
-  ]
+  ])
 }

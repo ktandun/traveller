@@ -65,7 +65,7 @@ pub fn handle_create_trip(
   )
 
   use <- bool.guard(
-    string.is_empty(create_trip_request.destination),
+    string.is_empty(create_trip_request.destination |> string.trim),
     Error(error.InvalidDestinationSpecified),
   )
 
@@ -125,7 +125,8 @@ pub fn handle_update_trip_companions(
   let request =
     request.trip_companions
     |> list.filter(fn(companion) {
-      !string.is_empty(companion.name) && !string.is_empty(companion.email)
+      !string.is_empty(companion.name |> string.trim)
+      && !string.is_empty(companion.email |> string.trim)
     })
 
   use _ <- result.try(trips_db.delete_trip_companions(ctx, trip_id))

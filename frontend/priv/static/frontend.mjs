@@ -446,41 +446,6 @@ function do_append(loop$first, loop$second) {
 function append2(first3, second2) {
   return do_append(reverse(first3), second2);
 }
-function reverse_and_prepend(loop$prefix, loop$suffix) {
-  while (true) {
-    let prefix = loop$prefix;
-    let suffix = loop$suffix;
-    if (prefix.hasLength(0)) {
-      return suffix;
-    } else {
-      let first$1 = prefix.head;
-      let rest$1 = prefix.tail;
-      loop$prefix = rest$1;
-      loop$suffix = prepend(first$1, suffix);
-    }
-  }
-}
-function do_concat(loop$lists, loop$acc) {
-  while (true) {
-    let lists = loop$lists;
-    let acc = loop$acc;
-    if (lists.hasLength(0)) {
-      return reverse(acc);
-    } else {
-      let list3 = lists.head;
-      let further_lists = lists.tail;
-      loop$lists = further_lists;
-      loop$acc = reverse_and_prepend(list3, acc);
-    }
-  }
-}
-function concat(lists) {
-  return do_concat(lists, toList([]));
-}
-function flat_map(list3, fun) {
-  let _pipe = map2(list3, fun);
-  return concat(_pipe);
-}
 function fold(loop$list, loop$initial, loop$fun) {
   while (true) {
     let list3 = loop$list;
@@ -593,7 +558,7 @@ function replace2(result, value4) {
 
 // build/dev/javascript/gleam_stdlib/gleam/string_builder.mjs
 function from_strings(strings) {
-  return concat2(strings);
+  return concat(strings);
 }
 function from_string(string4) {
   return identity(string4);
@@ -1464,7 +1429,7 @@ function lowercase(string4) {
 function split(xs, pattern) {
   return List.fromArray(xs.split(pattern));
 }
-function concat2(xs) {
+function concat(xs) {
   let result = "";
   for (const x of xs) {
     result = result + x;
@@ -4160,7 +4125,7 @@ function handle_trip_companions_page_event(model, event2) {
       })()
     );
     return [
-      model,
+      model.withFields({ show_loading: true }),
       post2(
         "http://localhost:8080/api/trips/" + trip_id + "/companions",
         update_trip_companions_request_encoder(
@@ -4182,22 +4147,23 @@ function handle_trip_companions_page_event(model, event2) {
   } else if (event2 instanceof TripCompanionsPageApiReturnedResponse) {
     let trip_id = event2.trip_id;
     let response = event2[1];
+    let model$1 = model.withFields({ show_loading: false });
     if (response.isOk()) {
       return [
-        model,
+        model$1,
         push("/trips/" + trip_id, new None2(), new None2())
       ];
     } else {
       let e = response[0];
       if (e instanceof OtherError && e[0] === 400) {
-        return [model, none()];
+        return [model$1, none()];
       } else if (e instanceof OtherError && e[0] === 401) {
         return [
-          model,
+          model$1,
           push("/login", new None2(), new None2())
         ];
       } else {
-        return [model, none()];
+        return [model$1, none()];
       }
     }
   } else if (event2 instanceof TripCompanionsPageUserUpdatedCompanion) {
@@ -4257,74 +4223,75 @@ function handle_trip_companions_page_event(model, event2) {
   }
 }
 function companion_input(companion) {
-  return toList([
-    p(
-      toList([]),
-      toList([
-        label(toList([]), toList([text("Name")])),
-        input(
-          toList([
-            on_input(
-              (name3) => {
-                return new TripCompanionsPage(
-                  new TripCompanionsPageUserUpdatedCompanion(
-                    companion.withFields({ name: name3 })
+  return tr(
+    toList([]),
+    toList([
+      td(
+        toList([]),
+        toList([
+          input(
+            toList([
+              on_input(
+                (name3) => {
+                  return new TripCompanionsPage(
+                    new TripCompanionsPageUserUpdatedCompanion(
+                      companion.withFields({ name: name3 })
+                    )
+                  );
+                }
+              ),
+              name2("companion-name-" + companion.trip_companion_id),
+              type_("text"),
+              required(true),
+              value2(companion.name)
+            ])
+          ),
+          span(toList([class$("validity")]), toList([]))
+        ])
+      ),
+      td(
+        toList([]),
+        toList([
+          input(
+            toList([
+              on_input(
+                (email) => {
+                  return new TripCompanionsPage(
+                    new TripCompanionsPageUserUpdatedCompanion(
+                      companion.withFields({ email })
+                    )
+                  );
+                }
+              ),
+              name2("companion-email-" + companion.trip_companion_id),
+              type_("email"),
+              required(true),
+              value2(companion.email)
+            ])
+          ),
+          span(toList([class$("validity")]), toList([]))
+        ])
+      ),
+      td(
+        toList([]),
+        toList([
+          button(
+            toList([
+              type_("button"),
+              on_click(
+                new TripCompanionsPage(
+                  new TripCompanionsPageUserClickedRemoveCompanion(
+                    companion.trip_companion_id
                   )
-                );
-              }
-            ),
-            name2("companion-name-" + companion.trip_companion_id),
-            type_("text"),
-            required(true),
-            value2(companion.name)
-          ])
-        ),
-        span(toList([class$("validity")]), toList([]))
-      ])
-    ),
-    p(
-      toList([]),
-      toList([
-        label(toList([]), toList([text("Email")])),
-        input(
-          toList([
-            on_input(
-              (email) => {
-                return new TripCompanionsPage(
-                  new TripCompanionsPageUserUpdatedCompanion(
-                    companion.withFields({ email })
-                  )
-                );
-              }
-            ),
-            name2("companion-email-" + companion.trip_companion_id),
-            type_("email"),
-            required(true),
-            value2(companion.email)
-          ])
-        ),
-        span(toList([class$("validity")]), toList([]))
-      ])
-    ),
-    div(
-      toList([]),
-      toList([
-        button(
-          toList([
-            type_("button"),
-            on_click(
-              new TripCompanionsPage(
-                new TripCompanionsPageUserClickedRemoveCompanion(
-                  companion.trip_companion_id
                 )
               )
-            )
-          ]),
-          toList([text("\u274C")])
-        )
-      ])
-    )
-  ]);
+            ]),
+            toList([text("Remove")])
+          )
+        ])
+      )
+    ])
+  );
 }
 function trip_companions_view(app_model, trip_id) {
   return div(
@@ -4373,12 +4340,35 @@ function trip_companions_view(app_model, trip_id) {
       ),
       form(
         toList([class$("companion-input")]),
-        flat_map(
-          app_model.trip_details.user_trip_companions,
-          (companion) => {
-            return companion_input(companion);
-          }
-        )
+        toList([
+          table(
+            toList([]),
+            toList([
+              thead(
+                toList([]),
+                toList([
+                  tr(
+                    toList([]),
+                    toList([
+                      th(toList([]), toList([text("Name")])),
+                      th(toList([]), toList([text("Email")])),
+                      th(toList([]), toList([text("")]))
+                    ])
+                  )
+                ])
+              ),
+              tbody(
+                toList([]),
+                map2(
+                  app_model.trip_details.user_trip_companions,
+                  (companion) => {
+                    return companion_input(companion);
+                  }
+                )
+              )
+            ])
+          )
+        ])
       )
     ])
   );

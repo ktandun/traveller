@@ -218,8 +218,8 @@ pub fn upsert_trip_companion(
       ctx.db,
       trip_companion_id,
       trip_id,
-      companion.name,
-      companion.email,
+      companion.name |> string.trim,
+      companion.email |> string.trim,
     )
     |> result.map(fn(_) { Nil })
     |> database.to_app_error()
