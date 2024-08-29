@@ -29,7 +29,7 @@ backend: db
 
 nginx:
     docker rm -f nginx-proxy
-    cd infra && docker build -t my-nginx-proxy . && docker run -d -p 8080:80 --name nginx-proxy my-nginx-proxy
+    cd infra && docker build -t my-nginx-proxy . && docker run --network=host -d --name nginx-proxy my-nginx-proxy
 
 format:
     gleam format {database,backend,shared,frontend}/{src,test}
