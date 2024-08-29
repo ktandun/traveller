@@ -28,7 +28,7 @@ pub fn trip_companions_view(app_model: AppModel, trip_id: String) {
             list.is_empty(app_model.trip_details.user_trip_companions)
           {
             True -> "Add First Companion"
-            False -> "Add More Companions"
+            False -> "Add More"
           }),
         ],
       ),
@@ -40,7 +40,7 @@ pub fn trip_companions_view(app_model: AppModel, trip_id: String) {
             ),
           ),
         ],
-        [element.text("Save Companions")],
+        [element.text("Save")],
       ),
     ]),
     html.form(

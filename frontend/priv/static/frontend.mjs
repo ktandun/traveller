@@ -4351,7 +4351,7 @@ function trip_companions_view(app_model, trip_id) {
                   if ($) {
                     return "Add First Companion";
                   } else {
-                    return "Add More Companions";
+                    return "Add More";
                   }
                 })()
               )
@@ -4367,7 +4367,7 @@ function trip_companions_view(app_model, trip_id) {
                 )
               )
             ]),
-            toList([text("Save Companions")])
+            toList([text("Save")])
           )
         ])
       ),
