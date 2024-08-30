@@ -11,5 +11,6 @@ pub fn radiate() {
     |> radiate.add_dir(".")
     |> radiate.on_reload(print_radiate_update)
     |> radiate.start()
+
   wisp.log_debug("Watching src to change.")
 }

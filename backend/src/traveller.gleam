@@ -1,3 +1,4 @@
+import gleam/erlang/os
 import gleam/erlang/process
 import mist
 import setup
@@ -15,7 +16,10 @@ pub fn main() {
 
   use db <- database.with_connection()
 
-  setup.radiate()
+  case os.get_env("DEPLOY_ENV") {
+    Ok("Production") -> Nil
+    _ -> setup.radiate()
+  }
 
   let context =
     web.Context(

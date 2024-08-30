@@ -3750,6 +3750,9 @@ function id_value(id) {
   return value4;
 }
 
+// build/dev/javascript/frontend/env.mjs
+var api_base_url = "http://localhost:8080";
+
 // build/dev/javascript/frontend/frontend/routes.mjs
 var Login = class extends CustomType {
 };
@@ -3824,11 +3827,11 @@ var TripPlaceCreatePage = class extends CustomType {
   }
 };
 var AppModel = class extends CustomType {
-  constructor(route, show_loading, api_base_url, login_request, trips_dashboard, trip_details, trip_create, trip_create_errors, trip_place_create, trip_place_create_errors) {
+  constructor(route, show_loading, api_base_url2, login_request, trips_dashboard, trip_details, trip_create, trip_create_errors, trip_place_create, trip_place_create_errors) {
     super();
     this.route = route;
     this.show_loading = show_loading;
-    this.api_base_url = api_base_url;
+    this.api_base_url = api_base_url2;
     this.login_request = login_request;
     this.trips_dashboard = trips_dashboard;
     this.trip_details = trip_details;
@@ -3954,7 +3957,7 @@ function default_app_model() {
   return new AppModel(
     new Login(),
     false,
-    "http://localhost:8080",
+    api_base_url,
     default_login_request(),
     default_user_trips(),
     default_user_trip_places(),
@@ -4777,9 +4780,9 @@ function trip_details_view(app_model) {
     ])
   );
 }
-function delete_trip_place(api_base_url, trip_id, trip_place_id) {
+function delete_trip_place(api_base_url2, trip_id, trip_place_id) {
   return delete$2(
-    api_base_url + "/api/trips/" + trip_id + "/places/" + trip_place_id,
+    api_base_url2 + "/api/trips/" + trip_id + "/places/" + trip_place_id,
     (result) => {
       if (result.isOk()) {
         return new OnRouteChange(new TripDetails(trip_id));
@@ -4828,9 +4831,9 @@ function handle_trip_details_page_event(model, event2) {
     ];
   }
 }
-function load_trip_details(api_base_url, trip_id) {
+function load_trip_details(api_base_url2, trip_id) {
   return get3(
-    api_base_url + "/api/trips/" + trip_id + "/places",
+    api_base_url2 + "/api/trips/" + trip_id + "/places",
     (response) => {
       let _pipe = user_trip_places_decoder();
       return from(_pipe, response);

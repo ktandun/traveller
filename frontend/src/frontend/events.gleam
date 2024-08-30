@@ -1,3 +1,4 @@
+import env
 import frontend/routes.{type Route}
 import gleam/dynamic.{type Dynamic}
 import lustre_http.{type HttpError}
@@ -34,7 +35,7 @@ pub fn default_app_model() {
   AppModel(
     route: routes.Login,
     show_loading: False,
-    api_base_url: "http://localhost:8080",
+    api_base_url: env.api_base_url,
     login_request: auth_models.default_login_request(),
     trips_dashboard: trip_models.default_user_trips(),
     trip_details: trip_models.default_user_trip_places(),
