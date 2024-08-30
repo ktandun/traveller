@@ -1,7 +1,7 @@
 import decode
 import gleam/json
-import gleam/list
 import gleam/option.{type Option}
+import gleam/string
 
 //
 
@@ -34,7 +34,7 @@ pub fn user_trip_decoder() {
 
 pub fn user_trip_encoder(data: UserTrip) {
   json.object([
-    #("trip_id", json.string(data.trip_id)),
+    #("trip_id", json.string(data.trip_id |> string.lowercase)),
     #("destination", json.string(data.destination)),
     #("start_date", json.string(data.start_date)),
     #("end_date", json.string(data.end_date)),
@@ -114,7 +114,7 @@ pub fn user_trip_place_decoder() {
 
 pub fn user_trip_place_encoder(data: UserTripPlace) {
   json.object([
-    #("trip_place_id", json.string(data.trip_place_id)),
+    #("trip_place_id", json.string(data.trip_place_id |> string.lowercase)),
     #("name", json.string(data.name)),
     #("date", json.string(data.date)),
     #("google_maps_link", json.nullable(data.google_maps_link, of: json.string)),
@@ -152,7 +152,7 @@ pub fn user_trip_places_decoder() {
 
 pub fn user_trip_places_encoder(data: UserTripPlaces) {
   json.object([
-    #("trip_id", json.string(data.trip_id)),
+    #("trip_id", json.string(data.trip_id |> string.lowercase)),
     #("destination", json.string(data.destination)),
     #("start_date", json.string(data.start_date)),
     #("end_date", json.string(data.end_date)),
@@ -193,7 +193,7 @@ pub fn user_trip_companion_decoder() {
 
 pub fn user_trip_companion_encoder(data: UserTripCompanion) {
   json.object([
-    #("trip_companion_id", json.string(data.trip_companion_id)),
+    #("trip_companion_id", json.string(data.trip_companion_id |> string.lowercase)),
     #("name", json.string(data.name)),
     #("email", json.string(data.email)),
   ])
@@ -286,7 +286,7 @@ pub fn update_trip_companions_request_encoder(data: UpdateTripCompanionsRequest)
 
 pub fn trip_companion_encoder(data: TripCompanion) {
   json.object([
-    #("trip_companion_id", json.string(data.trip_companion_id)),
+    #("trip_companion_id", json.string(data.trip_companion_id |> string.lowercase)),
     #("name", json.string(data.name)),
     #("email", json.string(data.email)),
   ])

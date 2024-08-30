@@ -2661,6 +2661,9 @@ function start3(app, selector, flags) {
 function h1(attrs, children) {
   return element("h1", attrs, children);
 }
+function h2(attrs, children) {
+  return element("h2", attrs, children);
+}
 function h3(attrs, children) {
   return element("h3", attrs, children);
 }
@@ -2727,7 +2730,7 @@ var defaults = {
   handle_external_links: false,
   handle_internal_links: true
 };
-var initial_location = window?.location?.href;
+var initial_location = globalThis.window && window?.location?.href;
 var do_initial_uri = () => {
   if (!initial_location) {
     return new Error(void 0);
@@ -4297,7 +4300,7 @@ function trip_companions_view(app_model, trip_id) {
   return div(
     toList([]),
     toList([
-      h1(toList([]), toList([text("Add Companions")])),
+      h3(toList([]), toList([text("Add Companions")])),
       div(
         toList([class$("buttons")]),
         toList([
@@ -4352,7 +4355,7 @@ function trip_companions_view(app_model, trip_id) {
                     toList([
                       th(toList([]), toList([text("Name")])),
                       th(toList([]), toList([text("Email")])),
-                      th(toList([]), toList([text("")]))
+                      th(toList([]), toList([text("Actions")]))
                     ])
                   )
                 ])
@@ -4379,7 +4382,7 @@ function trip_create_view(app_model) {
   return div(
     toList([]),
     toList([
-      h1(toList([]), toList([text("Create a New Trip")])),
+      h3(toList([]), toList([text("Create a New Trip")])),
       form(
         toList([]),
         toList([
@@ -4597,7 +4600,7 @@ function trip_details_view(app_model) {
   return div(
     toList([]),
     toList([
-      h1(
+      h2(
         toList([]),
         toList([
           text("Trip to "),
@@ -4836,7 +4839,7 @@ function trip_place_create_view(app_model, trip_id) {
   return div(
     toList([]),
     toList([
-      h1(toList([]), toList([text("Add a Place")])),
+      h3(toList([]), toList([text("Add a Place")])),
       form(
         toList([]),
         toList([

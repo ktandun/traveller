@@ -15,7 +15,7 @@ import shared/trip_models
 
 pub fn trip_companions_view(app_model: AppModel, trip_id: String) {
   html.div([], [
-    html.h1([], [element.text("Add Companions")]),
+    html.h3([], [element.text("Add Companions")]),
     html.div([attribute.class("buttons")], [
       html.button(
         [
@@ -49,7 +49,7 @@ pub fn trip_companions_view(app_model: AppModel, trip_id: String) {
           html.tr([], [
             html.th([], [element.text("Name")]),
             html.th([], [element.text("Email")]),
-            html.th([], [element.text("")]),
+            html.th([], [element.text("Actions")]),
           ]),
         ]),
         html.tbody(

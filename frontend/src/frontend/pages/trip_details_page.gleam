@@ -20,7 +20,7 @@ import shared/trip_models
 
 pub fn trip_details_view(app_model: AppModel) {
   html.div([], [
-    html.h1([], [
+    html.h2([], [
       element.text("Trip to "),
       html.span([attribute.class("text-cursive")], [
         element.text(app_model.trip_details.destination),

@@ -14,7 +14,7 @@ import shared/trip_models
 
 pub fn trip_place_create_view(app_model: AppModel, trip_id: String) {
   html.div([], [
-    html.h1([], [element.text("Add a Place")]),
+    html.h3([], [element.text("Add a Place")]),
     html.form([], [
       html.p([], [
         html.label([], [element.text("Place")]),
