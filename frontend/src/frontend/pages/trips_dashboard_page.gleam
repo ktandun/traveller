@@ -84,22 +84,3 @@ pub fn handle_trips_dashboard_page_event(
   }
 }
 
-pub fn load_trips_dashboard() -> Effect(AppEvent) {
-  let url = "http://localhost:8080/api/trips"
-
-  lustre_http.get(
-    url,
-    lustre_http.expect_json(
-      fn(response) { trip_models.user_trips_decoder() |> decode.from(response) },
-      fn(result) {
-        case result {
-          Ok(user_trips) ->
-            events.TripsDashboardPage(events.TripsDashboardPageApiReturnedTrips(
-              user_trips,
-            ))
-          Error(_e) -> events.OnRouteChange(routes.Login)
-        }
-      },
-    ),
-  )
-}

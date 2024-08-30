@@ -14,10 +14,15 @@ import wisp.{type Request, type Response}
 import youid/uuid.{type Uuid}
 
 pub type Context {
-  Context(db: pgo.Connection, uuid_provider: fn() -> Uuid)
+  Context(
+    db: pgo.Connection,
+    uuid_provider: fn() -> Uuid,
+    static_directory: String,
+  )
 }
 
 pub fn middleware(
+  ctx: Context,
   req: Request,
   handle_request: fn(Request) -> Response,
 ) -> wisp.Response {
@@ -28,6 +33,8 @@ pub fn middleware(
   use <- wisp.rescue_crashes
 
   use req <- wisp.handle_head(req)
+
+  use <- wisp.serve_static(req, under: "/", from: ctx.static_directory)
 
   handle_request(req)
 }

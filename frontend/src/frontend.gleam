@@ -1,3 +1,4 @@
+import decode
 import frontend/events.{type AppEvent, type AppModel, AppModel}
 import frontend/pages/login_page
 import frontend/pages/trip_companions_page
@@ -6,6 +7,7 @@ import frontend/pages/trip_details_page
 import frontend/pages/trip_place_create_page
 import frontend/pages/trips_dashboard_page
 import frontend/routes.{type Route}
+import frontend/web
 import gleam/string
 import gleam/uri.{type Uri}
 import lustre
@@ -14,6 +16,7 @@ import lustre/effect.{type Effect}
 import lustre/element.{type Element}
 import lustre/element/html
 import modem
+import shared/trip_models
 
 pub fn main() {
   let app = lustre.application(init, update, view)
@@ -61,14 +64,31 @@ pub fn update(model: AppModel, msg: AppEvent) -> #(AppModel, Effect(AppEvent)) {
   case msg {
     events.OnRouteChange(route) -> {
       #(AppModel(..model, route: route), case route {
-        routes.TripsDashboard -> trips_dashboard_page.load_trips_dashboard()
+        routes.TripsDashboard ->
+          // retrieve list of trips for logged in user
+          web.get(
+            model.api_base_url <> "/api/trips",
+            fn(response) {
+              trip_models.user_trips_decoder() |> decode.from(response)
+            },
+            fn(result) {
+              case result {
+                Ok(user_trips) ->
+                  events.TripsDashboardPage(
+                    events.TripsDashboardPageApiReturnedTrips(user_trips),
+                  )
+                Error(_e) -> events.OnRouteChange(routes.Login)
+              }
+            },
+          )
         routes.TripPlaceCreate(trip_id) | routes.TripCompanions(trip_id) ->
           case string.is_empty(model.trip_details.destination) {
-            True -> trip_details_page.load_trip_details(trip_id)
+            True ->
+              trip_details_page.load_trip_details(model.api_base_url, trip_id)
             False -> effect.none()
           }
         routes.TripDetails(trip_id) ->
-          trip_details_page.load_trip_details(trip_id)
+          trip_details_page.load_trip_details(model.api_base_url, trip_id)
         _ -> effect.none()
       })
     }

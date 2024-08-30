@@ -84,7 +84,7 @@ pub fn handle_trip_companions_page_event(
       #(
         AppModel(..model, show_loading: True),
         web.post(
-          "http://localhost:8080/api/trips/" <> trip_id <> "/companions",
+          model.api_base_url <> "/api/trips/" <> trip_id <> "/companions",
           trip_models.update_trip_companions_request_encoder(
             update_trip_companions_request,
           ),

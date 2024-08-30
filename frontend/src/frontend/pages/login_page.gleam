@@ -1,6 +1,7 @@
 import decode
-import frontend/events.{type AppEvent}
+import frontend/events.{type AppEvent, type AppModel}
 import frontend/routes
+import frontend/web
 import gleam/option
 import lustre/attribute
 import lustre/effect.{type Effect}
@@ -12,7 +13,7 @@ import modem
 import shared/auth_models
 import shared/id
 
-pub fn login_view(app_model: events.AppModel) {
+pub fn login_view(app_model: AppModel) {
   html.div([], [
     html.h3([attribute.class("text-cursive")], [element.text("Login")]),
     html.div([], [
@@ -68,34 +69,22 @@ pub fn handle_login_page_event(
     )
     events.LoginPageUserClickedSubmit -> #(
       events.AppModel(..model, show_loading: True),
-      handle_submit_login(model.login_request),
+      web.post(
+        model.api_base_url <> "/api/login",
+        auth_models.login_request_encoder(model.login_request),
+        fn(response) { id.id_decoder() |> decode.from(response) },
+        fn(result) {
+          case result {
+            Ok(user_id) ->
+              events.LoginPage(events.LoginPageApiReturnedResponse(user_id))
+            Error(_e) -> events.OnRouteChange(routes.Login)
+          }
+        },
+      ),
     )
     events.LoginPageApiReturnedResponse(_user_id) -> #(
       events.AppModel(..model, show_loading: False),
       modem.push("/dashboard", option.None, option.None),
     )
   }
-}
-
-fn handle_submit_login(
-  login_request: auth_models.LoginRequest,
-) -> Effect(AppEvent) {
-  let url = "http://localhost:8080/api/login"
-
-  let json = auth_models.login_request_encoder(login_request)
-
-  lustre_http.post(
-    url,
-    json,
-    lustre_http.expect_json(
-      fn(response) { id.id_decoder() |> decode.from(response) },
-      fn(result) {
-        case result {
-          Ok(user_id) ->
-            events.LoginPage(events.LoginPageApiReturnedResponse(user_id))
-          Error(_e) -> events.OnRouteChange(routes.Login)
-        }
-      },
-    ),
-  )
 }

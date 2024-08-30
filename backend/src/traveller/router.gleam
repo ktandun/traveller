@@ -11,22 +11,22 @@ import traveller/web.{type Context}
 import wisp.{type Request, type Response}
 
 pub fn handle_request(req: Request, ctx: Context) -> Response {
-  use req <- web.middleware(req)
+  use req <- web.middleware(ctx, req)
 
   case wisp.path_segments(req) {
-    ["login"] -> {
+    ["api", "login"] -> {
       case req.method {
         http.Post -> post_login(req, ctx)
         _ -> wisp.method_not_allowed([http.Post])
       }
     }
-    ["signup"] -> {
+    ["api", "signup"] -> {
       case req.method {
         http.Post -> post_signup(req, ctx)
         _ -> wisp.method_not_allowed([http.Post])
       }
     }
-    ["trips"] -> {
+    ["api", "trips"] -> {
       use user_id <- web.require_authenticated(req, ctx)
 
       case req.method {
@@ -35,7 +35,7 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
         _ -> wisp.method_not_allowed([http.Get, http.Post])
       }
     }
-    ["trips", trip_id, "places"] -> {
+    ["api", "trips", trip_id, "places"] -> {
       use user_id <- web.require_authenticated(req, ctx)
 
       case req.method {
@@ -44,7 +44,7 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
         _ -> wisp.method_not_allowed([http.Get, http.Post])
       }
     }
-    ["trips", trip_id, "companions"] -> {
+    ["api", "trips", trip_id, "companions"] -> {
       use user_id <- web.require_authenticated(req, ctx)
 
       case req.method {
@@ -52,7 +52,7 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
         _ -> wisp.method_not_allowed([http.Post])
       }
     }
-    ["trips", trip_id, "places", trip_place_id] -> {
+    ["api", "trips", trip_id, "places", trip_place_id] -> {
       use user_id <- web.require_authenticated(req, ctx)
 
       case req.method {

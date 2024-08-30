@@ -16,7 +16,12 @@ pub fn gen_uuid() {
 pub fn with_context(callback: fn(web.Context) -> t) -> t {
   use db <- database.with_connection()
 
-  let context = web.Context(db: db, uuid_provider: gen_uuid)
+  let context =
+    web.Context(
+      db: db,
+      uuid_provider: gen_uuid,
+      static_directory: "/priv/static",
+    )
 
   callback(context)
 }

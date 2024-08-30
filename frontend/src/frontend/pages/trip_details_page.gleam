@@ -4,17 +4,14 @@ import frontend/events.{
   type AppEvent, type AppModel, type TripDetailsPageEvent, AppModel,
 }
 import frontend/routes
-import gleam/http
-import gleam/http/request
+import frontend/web
 import gleam/list
 import gleam/option
-import gleam/result
 import lustre/attribute
 import lustre/effect.{type Effect}
 import lustre/element
 import lustre/element/html
 import lustre/event
-import lustre_http
 import modem
 import shared/trip_models
 
@@ -57,9 +54,11 @@ pub fn trip_details_view(app_model: AppModel) {
       html.button(
         [
           event.on_click(
-            events.TripDetailsPage(events.TripDetailsPageUserClickedAddCompanions(
-              app_model.trip_details.trip_id,
-            )),
+            events.TripDetailsPage(
+              events.TripDetailsPageUserClickedAddCompanions(
+                app_model.trip_details.trip_id,
+              ),
+            ),
           ),
         ],
         [element.text("Add Travel Companions")],
@@ -124,7 +123,11 @@ pub fn handle_trip_details_page_event(
     )
     events.TripDetailsPageUserClickedRemovePlace(trip_place_id) -> #(
       model,
-      delete_trip_place(model.trip_details.trip_id, trip_place_id),
+      delete_trip_place(
+        model.api_base_url,
+        model.trip_details.trip_id,
+        trip_place_id,
+      ),
     )
     events.TripDetailsPageUserClickedAddCompanions(trip_id) -> #(
       model,
@@ -146,47 +149,38 @@ pub fn handle_trip_details_page_event(
 }
 
 pub fn delete_trip_place(
+  api_base_url: String,
   trip_id: String,
   trip_place_id: String,
 ) -> Effect(AppEvent) {
-  let url =
-    "http://localhost:8080/api/trips/" <> trip_id <> "/places/" <> trip_place_id
-
-  let req =
-    url
-    |> request.to()
-    |> result.unwrap(request.new())
-
-  req
-  |> request.set_method(http.Delete)
-  |> lustre_http.send(
-    lustre_http.expect_anything(fn(result) {
+  web.delete(
+    api_base_url <> "/api/trips/" <> trip_id <> "/places/" <> trip_place_id,
+    fn(result) {
       case result {
         Ok(_) -> events.OnRouteChange(routes.TripDetails(trip_id))
         Error(_e) -> events.OnRouteChange(routes.Login)
       }
-    }),
+    },
   )
 }
 
-pub fn load_trip_details(trip_id: String) -> Effect(AppEvent) {
-  let url = "http://localhost:8080/api/trips/" <> trip_id <> "/places"
-
-  lustre_http.get(
-    url,
-    lustre_http.expect_json(
-      fn(response) {
-        trip_models.user_trip_places_decoder() |> decode.from(response)
-      },
-      fn(result) {
-        case result {
-          Ok(user_trip_places) ->
-            events.TripDetailsPage(events.TripDetailsPageApiReturnedTripDetails(
-              user_trip_places,
-            ))
-          Error(_e) -> events.OnRouteChange(routes.Login)
-        }
-      },
-    ),
+pub fn load_trip_details(
+  api_base_url: String,
+  trip_id: String,
+) -> Effect(AppEvent) {
+  web.get(
+    api_base_url <> "/api/trips/" <> trip_id <> "/places",
+    fn(response) {
+      trip_models.user_trip_places_decoder() |> decode.from(response)
+    },
+    fn(result) {
+      case result {
+        Ok(user_trip_places) ->
+          events.TripDetailsPage(events.TripDetailsPageApiReturnedTripDetails(
+            user_trip_places,
+          ))
+        Error(_e) -> events.OnRouteChange(routes.Login)
+      }
+    },
   )
 }

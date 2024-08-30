@@ -1,10 +1,9 @@
 import decode
-import frontend/events.{
-  type AppEvent, type AppModel, type TripCreatePageEvent, AppModel,
-}
+import frontend/events.{type AppModel, type TripCreatePageEvent, AppModel}
+import frontend/web
 import gleam/option
 import lustre/attribute
-import lustre/effect.{type Effect}
+import lustre/effect
 import lustre/element
 import lustre/element/html
 import lustre/event
@@ -103,7 +102,14 @@ pub fn handle_trip_create_page_event(
     )
     events.TripCreatePageUserClickedCreateTrip -> #(
       model,
-      handle_create_trip(model.trip_create),
+      web.post(
+        model.api_base_url <> "/api/trips",
+        trip_models.create_trip_request_encoder(model.trip_create),
+        fn(response) { id.id_decoder() |> decode.from(response) },
+        fn(result) {
+          events.TripCreatePage(events.TripCreatePageApiReturnedResponse(result))
+        },
+      ),
     )
     events.TripCreatePageApiReturnedResponse(response) -> {
       case response {
@@ -136,23 +142,4 @@ pub fn handle_trip_create_page_event(
       }
     }
   }
-}
-
-fn handle_create_trip(
-  create_trip_request: trip_models.CreateTripRequest,
-) -> Effect(AppEvent) {
-  let url = "http://localhost:8080/api/trips"
-
-  let json = trip_models.create_trip_request_encoder(create_trip_request)
-
-  lustre_http.post(
-    url,
-    json,
-    lustre_http.expect_json(
-      fn(response) { id.id_decoder() |> decode.from(response) },
-      fn(result) {
-        events.TripCreatePage(events.TripCreatePageApiReturnedResponse(result))
-      },
-    ),
-  )
 }

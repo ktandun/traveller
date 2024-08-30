@@ -1,7 +1,10 @@
 import frontend/events.{type AppEvent, type AppModel}
 import frontend/routes
 import gleam/dynamic.{type Decoder}
+import gleam/http
+import gleam/http/request
 import gleam/json.{type Json}
+import gleam/result
 import lustre/effect.{type Effect}
 import lustre_http.{type HttpError}
 
@@ -31,4 +34,28 @@ pub fn post(
   to_msg: fn(Result(b, HttpError)) -> AppEvent,
 ) -> Effect(AppEvent) {
   lustre_http.post(url, json, lustre_http.expect_json(response_decoder, to_msg))
+}
+
+pub fn get(
+  url: String,
+  response_decoder: Decoder(b),
+  to_msg: fn(Result(b, HttpError)) -> AppEvent,
+) -> Effect(AppEvent) {
+  lustre_http.get(url, lustre_http.expect_json(response_decoder, to_msg))
+}
+
+pub fn delete(
+  url: String,
+  to_msg: fn(Result(Nil, HttpError)) -> AppEvent,
+) -> Effect(AppEvent) {
+  let req =
+    url
+    |> request.to()
+    |> result.unwrap(request.new())
+
+  req
+  |> request.set_method(http.Delete)
+  |> lustre_http.send(
+    lustre_http.expect_anything(fn(response) { to_msg(response) }),
+  )
 }

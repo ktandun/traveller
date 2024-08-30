@@ -1,5 +1,4 @@
 import gleam/erlang/process
-import gleam/io
 import mist
 import setup
 import traveller/database
@@ -18,7 +17,12 @@ pub fn main() {
 
   setup.radiate()
 
-  let context = web.Context(db: db, uuid_provider: uuid.v7)
+  let context =
+    web.Context(
+      db: db,
+      uuid_provider: uuid.v7,
+      static_directory: static_directory(),
+    )
 
   let handler = router.handle_request(_, context)
 
@@ -29,7 +33,14 @@ pub fn main() {
     |> mist.port(8000)
     |> mist.start_http
 
-  io.debug("Running")
-
   process.sleep_forever()
+}
+
+pub fn static_directory() -> String {
+  // The priv directory is where we store non-Gleam and non-Erlang files,
+  // including static assets to be served.
+  // This function returns an absolute path and works both in development and in
+  // production after compilation.
+  let assert Ok(priv_directory) = wisp.priv_directory("traveller")
+  priv_directory <> "/static"
 }

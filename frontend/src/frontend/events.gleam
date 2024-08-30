@@ -19,6 +19,7 @@ pub type AppModel {
   AppModel(
     route: Route,
     show_loading: Bool,
+    api_base_url: String,
     login_request: auth_models.LoginRequest,
     trips_dashboard: trip_models.UserTrips,
     trip_details: trip_models.UserTripPlaces,
@@ -33,6 +34,7 @@ pub fn default_app_model() {
   AppModel(
     route: routes.Login,
     show_loading: False,
+    api_base_url: "http://localhost:8080",
     login_request: auth_models.default_login_request(),
     trips_dashboard: trip_models.default_user_trips(),
     trip_details: trip_models.default_user_trip_places(),

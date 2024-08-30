@@ -188,9 +188,9 @@ function isEqual(x, y) {
       } catch {
       }
     }
-    let [keys2, get3] = getters(a2);
+    let [keys2, get4] = getters(a2);
     for (let k of keys2(a2)) {
-      values.push(get3(a2, k), get3(b, k));
+      values.push(get4(a2, k), get4(b, k));
     }
   }
   return true;
@@ -443,7 +443,7 @@ function do_append(loop$first, loop$second) {
     }
   }
 }
-function append2(first3, second2) {
+function append(first3, second2) {
   return do_append(reverse(first3), second2);
 }
 function fold(loop$list, loop$initial, loop$fun) {
@@ -486,7 +486,7 @@ function do_repeat(loop$a, loop$times, loop$acc) {
     }
   }
 }
-function repeat2(a2, times) {
+function repeat(a2, times) {
   return do_repeat(a2, times, toList([]));
 }
 function key_set(list3, key, value4) {
@@ -547,7 +547,7 @@ function nil_error(result) {
     return void 0;
   });
 }
-function replace2(result, value4) {
+function replace(result, value4) {
   if (result.isOk()) {
     return new Ok(value4);
   } else {
@@ -568,6 +568,35 @@ function to_string3(builder) {
 }
 function split2(iodata, pattern) {
   return split(iodata, pattern);
+}
+
+// build/dev/javascript/gleam_stdlib/gleam/string.mjs
+function is_empty2(str) {
+  return str === "";
+}
+function lowercase2(string4) {
+  return lowercase(string4);
+}
+function starts_with2(string4, prefix) {
+  return starts_with(string4, prefix);
+}
+function concat2(strings) {
+  let _pipe = strings;
+  let _pipe$1 = from_strings(_pipe);
+  return to_string3(_pipe$1);
+}
+function pop_grapheme2(string4) {
+  return pop_grapheme(string4);
+}
+function split3(x, substring) {
+  if (substring === "") {
+    return graphemes(x);
+  } else {
+    let _pipe = x;
+    let _pipe$1 = from_string(_pipe);
+    let _pipe$2 = split2(_pipe$1, substring);
+    return map2(_pipe$2, to_string3);
+  }
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/dynamic.mjs
@@ -1579,33 +1608,134 @@ function try_get_field2(value4, field3, or_else) {
   }
 }
 
-// build/dev/javascript/gleam_stdlib/gleam/string.mjs
-function is_empty2(str) {
-  return str === "";
-}
-function lowercase2(string4) {
-  return lowercase(string4);
-}
-function starts_with2(string4, prefix) {
-  return starts_with(string4, prefix);
-}
-function concat3(strings) {
-  let _pipe = strings;
-  let _pipe$1 = from_strings(_pipe);
-  return to_string3(_pipe$1);
-}
-function pop_grapheme2(string4) {
-  return pop_grapheme(string4);
-}
-function split3(x, substring) {
-  if (substring === "") {
-    return graphemes(x);
-  } else {
-    let _pipe = x;
-    let _pipe$1 = from_string(_pipe);
-    let _pipe$2 = split2(_pipe$1, substring);
-    return map2(_pipe$2, to_string3);
+// build/dev/javascript/decode/decode_ffi.mjs
+function index2(data, key) {
+  const int4 = Number.isInteger(key);
+  if (int4 && Array.isArray(data) || data && typeof data === "object" || Object.getPrototypeOf(data) === Object.prototype) {
+    return new Ok(data[key]);
   }
+  if (value instanceof Dict || value instanceof WeakMap || value instanceof Map) {
+    const entry = map_get(value, name);
+    return new Ok(entry.isOk() ? new Some(entry[0]) : new None());
+  }
+  if (Object.getPrototypeOf(value) == Object.prototype) {
+    return try_get_field(value, name, () => new Ok(new None()));
+  }
+  return new Error(int4 ? "Indexable" : "Dict");
+}
+
+// build/dev/javascript/decode/decode.mjs
+var Decoder = class extends CustomType {
+  constructor(continuation) {
+    super();
+    this.continuation = continuation;
+  }
+};
+function into(constructor) {
+  return new Decoder((_) => {
+    return new Ok(constructor);
+  });
+}
+function parameter(body) {
+  return body;
+}
+function from(decoder, data) {
+  return decoder.continuation(data);
+}
+var string2 = /* @__PURE__ */ new Decoder(string);
+var int2 = /* @__PURE__ */ new Decoder(int);
+function list2(item) {
+  return new Decoder(list(item.continuation));
+}
+function optional2(item) {
+  return new Decoder(optional(item.continuation));
+}
+function push_path2(errors, key) {
+  let key$1 = identity(key);
+  let decoder = any(
+    toList([
+      string,
+      (x) => {
+        return map3(int(x), to_string2);
+      }
+    ])
+  );
+  let key$2 = (() => {
+    let $ = decoder(key$1);
+    if ($.isOk()) {
+      let key$22 = $[0];
+      return key$22;
+    } else {
+      return "<" + classify(key$1) + ">";
+    }
+  })();
+  return map2(
+    errors,
+    (error) => {
+      return error.withFields({ path: prepend(key$2, error.path) });
+    }
+  );
+}
+function index3(key, inner, data) {
+  let $ = index2(data, key);
+  if ($.isOk()) {
+    let data$1 = $[0];
+    let $1 = inner(data$1);
+    if ($1.isOk()) {
+      let data$2 = $1[0];
+      return new Ok(data$2);
+    } else {
+      let errors = $1[0];
+      return new Error(push_path2(errors, key));
+    }
+  } else {
+    let kind = $[0];
+    return new Error(
+      toList([new DecodeError(kind, classify(data), toList([]))])
+    );
+  }
+}
+function at(path, inner) {
+  return new Decoder(
+    (data) => {
+      let decoder = fold_right(
+        path,
+        inner.continuation,
+        (dyn_decoder, segment) => {
+          return (_capture) => {
+            return index3(segment, dyn_decoder, _capture);
+          };
+        }
+      );
+      return decoder(data);
+    }
+  );
+}
+function subfield(decoder, field_path, field_decoder) {
+  return new Decoder(
+    (data) => {
+      let constructor = decoder.continuation(data);
+      let data$1 = from(at(field_path, field_decoder), data);
+      if (constructor.isOk() && data$1.isOk()) {
+        let constructor$1 = constructor[0];
+        let data$2 = data$1[0];
+        return new Ok(constructor$1(data$2));
+      } else if (!constructor.isOk() && !data$1.isOk()) {
+        let e1 = constructor[0];
+        let e2 = data$1[0];
+        return new Error(append(e1, e2));
+      } else if (!data$1.isOk()) {
+        let errors = data$1[0];
+        return new Error(errors);
+      } else {
+        let errors = constructor[0];
+        return new Error(errors);
+      }
+    }
+  );
+}
+function field2(decoder, field_name, field_decoder) {
+  return subfield(decoder, toList([field_name]), field_decoder);
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/uri.mjs
@@ -1677,9 +1807,9 @@ function extra_required(loop$list, loop$remaining) {
 }
 function pad_list(list3, size) {
   let _pipe = list3;
-  return append2(
+  return append(
     _pipe,
-    repeat2(new None2(), extra_required(list3, size))
+    repeat(new None2(), extra_required(list3, size))
   );
 }
 function split_authority(authority) {
@@ -1879,7 +2009,7 @@ function to_string4(uri) {
       return parts$4;
     }
   })();
-  return concat3(parts$5);
+  return concat2(parts$5);
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/bool.mjs
@@ -2030,7 +2160,7 @@ function decode2(json, decoder) {
 function to_string6(json) {
   return json_to_string(json);
 }
-function string2(input2) {
+function string3(input2) {
   return identity2(input2);
 }
 function null$() {
@@ -2063,7 +2193,7 @@ var Effect = class extends CustomType {
     this.all = all;
   }
 };
-function from(effect) {
+function from2(effect) {
   return new Effect(toList([(dispatch, _) => {
     return effect(dispatch);
   }]));
@@ -2078,7 +2208,7 @@ function batch(effects) {
       toList([]),
       (b, _use1) => {
         let a2 = _use1.all;
-        return append2(b, a2);
+        return append(b, a2);
       }
     )
   );
@@ -2822,7 +2952,7 @@ var uri_from_url = (url) => {
 
 // build/dev/javascript/modem/modem.mjs
 function init2(handler) {
-  return from(
+  return from2(
     (dispatch) => {
       return guard(
         !is_browser(),
@@ -2850,7 +2980,7 @@ var relative = /* @__PURE__ */ new Uri(
   /* @__PURE__ */ new None2()
 );
 function push(path, query, fragment) {
-  return from(
+  return from2(
     (_) => {
       return guard(
         !is_browser(),
@@ -2862,6 +2992,290 @@ function push(path, query, fragment) {
         }
       );
     }
+  );
+}
+
+// build/dev/javascript/shared/shared/trip_models.mjs
+var UserTrip = class extends CustomType {
+  constructor(trip_id, destination, start_date, end_date, places_count) {
+    super();
+    this.trip_id = trip_id;
+    this.destination = destination;
+    this.start_date = start_date;
+    this.end_date = end_date;
+    this.places_count = places_count;
+  }
+};
+var UserTrips = class extends CustomType {
+  constructor(user_trips) {
+    super();
+    this.user_trips = user_trips;
+  }
+};
+var UserTripPlace = class extends CustomType {
+  constructor(trip_place_id, name3, date, google_maps_link) {
+    super();
+    this.trip_place_id = trip_place_id;
+    this.name = name3;
+    this.date = date;
+    this.google_maps_link = google_maps_link;
+  }
+};
+var UserTripPlaces = class extends CustomType {
+  constructor(trip_id, destination, start_date, end_date, user_trip_places, user_trip_companions) {
+    super();
+    this.trip_id = trip_id;
+    this.destination = destination;
+    this.start_date = start_date;
+    this.end_date = end_date;
+    this.user_trip_places = user_trip_places;
+    this.user_trip_companions = user_trip_companions;
+  }
+};
+var UserTripCompanion = class extends CustomType {
+  constructor(trip_companion_id, name3, email) {
+    super();
+    this.trip_companion_id = trip_companion_id;
+    this.name = name3;
+    this.email = email;
+  }
+};
+var CreateTripRequest = class extends CustomType {
+  constructor(destination, start_date, end_date) {
+    super();
+    this.destination = destination;
+    this.start_date = start_date;
+    this.end_date = end_date;
+  }
+};
+var CreateTripPlaceRequest = class extends CustomType {
+  constructor(place, date, google_maps_link) {
+    super();
+    this.place = place;
+    this.date = date;
+    this.google_maps_link = google_maps_link;
+  }
+};
+var UpdateTripCompanionsRequest = class extends CustomType {
+  constructor(trip_companions) {
+    super();
+    this.trip_companions = trip_companions;
+  }
+};
+var TripCompanion = class extends CustomType {
+  constructor(trip_companion_id, name3, email) {
+    super();
+    this.trip_companion_id = trip_companion_id;
+    this.name = name3;
+    this.email = email;
+  }
+};
+function user_trip_decoder() {
+  let _pipe = into(
+    parameter(
+      (trip_id) => {
+        return parameter(
+          (destination) => {
+            return parameter(
+              (start_date) => {
+                return parameter(
+                  (end_date) => {
+                    return parameter(
+                      (places_count) => {
+                        return new UserTrip(
+                          trip_id,
+                          destination,
+                          start_date,
+                          end_date,
+                          places_count
+                        );
+                      }
+                    );
+                  }
+                );
+              }
+            );
+          }
+        );
+      }
+    )
+  );
+  let _pipe$1 = field2(_pipe, "trip_id", string2);
+  let _pipe$2 = field2(_pipe$1, "destination", string2);
+  let _pipe$3 = field2(_pipe$2, "start_date", string2);
+  let _pipe$4 = field2(_pipe$3, "end_date", string2);
+  return field2(_pipe$4, "places_count", int2);
+}
+function default_user_trips() {
+  return new UserTrips(toList([]));
+}
+function user_trips_decoder() {
+  let _pipe = into(
+    parameter((user_trips) => {
+      return new UserTrips(user_trips);
+    })
+  );
+  return field2(_pipe, "user_trips", list2(user_trip_decoder()));
+}
+function default_user_trip_places() {
+  return new UserTripPlaces("", "", "", "", toList([]), toList([]));
+}
+function user_trip_place_decoder() {
+  let _pipe = into(
+    parameter(
+      (trip_place_id) => {
+        return parameter(
+          (name3) => {
+            return parameter(
+              (date) => {
+                return parameter(
+                  (google_maps_link) => {
+                    return new UserTripPlace(
+                      trip_place_id,
+                      name3,
+                      date,
+                      google_maps_link
+                    );
+                  }
+                );
+              }
+            );
+          }
+        );
+      }
+    )
+  );
+  let _pipe$1 = field2(_pipe, "trip_place_id", string2);
+  let _pipe$2 = field2(_pipe$1, "name", string2);
+  let _pipe$3 = field2(_pipe$2, "date", string2);
+  return field2(
+    _pipe$3,
+    "google_maps_link",
+    optional2(string2)
+  );
+}
+function default_user_trip_companion() {
+  return new UserTripCompanion("", "", "");
+}
+function user_trip_companion_decoder() {
+  let _pipe = into(
+    parameter(
+      (trip_companion_id) => {
+        return parameter(
+          (name3) => {
+            return parameter(
+              (email) => {
+                return new UserTripCompanion(trip_companion_id, name3, email);
+              }
+            );
+          }
+        );
+      }
+    )
+  );
+  let _pipe$1 = field2(_pipe, "trip_companion_id", string2);
+  let _pipe$2 = field2(_pipe$1, "name", string2);
+  return field2(_pipe$2, "email", string2);
+}
+function user_trip_places_decoder() {
+  let _pipe = into(
+    parameter(
+      (trip_id) => {
+        return parameter(
+          (destination) => {
+            return parameter(
+              (start_date) => {
+                return parameter(
+                  (end_date) => {
+                    return parameter(
+                      (user_trip_places) => {
+                        return parameter(
+                          (user_trip_companions) => {
+                            return new UserTripPlaces(
+                              trip_id,
+                              destination,
+                              start_date,
+                              end_date,
+                              user_trip_places,
+                              user_trip_companions
+                            );
+                          }
+                        );
+                      }
+                    );
+                  }
+                );
+              }
+            );
+          }
+        );
+      }
+    )
+  );
+  let _pipe$1 = field2(_pipe, "trip_id", string2);
+  let _pipe$2 = field2(_pipe$1, "destination", string2);
+  let _pipe$3 = field2(_pipe$2, "start_date", string2);
+  let _pipe$4 = field2(_pipe$3, "end_date", string2);
+  let _pipe$5 = field2(
+    _pipe$4,
+    "user_trip_places",
+    list2(user_trip_place_decoder())
+  );
+  return field2(
+    _pipe$5,
+    "user_trip_companions",
+    list2(user_trip_companion_decoder())
+  );
+}
+function default_create_trip_request() {
+  return new CreateTripRequest("", "", "");
+}
+function create_trip_request_encoder(data) {
+  return object2(
+    toList([
+      ["destination", string3(data.destination)],
+      ["start_date", string3(data.start_date)],
+      ["end_date", string3(data.end_date)]
+    ])
+  );
+}
+function default_create_trip_place_request() {
+  return new CreateTripPlaceRequest("", "", new None2());
+}
+function create_trip_place_request_encoder(data) {
+  return object2(
+    toList([
+      ["place", string3(data.place)],
+      ["date", string3(data.date)],
+      ["google_maps_link", nullable(data.google_maps_link, string3)]
+    ])
+  );
+}
+function trip_companion_encoder(data) {
+  return object2(
+    toList([
+      [
+        "trip_companion_id",
+        string3(
+          (() => {
+            let _pipe = data.trip_companion_id;
+            return lowercase2(_pipe);
+          })()
+        )
+      ],
+      ["name", string3(data.name)],
+      ["email", string3(data.email)]
+    ])
+  );
+}
+function update_trip_companions_request_encoder(data) {
+  return object2(
+    toList([
+      [
+        "trip_companions",
+        array2(data.trip_companions, trip_companion_encoder)
+      ]
+    ])
   );
 }
 
@@ -3209,7 +3623,7 @@ function do_send(req, expect, dispatch) {
   return void 0;
 }
 function get2(url, expect) {
-  return from(
+  return from2(
     (dispatch) => {
       let $ = to(url);
       if ($.isOk()) {
@@ -3222,7 +3636,7 @@ function get2(url, expect) {
   );
 }
 function post(url, body, expect) {
-  return from(
+  return from2(
     (dispatch) => {
       let $ = to(url);
       if ($.isOk()) {
@@ -3243,7 +3657,7 @@ function post(url, body, expect) {
   );
 }
 function send2(req, expect) {
-  return from((_capture) => {
+  return from2((_capture) => {
     return do_send(req, expect, _capture);
   });
 }
@@ -3270,7 +3684,7 @@ function expect_anything(to_msg) {
     (response) => {
       let _pipe = response;
       let _pipe$1 = then$(_pipe, response_to_result);
-      let _pipe$2 = replace2(_pipe$1, void 0);
+      let _pipe$2 = replace(_pipe$1, void 0);
       return to_msg(_pipe$2);
     }
   );
@@ -3298,136 +3712,6 @@ function expect_json(decoder, to_msg) {
   );
 }
 
-// build/dev/javascript/decode/decode_ffi.mjs
-function index3(data, key) {
-  const int4 = Number.isInteger(key);
-  if (int4 && Array.isArray(data) || data && typeof data === "object" || Object.getPrototypeOf(data) === Object.prototype) {
-    return new Ok(data[key]);
-  }
-  if (value instanceof Dict || value instanceof WeakMap || value instanceof Map) {
-    const entry = map_get(value, name);
-    return new Ok(entry.isOk() ? new Some(entry[0]) : new None());
-  }
-  if (Object.getPrototypeOf(value) == Object.prototype) {
-    return try_get_field(value, name, () => new Ok(new None()));
-  }
-  return new Error(int4 ? "Indexable" : "Dict");
-}
-
-// build/dev/javascript/decode/decode.mjs
-var Decoder = class extends CustomType {
-  constructor(continuation) {
-    super();
-    this.continuation = continuation;
-  }
-};
-function into(constructor) {
-  return new Decoder((_) => {
-    return new Ok(constructor);
-  });
-}
-function parameter(body) {
-  return body;
-}
-function from2(decoder, data) {
-  return decoder.continuation(data);
-}
-var string3 = /* @__PURE__ */ new Decoder(string);
-var int3 = /* @__PURE__ */ new Decoder(int);
-function list2(item) {
-  return new Decoder(list(item.continuation));
-}
-function optional2(item) {
-  return new Decoder(optional(item.continuation));
-}
-function push_path2(errors, key) {
-  let key$1 = identity(key);
-  let decoder = any(
-    toList([
-      string,
-      (x) => {
-        return map3(int(x), to_string2);
-      }
-    ])
-  );
-  let key$2 = (() => {
-    let $ = decoder(key$1);
-    if ($.isOk()) {
-      let key$22 = $[0];
-      return key$22;
-    } else {
-      return "<" + classify(key$1) + ">";
-    }
-  })();
-  return map2(
-    errors,
-    (error) => {
-      return error.withFields({ path: prepend(key$2, error.path) });
-    }
-  );
-}
-function index4(key, inner, data) {
-  let $ = index3(data, key);
-  if ($.isOk()) {
-    let data$1 = $[0];
-    let $1 = inner(data$1);
-    if ($1.isOk()) {
-      let data$2 = $1[0];
-      return new Ok(data$2);
-    } else {
-      let errors = $1[0];
-      return new Error(push_path2(errors, key));
-    }
-  } else {
-    let kind = $[0];
-    return new Error(
-      toList([new DecodeError(kind, classify(data), toList([]))])
-    );
-  }
-}
-function at(path, inner) {
-  return new Decoder(
-    (data) => {
-      let decoder = fold_right(
-        path,
-        inner.continuation,
-        (dyn_decoder, segment) => {
-          return (_capture) => {
-            return index4(segment, dyn_decoder, _capture);
-          };
-        }
-      );
-      return decoder(data);
-    }
-  );
-}
-function subfield(decoder, field_path, field_decoder) {
-  return new Decoder(
-    (data) => {
-      let constructor = decoder.continuation(data);
-      let data$1 = from2(at(field_path, field_decoder), data);
-      if (constructor.isOk() && data$1.isOk()) {
-        let constructor$1 = constructor[0];
-        let data$2 = data$1[0];
-        return new Ok(constructor$1(data$2));
-      } else if (!constructor.isOk() && !data$1.isOk()) {
-        let e1 = constructor[0];
-        let e2 = data$1[0];
-        return new Error(append2(e1, e2));
-      } else if (!data$1.isOk()) {
-        let errors = data$1[0];
-        return new Error(errors);
-      } else {
-        let errors = constructor[0];
-        return new Error(errors);
-      }
-    }
-  );
-}
-function field2(decoder, field_name, field_decoder) {
-  return subfield(decoder, toList([field_name]), field_decoder);
-}
-
 // build/dev/javascript/shared/shared/auth_models.mjs
 var LoginRequest = class extends CustomType {
   constructor(email, password) {
@@ -3442,8 +3726,8 @@ function default_login_request() {
 function login_request_encoder(data) {
   return object2(
     toList([
-      ["email", string2(data.email)],
-      ["password", string2(data.password)]
+      ["email", string3(data.email)],
+      ["password", string3(data.password)]
     ])
   );
 }
@@ -3459,287 +3743,11 @@ function id_decoder() {
   let _pipe = into(parameter((id) => {
     return new Id(id);
   }));
-  return field2(_pipe, "id", string3);
+  return field2(_pipe, "id", string2);
 }
 function id_value(id) {
   let value4 = id[0];
   return value4;
-}
-
-// build/dev/javascript/shared/shared/trip_models.mjs
-var UserTrip = class extends CustomType {
-  constructor(trip_id, destination, start_date, end_date, places_count) {
-    super();
-    this.trip_id = trip_id;
-    this.destination = destination;
-    this.start_date = start_date;
-    this.end_date = end_date;
-    this.places_count = places_count;
-  }
-};
-var UserTrips = class extends CustomType {
-  constructor(user_trips) {
-    super();
-    this.user_trips = user_trips;
-  }
-};
-var UserTripPlace = class extends CustomType {
-  constructor(trip_place_id, name3, date, google_maps_link) {
-    super();
-    this.trip_place_id = trip_place_id;
-    this.name = name3;
-    this.date = date;
-    this.google_maps_link = google_maps_link;
-  }
-};
-var UserTripPlaces = class extends CustomType {
-  constructor(trip_id, destination, start_date, end_date, user_trip_places, user_trip_companions) {
-    super();
-    this.trip_id = trip_id;
-    this.destination = destination;
-    this.start_date = start_date;
-    this.end_date = end_date;
-    this.user_trip_places = user_trip_places;
-    this.user_trip_companions = user_trip_companions;
-  }
-};
-var UserTripCompanion = class extends CustomType {
-  constructor(trip_companion_id, name3, email) {
-    super();
-    this.trip_companion_id = trip_companion_id;
-    this.name = name3;
-    this.email = email;
-  }
-};
-var CreateTripRequest = class extends CustomType {
-  constructor(destination, start_date, end_date) {
-    super();
-    this.destination = destination;
-    this.start_date = start_date;
-    this.end_date = end_date;
-  }
-};
-var CreateTripPlaceRequest = class extends CustomType {
-  constructor(place, date, google_maps_link) {
-    super();
-    this.place = place;
-    this.date = date;
-    this.google_maps_link = google_maps_link;
-  }
-};
-var UpdateTripCompanionsRequest = class extends CustomType {
-  constructor(trip_companions) {
-    super();
-    this.trip_companions = trip_companions;
-  }
-};
-var TripCompanion = class extends CustomType {
-  constructor(trip_companion_id, name3, email) {
-    super();
-    this.trip_companion_id = trip_companion_id;
-    this.name = name3;
-    this.email = email;
-  }
-};
-function user_trip_decoder() {
-  let _pipe = into(
-    parameter(
-      (trip_id) => {
-        return parameter(
-          (destination) => {
-            return parameter(
-              (start_date) => {
-                return parameter(
-                  (end_date) => {
-                    return parameter(
-                      (places_count) => {
-                        return new UserTrip(
-                          trip_id,
-                          destination,
-                          start_date,
-                          end_date,
-                          places_count
-                        );
-                      }
-                    );
-                  }
-                );
-              }
-            );
-          }
-        );
-      }
-    )
-  );
-  let _pipe$1 = field2(_pipe, "trip_id", string3);
-  let _pipe$2 = field2(_pipe$1, "destination", string3);
-  let _pipe$3 = field2(_pipe$2, "start_date", string3);
-  let _pipe$4 = field2(_pipe$3, "end_date", string3);
-  return field2(_pipe$4, "places_count", int3);
-}
-function default_user_trips() {
-  return new UserTrips(toList([]));
-}
-function user_trips_decoder() {
-  let _pipe = into(
-    parameter((user_trips) => {
-      return new UserTrips(user_trips);
-    })
-  );
-  return field2(_pipe, "user_trips", list2(user_trip_decoder()));
-}
-function default_user_trip_places() {
-  return new UserTripPlaces("", "", "", "", toList([]), toList([]));
-}
-function user_trip_place_decoder() {
-  let _pipe = into(
-    parameter(
-      (trip_place_id) => {
-        return parameter(
-          (name3) => {
-            return parameter(
-              (date) => {
-                return parameter(
-                  (google_maps_link) => {
-                    return new UserTripPlace(
-                      trip_place_id,
-                      name3,
-                      date,
-                      google_maps_link
-                    );
-                  }
-                );
-              }
-            );
-          }
-        );
-      }
-    )
-  );
-  let _pipe$1 = field2(_pipe, "trip_place_id", string3);
-  let _pipe$2 = field2(_pipe$1, "name", string3);
-  let _pipe$3 = field2(_pipe$2, "date", string3);
-  return field2(
-    _pipe$3,
-    "google_maps_link",
-    optional2(string3)
-  );
-}
-function default_user_trip_companion() {
-  return new UserTripCompanion("", "", "");
-}
-function user_trip_companion_decoder() {
-  let _pipe = into(
-    parameter(
-      (trip_companion_id) => {
-        return parameter(
-          (name3) => {
-            return parameter(
-              (email) => {
-                return new UserTripCompanion(trip_companion_id, name3, email);
-              }
-            );
-          }
-        );
-      }
-    )
-  );
-  let _pipe$1 = field2(_pipe, "trip_companion_id", string3);
-  let _pipe$2 = field2(_pipe$1, "name", string3);
-  return field2(_pipe$2, "email", string3);
-}
-function user_trip_places_decoder() {
-  let _pipe = into(
-    parameter(
-      (trip_id) => {
-        return parameter(
-          (destination) => {
-            return parameter(
-              (start_date) => {
-                return parameter(
-                  (end_date) => {
-                    return parameter(
-                      (user_trip_places) => {
-                        return parameter(
-                          (user_trip_companions) => {
-                            return new UserTripPlaces(
-                              trip_id,
-                              destination,
-                              start_date,
-                              end_date,
-                              user_trip_places,
-                              user_trip_companions
-                            );
-                          }
-                        );
-                      }
-                    );
-                  }
-                );
-              }
-            );
-          }
-        );
-      }
-    )
-  );
-  let _pipe$1 = field2(_pipe, "trip_id", string3);
-  let _pipe$2 = field2(_pipe$1, "destination", string3);
-  let _pipe$3 = field2(_pipe$2, "start_date", string3);
-  let _pipe$4 = field2(_pipe$3, "end_date", string3);
-  let _pipe$5 = field2(
-    _pipe$4,
-    "user_trip_places",
-    list2(user_trip_place_decoder())
-  );
-  return field2(
-    _pipe$5,
-    "user_trip_companions",
-    list2(user_trip_companion_decoder())
-  );
-}
-function default_create_trip_request() {
-  return new CreateTripRequest("", "", "");
-}
-function create_trip_request_encoder(data) {
-  return object2(
-    toList([
-      ["destination", string2(data.destination)],
-      ["start_date", string2(data.start_date)],
-      ["end_date", string2(data.end_date)]
-    ])
-  );
-}
-function default_create_trip_place_request() {
-  return new CreateTripPlaceRequest("", "", new None2());
-}
-function create_trip_place_request_encoder(data) {
-  return object2(
-    toList([
-      ["place", string2(data.place)],
-      ["date", string2(data.date)],
-      ["google_maps_link", nullable(data.google_maps_link, string2)]
-    ])
-  );
-}
-function trip_companion_encoder(data) {
-  return object2(
-    toList([
-      ["trip_companion_id", string2(data.trip_companion_id)],
-      ["name", string2(data.name)],
-      ["email", string2(data.email)]
-    ])
-  );
-}
-function update_trip_companions_request_encoder(data) {
-  return object2(
-    toList([
-      [
-        "trip_companions",
-        array2(data.trip_companions, trip_companion_encoder)
-      ]
-    ])
-  );
 }
 
 // build/dev/javascript/frontend/frontend/routes.mjs
@@ -3816,10 +3824,11 @@ var TripPlaceCreatePage = class extends CustomType {
   }
 };
 var AppModel = class extends CustomType {
-  constructor(route, show_loading, login_request, trips_dashboard, trip_details, trip_create, trip_create_errors, trip_place_create, trip_place_create_errors) {
+  constructor(route, show_loading, api_base_url, login_request, trips_dashboard, trip_details, trip_create, trip_create_errors, trip_place_create, trip_place_create_errors) {
     super();
     this.route = route;
     this.show_loading = show_loading;
+    this.api_base_url = api_base_url;
     this.login_request = login_request;
     this.trips_dashboard = trips_dashboard;
     this.trip_details = trip_details;
@@ -3945,6 +3954,7 @@ function default_app_model() {
   return new AppModel(
     new Login(),
     false,
+    "http://localhost:8080",
     default_login_request(),
     default_user_trips(),
     default_user_trip_places(),
@@ -3977,6 +3987,36 @@ function on_input(msg) {
       let _pipe = value3(event2);
       return map3(_pipe, msg);
     }
+  );
+}
+
+// build/dev/javascript/frontend/frontend/web.mjs
+function post2(url, json, response_decoder, to_msg) {
+  return post(
+    url,
+    json,
+    expect_json(response_decoder, to_msg)
+  );
+}
+function get3(url, response_decoder, to_msg) {
+  return get2(
+    url,
+    expect_json(response_decoder, to_msg)
+  );
+}
+function delete$2(url, to_msg) {
+  let req = (() => {
+    let _pipe2 = url;
+    let _pipe$12 = to(_pipe2);
+    return unwrap2(_pipe$12, new$4());
+  })();
+  let _pipe = req;
+  let _pipe$1 = set_method(_pipe, new Delete());
+  return send2(
+    _pipe$1,
+    expect_anything((response) => {
+      return to_msg(response);
+    })
   );
 }
 
@@ -4040,30 +4080,6 @@ function login_view(app_model) {
     ])
   );
 }
-function handle_submit_login(login_request) {
-  let url = "http://localhost:8080/api/login";
-  let json = login_request_encoder(login_request);
-  return post(
-    url,
-    json,
-    expect_json(
-      (response) => {
-        let _pipe = id_decoder();
-        return from2(_pipe, response);
-      },
-      (result) => {
-        if (result.isOk()) {
-          let user_id = result[0];
-          return new LoginPage(
-            new LoginPageApiReturnedResponse(user_id)
-          );
-        } else {
-          return new OnRouteChange(new Login());
-        }
-      }
-    )
-  );
-}
 function handle_login_page_event(model, event2) {
   if (event2 instanceof LoginPageUserUpdatedEmail) {
     let email = event2.email;
@@ -4084,7 +4100,24 @@ function handle_login_page_event(model, event2) {
   } else if (event2 instanceof LoginPageUserClickedSubmit) {
     return [
       model.withFields({ show_loading: true }),
-      handle_submit_login(model.login_request)
+      post2(
+        model.api_base_url + "/api/login",
+        login_request_encoder(model.login_request),
+        (response) => {
+          let _pipe = id_decoder();
+          return from(_pipe, response);
+        },
+        (result) => {
+          if (result.isOk()) {
+            let user_id = result[0];
+            return new LoginPage(
+              new LoginPageApiReturnedResponse(user_id)
+            );
+          } else {
+            return new OnRouteChange(new Login());
+          }
+        }
+      )
     ];
   } else {
     return [
@@ -4097,15 +4130,6 @@ function handle_login_page_event(model, event2) {
 // build/dev/javascript/frontend/frontend/uuid_util.mjs
 function gen_uuid() {
   return crypto.randomUUID();
-}
-
-// build/dev/javascript/frontend/frontend/web.mjs
-function post2(url, json, response_decoder, to_msg) {
-  return post(
-    url,
-    json,
-    expect_json(response_decoder, to_msg)
-  );
 }
 
 // build/dev/javascript/frontend/frontend/pages/trip_companions_page.mjs
@@ -4130,7 +4154,7 @@ function handle_trip_companions_page_event(model, event2) {
     return [
       model.withFields({ show_loading: true }),
       post2(
-        "http://localhost:8080/api/trips/" + trip_id + "/companions",
+        model.api_base_url + "/api/trips/" + trip_id + "/companions",
         update_trip_companions_request_encoder(
           update_trip_companions_request
         ),
@@ -4483,25 +4507,6 @@ function trip_create_view(app_model) {
     ])
   );
 }
-function handle_create_trip(create_trip_request) {
-  let url = "http://localhost:8080/api/trips";
-  let json = create_trip_request_encoder(create_trip_request);
-  return post(
-    url,
-    json,
-    expect_json(
-      (response) => {
-        let _pipe = id_decoder();
-        return from2(_pipe, response);
-      },
-      (result) => {
-        return new TripCreatePage(
-          new TripCreatePageApiReturnedResponse(result)
-        );
-      }
-    )
-  );
-}
 function handle_trip_create_page_event(model, event2) {
   if (event2 instanceof TripCreatePageUserInputCreateTripRequest) {
     let create_trip_request = event2[0];
@@ -4510,7 +4515,22 @@ function handle_trip_create_page_event(model, event2) {
       none()
     ];
   } else if (event2 instanceof TripCreatePageUserClickedCreateTrip) {
-    return [model, handle_create_trip(model.trip_create)];
+    return [
+      model,
+      post2(
+        model.api_base_url + "/api/trips",
+        create_trip_request_encoder(model.trip_create),
+        (response) => {
+          let _pipe = id_decoder();
+          return from(_pipe, response);
+        },
+        (result) => {
+          return new TripCreatePage(
+            new TripCreatePageApiReturnedResponse(result)
+          );
+        }
+      )
+    ];
   } else {
     let response = event2[0];
     if (response.isOk()) {
@@ -4757,26 +4777,16 @@ function trip_details_view(app_model) {
     ])
   );
 }
-function delete_trip_place(trip_id, trip_place_id) {
-  let url = "http://localhost:8080/api/trips/" + trip_id + "/places/" + trip_place_id;
-  let req = (() => {
-    let _pipe2 = url;
-    let _pipe$12 = to(_pipe2);
-    return unwrap2(_pipe$12, new$4());
-  })();
-  let _pipe = req;
-  let _pipe$1 = set_method(_pipe, new Delete());
-  return send2(
-    _pipe$1,
-    expect_anything(
-      (result) => {
-        if (result.isOk()) {
-          return new OnRouteChange(new TripDetails(trip_id));
-        } else {
-          return new OnRouteChange(new Login());
-        }
+function delete_trip_place(api_base_url, trip_id, trip_place_id) {
+  return delete$2(
+    api_base_url + "/api/trips/" + trip_id + "/places/" + trip_place_id,
+    (result) => {
+      if (result.isOk()) {
+        return new OnRouteChange(new TripDetails(trip_id));
+      } else {
+        return new OnRouteChange(new Login());
       }
-    )
+    }
   );
 }
 function handle_trip_details_page_event(model, event2) {
@@ -4788,7 +4798,14 @@ function handle_trip_details_page_event(model, event2) {
     ];
   } else if (event2 instanceof TripDetailsPageUserClickedRemovePlace) {
     let trip_place_id = event2.trip_place_id;
-    return [model, delete_trip_place(model.trip_details.trip_id, trip_place_id)];
+    return [
+      model,
+      delete_trip_place(
+        model.api_base_url,
+        model.trip_details.trip_id,
+        trip_place_id
+      )
+    ];
   } else if (event2 instanceof TripDetailsPageUserClickedAddCompanions) {
     let trip_id = event2.trip_id;
     return [
@@ -4811,26 +4828,23 @@ function handle_trip_details_page_event(model, event2) {
     ];
   }
 }
-function load_trip_details(trip_id) {
-  let url = "http://localhost:8080/api/trips/" + trip_id + "/places";
-  return get2(
-    url,
-    expect_json(
-      (response) => {
-        let _pipe = user_trip_places_decoder();
-        return from2(_pipe, response);
-      },
-      (result) => {
-        if (result.isOk()) {
-          let user_trip_places = result[0];
-          return new TripDetailsPage(
-            new TripDetailsPageApiReturnedTripDetails(user_trip_places)
-          );
-        } else {
-          return new OnRouteChange(new Login());
-        }
+function load_trip_details(api_base_url, trip_id) {
+  return get3(
+    api_base_url + "/api/trips/" + trip_id + "/places",
+    (response) => {
+      let _pipe = user_trip_places_decoder();
+      return from(_pipe, response);
+    },
+    (result) => {
+      if (result.isOk()) {
+        let user_trip_places = result[0];
+        return new TripDetailsPage(
+          new TripDetailsPageApiReturnedTripDetails(user_trip_places)
+        );
+      } else {
+        return new OnRouteChange(new Login());
       }
-    )
+    }
   );
 }
 
@@ -4977,11 +4991,11 @@ function handle_trip_place_create_page_event(model, event2) {
     return [
       model,
       post2(
-        "http://localhost:8080/api/trips/" + trip_id + "/places",
+        model.api_base_url + "/api/trips/" + trip_id + "/places",
         create_trip_place_request_encoder(model.trip_place_create),
         (response) => {
           let _pipe = id_decoder();
-          return from2(_pipe, response);
+          return from(_pipe, response);
         },
         (decode_result2) => {
           return new TripPlaceCreatePage(
@@ -5120,28 +5134,6 @@ function handle_trips_dashboard_page_event(model, event2) {
     ];
   }
 }
-function load_trips_dashboard() {
-  let url = "http://localhost:8080/api/trips";
-  return get2(
-    url,
-    expect_json(
-      (response) => {
-        let _pipe = user_trips_decoder();
-        return from2(_pipe, response);
-      },
-      (result) => {
-        if (result.isOk()) {
-          let user_trips = result[0];
-          return new TripsDashboardPage(
-            new TripsDashboardPageApiReturnedTrips(user_trips)
-          );
-        } else {
-          return new OnRouteChange(new Login());
-        }
-      }
-    )
-  );
-}
 
 // build/dev/javascript/frontend/frontend.mjs
 function path_to_route(path_segments2) {
@@ -5191,7 +5183,7 @@ function init3(_) {
     batch(
       toList([
         init2(on_url_change),
-        from(
+        from2(
           (dispatch) => {
             return dispatch(new OnRouteChange(initial_uri));
           }
@@ -5207,12 +5199,31 @@ function update(model, msg) {
       model.withFields({ route }),
       (() => {
         if (route instanceof TripsDashboard) {
-          return load_trips_dashboard();
+          return get3(
+            model.api_base_url + "/api/trips",
+            (response) => {
+              let _pipe = user_trips_decoder();
+              return from(_pipe, response);
+            },
+            (result) => {
+              if (result.isOk()) {
+                let user_trips = result[0];
+                return new TripsDashboardPage(
+                  new TripsDashboardPageApiReturnedTrips(user_trips)
+                );
+              } else {
+                return new OnRouteChange(new Login());
+              }
+            }
+          );
         } else if (route instanceof TripPlaceCreate) {
           let trip_id = route.trip_id;
           let $ = is_empty2(model.trip_details.destination);
           if ($) {
-            return load_trip_details(trip_id);
+            return load_trip_details(
+              model.api_base_url,
+              trip_id
+            );
           } else {
             return none();
           }
@@ -5220,13 +5231,19 @@ function update(model, msg) {
           let trip_id = route.trip_id;
           let $ = is_empty2(model.trip_details.destination);
           if ($) {
-            return load_trip_details(trip_id);
+            return load_trip_details(
+              model.api_base_url,
+              trip_id
+            );
           } else {
             return none();
           }
         } else if (route instanceof TripDetails) {
           let trip_id = route.trip_id;
-          return load_trip_details(trip_id);
+          return load_trip_details(
+            model.api_base_url,
+            trip_id
+          );
         } else {
           return none();
         }
@@ -5371,7 +5388,7 @@ function main() {
     throw makeError(
       "assignment_no_match",
       "frontend",
-      20,
+      23,
       "main",
       "Assignment pattern did not match",
       { value: $ }

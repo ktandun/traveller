@@ -122,7 +122,7 @@ pub fn handle_trip_place_create_page_event(
     events.TripPlaceCreatePageUserClickedSubmit(trip_id) -> #(
       model,
       web.post(
-        "http://localhost:8080/api/trips/" <> trip_id <> "/places",
+        model.api_base_url <> "/api/trips/" <> trip_id <> "/places",
         trip_models.create_trip_place_request_encoder(model.trip_place_create),
         fn(response) { id.id_decoder() |> decode.from(response) },
         fn(decode_result) {
