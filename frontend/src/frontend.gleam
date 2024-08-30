@@ -5,6 +5,7 @@ import frontend/pages/trip_companions_page
 import frontend/pages/trip_create_page
 import frontend/pages/trip_details_page
 import frontend/pages/trip_place_create_page
+import frontend/pages/trip_update_page
 import frontend/pages/trips_dashboard_page
 import frontend/routes.{type Route}
 import frontend/web
@@ -54,6 +55,7 @@ fn path_to_route(path_segments: List(String)) -> Route {
     ["dashboard"] -> routes.TripsDashboard
     ["trips", "create"] -> routes.TripCreate
     ["trips", trip_id] -> routes.TripDetails(trip_id)
+    ["trips", trip_id, "update"] -> routes.TripUpdate(trip_id)
     ["trips", trip_id, "add-companions"] -> routes.TripCompanions(trip_id)
     ["trips", trip_id, "places", "create"] -> routes.TripPlaceCreate(trip_id)
     _ -> routes.FourOFour
@@ -81,7 +83,9 @@ pub fn update(model: AppModel, msg: AppEvent) -> #(AppModel, Effect(AppEvent)) {
               }
             },
           )
-        routes.TripPlaceCreate(trip_id) | routes.TripCompanions(trip_id) ->
+        routes.TripPlaceCreate(trip_id)
+        | routes.TripCompanions(trip_id)
+        | routes.TripUpdate(trip_id) ->
           case string.is_empty(model.trip_details.destination) {
             True ->
               trip_details_page.load_trip_details(model.api_base_url, trip_id)
@@ -99,6 +103,8 @@ pub fn update(model: AppModel, msg: AppEvent) -> #(AppModel, Effect(AppEvent)) {
       trip_details_page.handle_trip_details_page_event(model, event)
     events.TripCreatePage(event) ->
       trip_create_page.handle_trip_create_page_event(model, event)
+    events.TripUpdatePage(event) ->
+      trip_update_page.handle_trip_update_page_event(model, event)
     events.TripPlaceCreatePage(event) ->
       trip_place_create_page.handle_trip_place_create_page_event(model, event)
     events.TripCompanionsPage(event) ->
@@ -120,6 +126,8 @@ pub fn view(app_model: AppModel) -> Element(AppEvent) {
       routes.TripCompanions(trip_id) ->
         trip_companions_page.trip_companions_view(app_model, trip_id)
       routes.TripCreate -> trip_create_page.trip_create_view(app_model)
+      routes.TripUpdate(trip_id) ->
+        trip_update_page.trip_update_view(app_model, trip_id)
       routes.TripPlaceCreate(trip_id) ->
         trip_place_create_page.trip_place_create_view(app_model, trip_id)
       routes.FourOFour -> html.h1([], [element.text("Not Found")])
@@ -142,6 +150,7 @@ fn breadcrumbs(app_model: AppModel) {
     html.a([attribute.href("/dashboard")], [element.text("Trips")]),
     case app_model.route {
       routes.TripDetails(trip_id)
+      | routes.TripUpdate(trip_id)
       | routes.TripPlaceCreate(trip_id)
       | routes.TripCompanions(trip_id) ->
         html.span([], [

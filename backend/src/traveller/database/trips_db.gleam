@@ -8,6 +8,7 @@ import gleam/string
 import shared/id.{type Id, type TripId, type TripPlaceId, type UserId}
 import shared/trip_models.{
   type CreateTripPlaceRequest, type CreateTripRequest, type TripCompanion,
+  type UpdateTripRequest,
 }
 import traveller/database
 import traveller/error.{type AppError}
@@ -233,4 +234,24 @@ pub fn delete_trip_companions(ctx: Context, trip_id: Id(TripId)) {
   sql.delete_trip_companions(ctx.db, trip_id)
   |> result.map(fn(_) { Nil })
   |> database.to_app_error()
+}
+
+pub fn update_user_trip(
+  ctx: Context,
+  trip_id: Id(TripId),
+  update_trip_request: UpdateTripRequest,
+) -> Result(Id(TripId), AppError) {
+  use pgo.Returned(_, _) <- result.try(
+    sql.update_trip(
+      ctx.db,
+      trip_id |> id.id_value,
+      update_trip_request.destination,
+      update_trip_request.start_date,
+      update_trip_request.end_date,
+    )
+    |> database.to_app_error(),
+  )
+
+  trip_id
+  |> Ok
 }

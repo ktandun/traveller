@@ -3070,6 +3070,14 @@ var TripCompanion = class extends CustomType {
     this.email = email;
   }
 };
+var UpdateTripRequest = class extends CustomType {
+  constructor(destination, start_date, end_date) {
+    super();
+    this.destination = destination;
+    this.start_date = start_date;
+    this.end_date = end_date;
+  }
+};
 function user_trip_decoder() {
   let _pipe = into(
     parameter(
@@ -3275,6 +3283,18 @@ function update_trip_companions_request_encoder(data) {
         "trip_companions",
         array2(data.trip_companions, trip_companion_encoder)
       ]
+    ])
+  );
+}
+function default_update_trip_request() {
+  return new UpdateTripRequest("", "", "");
+}
+function update_trip_request_encoder(data) {
+  return object2(
+    toList([
+      ["destination", string3(data.destination)],
+      ["start_date", string3(data.start_date)],
+      ["end_date", string3(data.end_date)]
     ])
   );
 }
@@ -3772,6 +3792,12 @@ var TripPlaceCreate = class extends CustomType {
     this.trip_id = trip_id;
   }
 };
+var TripUpdate = class extends CustomType {
+  constructor(trip_id) {
+    super();
+    this.trip_id = trip_id;
+  }
+};
 var TripCompanions = class extends CustomType {
   constructor(trip_id) {
     super();
@@ -3820,6 +3846,12 @@ var TripCreatePage = class extends CustomType {
     this[0] = x0;
   }
 };
+var TripUpdatePage = class extends CustomType {
+  constructor(x0) {
+    super();
+    this[0] = x0;
+  }
+};
 var TripPlaceCreatePage = class extends CustomType {
   constructor(x0) {
     super();
@@ -3827,7 +3859,7 @@ var TripPlaceCreatePage = class extends CustomType {
   }
 };
 var AppModel = class extends CustomType {
-  constructor(route, show_loading, api_base_url2, login_request, trips_dashboard, trip_details, trip_create, trip_create_errors, trip_place_create, trip_place_create_errors) {
+  constructor(route, show_loading, api_base_url2, login_request, trips_dashboard, trip_details, trip_create, trip_create_errors, trip_update, trip_update_errors, trip_place_create, trip_place_create_errors) {
     super();
     this.route = route;
     this.show_loading = show_loading;
@@ -3837,6 +3869,8 @@ var AppModel = class extends CustomType {
     this.trip_details = trip_details;
     this.trip_create = trip_create;
     this.trip_create_errors = trip_create_errors;
+    this.trip_update = trip_update;
+    this.trip_update_errors = trip_update_errors;
     this.trip_place_create = trip_place_create;
     this.trip_place_create_errors = trip_place_create_errors;
   }
@@ -3887,6 +3921,12 @@ var TripDetailsPageUserClickedCreatePlace = class extends CustomType {
     this.trip_id = trip_id;
   }
 };
+var TripDetailsPageUserClickedUpdateTrip = class extends CustomType {
+  constructor(trip_id) {
+    super();
+    this.trip_id = trip_id;
+  }
+};
 var TripDetailsPageUserClickedAddCompanions = class extends CustomType {
   constructor(trip_id) {
     super();
@@ -3902,6 +3942,24 @@ var TripCreatePageUserInputCreateTripRequest = class extends CustomType {
 var TripCreatePageUserClickedCreateTrip = class extends CustomType {
 };
 var TripCreatePageApiReturnedResponse = class extends CustomType {
+  constructor(x0) {
+    super();
+    this[0] = x0;
+  }
+};
+var TripUpdatePageUserInputUpdateTripRequest = class extends CustomType {
+  constructor(x0) {
+    super();
+    this[0] = x0;
+  }
+};
+var TripUpdatePageUserClickedUpdateTrip = class extends CustomType {
+  constructor(trip_id) {
+    super();
+    this.trip_id = trip_id;
+  }
+};
+var TripUpdatePageApiReturnedResponse = class extends CustomType {
   constructor(x0) {
     super();
     this[0] = x0;
@@ -3963,6 +4021,8 @@ function default_app_model() {
     default_user_trip_places(),
     default_create_trip_request(),
     "",
+    default_update_trip_request(),
+    "",
     default_create_trip_place_request(),
     ""
   );
@@ -4001,6 +4061,24 @@ function post2(url, json, response_decoder, to_msg) {
     expect_json(response_decoder, to_msg)
   );
 }
+function put(url, json, response_decoder, to_msg) {
+  let req = (() => {
+    let _pipe2 = to(url);
+    let _pipe$12 = unwrap2(_pipe2, new$4());
+    let _pipe$2 = set_header(
+      _pipe$12,
+      "Content-Type",
+      "application/json"
+    );
+    return set_body(_pipe$2, to_string6(json));
+  })();
+  let _pipe = req;
+  let _pipe$1 = set_method(_pipe, new Put());
+  return send2(
+    _pipe$1,
+    expect_json(response_decoder, to_msg)
+  );
+}
 function get3(url, response_decoder, to_msg) {
   return get2(
     url,
@@ -4009,9 +4087,8 @@ function get3(url, response_decoder, to_msg) {
 }
 function delete$2(url, to_msg) {
   let req = (() => {
-    let _pipe2 = url;
-    let _pipe$12 = to(_pipe2);
-    return unwrap2(_pipe$12, new$4());
+    let _pipe2 = to(url);
+    return unwrap2(_pipe2, new$4());
   })();
   let _pipe = req;
   let _pipe$1 = set_method(_pipe, new Delete());
@@ -4663,6 +4740,18 @@ function trip_details_view(app_model) {
             toList([
               on_click(
                 new TripDetailsPage(
+                  new TripDetailsPageUserClickedUpdateTrip(
+                    app_model.trip_details.trip_id
+                  )
+                )
+              )
+            ]),
+            toList([text("Edit Trip")])
+          ),
+          button(
+            toList([
+              on_click(
+                new TripDetailsPage(
                   new TripDetailsPageUserClickedCreatePlace(
                     app_model.trip_details.trip_id
                   )
@@ -4796,7 +4885,14 @@ function handle_trip_details_page_event(model, event2) {
   if (event2 instanceof TripDetailsPageApiReturnedTripDetails) {
     let user_trip_places = event2[0];
     return [
-      model.withFields({ trip_details: user_trip_places }),
+      model.withFields({
+        trip_details: user_trip_places,
+        trip_update: new UpdateTripRequest(
+          user_trip_places.destination,
+          user_trip_places.start_date,
+          user_trip_places.end_date
+        )
+      }),
       none()
     ];
   } else if (event2 instanceof TripDetailsPageUserClickedRemovePlace) {
@@ -4815,6 +4911,16 @@ function handle_trip_details_page_event(model, event2) {
       model,
       push(
         "/trips/" + trip_id + "/add-companions",
+        new None2(),
+        new None2()
+      )
+    ];
+  } else if (event2 instanceof TripDetailsPageUserClickedUpdateTrip) {
+    let trip_id = event2.trip_id;
+    return [
+      model,
+      push(
+        "/trips/" + trip_id + "/update",
         new None2(),
         new None2()
       )
@@ -5013,6 +5119,179 @@ function handle_trip_place_create_page_event(model, event2) {
   }
 }
 
+// build/dev/javascript/frontend/frontend/pages/trip_update_page.mjs
+function trip_update_view(app_model, trip_id) {
+  return div(
+    toList([]),
+    toList([
+      h3(
+        toList([]),
+        toList([
+          text("Update Trip to "),
+          span(
+            toList([class$("text-cursive")]),
+            toList([text(app_model.trip_details.destination)])
+          )
+        ])
+      ),
+      form(
+        toList([]),
+        toList([
+          p(
+            toList([]),
+            toList([
+              label(toList([]), toList([text("From")])),
+              input(
+                toList([
+                  on_input(
+                    (start_date) => {
+                      return new TripUpdatePage(
+                        new TripUpdatePageUserInputUpdateTripRequest(
+                          app_model.trip_update.withFields({
+                            start_date
+                          })
+                        )
+                      );
+                    }
+                  ),
+                  name2("from"),
+                  type_("date"),
+                  required(true),
+                  value2(app_model.trip_update.start_date)
+                ])
+              ),
+              span(toList([class$("validity")]), toList([]))
+            ])
+          ),
+          p(
+            toList([]),
+            toList([
+              label(toList([]), toList([text("To")])),
+              input(
+                toList([
+                  on_input(
+                    (end_date) => {
+                      return new TripUpdatePage(
+                        new TripUpdatePageUserInputUpdateTripRequest(
+                          app_model.trip_update.withFields({ end_date })
+                        )
+                      );
+                    }
+                  ),
+                  min(app_model.trip_update.start_date),
+                  name2("to"),
+                  type_("date"),
+                  required(true),
+                  value2(app_model.trip_update.end_date)
+                ])
+              ),
+              span(toList([class$("validity")]), toList([]))
+            ])
+          ),
+          p(
+            toList([]),
+            toList([
+              label(toList([]), toList([text("Destination")])),
+              input(
+                toList([
+                  on_input(
+                    (destination) => {
+                      return new TripUpdatePage(
+                        new TripUpdatePageUserInputUpdateTripRequest(
+                          app_model.trip_update.withFields({
+                            destination
+                          })
+                        )
+                      );
+                    }
+                  ),
+                  name2("destination"),
+                  placeholder("Where are you going?"),
+                  type_("text"),
+                  required(true),
+                  value2(app_model.trip_update.destination)
+                ])
+              ),
+              span(toList([class$("validity")]), toList([]))
+            ])
+          )
+        ])
+      ),
+      div(
+        toList([]),
+        toList([text(app_model.trip_update_errors)])
+      ),
+      button(
+        toList([
+          on_click(
+            new TripUpdatePage(
+              new TripUpdatePageUserClickedUpdateTrip(trip_id)
+            )
+          )
+        ]),
+        toList([text("Update Trip")])
+      )
+    ])
+  );
+}
+function handle_trip_update_page_event(model, event2) {
+  if (event2 instanceof TripUpdatePageUserInputUpdateTripRequest) {
+    let update_trip_request = event2[0];
+    return [
+      model.withFields({ trip_update: update_trip_request }),
+      none()
+    ];
+  } else if (event2 instanceof TripUpdatePageUserClickedUpdateTrip) {
+    let trip_id = event2.trip_id;
+    return [
+      model,
+      put(
+        model.api_base_url + "/api/trips/" + trip_id,
+        update_trip_request_encoder(model.trip_update),
+        (response) => {
+          let _pipe = id_decoder();
+          return from(_pipe, response);
+        },
+        (result) => {
+          return new TripUpdatePage(
+            new TripUpdatePageApiReturnedResponse(result)
+          );
+        }
+      )
+    ];
+  } else {
+    let response = event2[0];
+    if (response.isOk()) {
+      let trip_id = response[0];
+      let trip_id$1 = id_value(trip_id);
+      return [
+        model.withFields({
+          trip_update: default_update_trip_request(),
+          trip_update_errors: ""
+        }),
+        push(
+          "/trips/" + trip_id$1,
+          new None2(),
+          new None2()
+        )
+      ];
+    } else {
+      let e = response[0];
+      if (e instanceof OtherError && e[0] === 400) {
+        let error = e[1];
+        return [model.withFields({ trip_update_errors: error }), none()];
+      } else if (e instanceof OtherError && e[0] === 401) {
+        return [
+          model,
+          push("/login", new None2(), new None2())
+        ];
+      } else {
+        return [model, none()];
+      }
+    }
+  }
+}
+
 // build/dev/javascript/frontend/frontend/pages/trips_dashboard_page.mjs
 function trips_dashboard_view(app_model) {
   return div(
@@ -5151,6 +5430,9 @@ function path_to_route(path_segments2) {
   } else if (path_segments2.hasLength(2) && path_segments2.head === "trips") {
     let trip_id = path_segments2.tail.head;
     return new TripDetails(trip_id);
+  } else if (path_segments2.hasLength(3) && path_segments2.head === "trips" && path_segments2.tail.tail.head === "update") {
+    let trip_id = path_segments2.tail.head;
+    return new TripUpdate(trip_id);
   } else if (path_segments2.hasLength(3) && path_segments2.head === "trips" && path_segments2.tail.tail.head === "add-companions") {
     let trip_id = path_segments2.tail.head;
     return new TripCompanions(trip_id);
@@ -5241,6 +5523,17 @@ function update(model, msg) {
           } else {
             return none();
           }
+        } else if (route instanceof TripUpdate) {
+          let trip_id = route.trip_id;
+          let $ = is_empty2(model.trip_details.destination);
+          if ($) {
+            return load_trip_details(
+              model.api_base_url,
+              trip_id
+            );
+          } else {
+            return none();
+          }
         } else if (route instanceof TripDetails) {
           let trip_id = route.trip_id;
           return load_trip_details(
@@ -5264,6 +5557,9 @@ function update(model, msg) {
   } else if (msg instanceof TripCreatePage) {
     let event2 = msg[0];
     return handle_trip_create_page_event(model, event2);
+  } else if (msg instanceof TripUpdatePage) {
+    let event2 = msg[0];
+    return handle_trip_update_page_event(model, event2);
   } else if (msg instanceof TripPlaceCreatePage) {
     let event2 = msg[0];
     return handle_trip_place_create_page_event(
@@ -5286,6 +5582,18 @@ function breadcrumbs(app_model) {
       (() => {
         let $ = app_model.route;
         if ($ instanceof TripDetails) {
+          let trip_id = $.trip_id;
+          return span(
+            toList([]),
+            toList([
+              text(" > "),
+              a(
+                toList([href("/trips/" + trip_id)]),
+                toList([text(app_model.trip_details.destination)])
+              )
+            ])
+          );
+        } else if ($ instanceof TripUpdate) {
           let trip_id = $.trip_id;
           return span(
             toList([]),
@@ -5349,6 +5657,9 @@ function view(app_model) {
           return trip_companions_view(app_model, trip_id);
         } else if ($ instanceof TripCreate) {
           return trip_create_view(app_model);
+        } else if ($ instanceof TripUpdate) {
+          let trip_id = $.trip_id;
+          return trip_update_view(app_model, trip_id);
         } else if ($ instanceof TripPlaceCreate) {
           let trip_id = $.trip_id;
           return trip_place_create_view(
@@ -5391,7 +5702,7 @@ function main() {
     throw makeError(
       "assignment_no_match",
       "frontend",
-      23,
+      24,
       "main",
       "Assignment pattern did not match",
       { value: $ }

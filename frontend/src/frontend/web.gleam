@@ -36,6 +36,23 @@ pub fn post(
   lustre_http.post(url, json, lustre_http.expect_json(response_decoder, to_msg))
 }
 
+pub fn put(
+  url: String,
+  json: Json,
+  response_decoder: Decoder(b),
+  to_msg: fn(Result(b, HttpError)) -> AppEvent,
+) -> Effect(AppEvent) {
+  let req =
+    request.to(url)
+    |> result.unwrap(request.new())
+    |> request.set_header("Content-Type", "application/json")
+    |> request.set_body(json.to_string(json))
+
+  req
+  |> request.set_method(http.Put)
+  |> lustre_http.send(lustre_http.expect_json(response_decoder, to_msg))
+}
+
 pub fn get(
   url: String,
   response_decoder: Decoder(b),
@@ -49,8 +66,7 @@ pub fn delete(
   to_msg: fn(Result(Nil, HttpError)) -> AppEvent,
 ) -> Effect(AppEvent) {
   let req =
-    url
-    |> request.to()
+    request.to(url)
     |> result.unwrap(request.new())
 
   req

@@ -6,7 +6,7 @@ import gleam/string
 import shared/id.{type Id, type TripId, type TripPlaceId, type UserId}
 import shared/trip_models.{
   type CreateTripPlaceRequest, type CreateTripRequest,
-  type UpdateTripCompanionsRequest, type UserTrips,
+  type UpdateTripCompanionsRequest, type UpdateTripRequest, type UserTrips,
 }
 import traveller/database/trips_db
 import traveller/date_util
@@ -132,4 +132,44 @@ pub fn handle_update_trip_companions(
   use _ <- result.try(trips_db.delete_trip_companions(ctx, trip_id))
 
   trips_db.upsert_trip_companion(ctx, trip_id, request)
+}
+
+// Update trip details
+pub fn handle_update_trip(
+  ctx: Context,
+  user_id: Id(UserId),
+  trip_id: Id(TripId),
+  update_trip_request: UpdateTripRequest,
+) -> Result(Id(TripId), AppError) {
+  use _ <- result.try(trips_db.ensure_trip_id_exists(ctx, user_id, trip_id))
+
+  let now = birl.now()
+
+  use #(start_year, start_month, start_date) <- result.try(
+    date_util.from_yyyy_mm_dd(update_trip_request.start_date),
+  )
+  use #(end_year, end_month, end_date) <- result.try(date_util.from_yyyy_mm_dd(
+    update_trip_request.end_date,
+  ))
+  let start_date =
+    birl.set_day(now, birl.Day(start_year, start_month, start_date))
+  let end_date = birl.set_day(now, birl.Day(end_year, end_month, end_date))
+
+  use <- bool.guard(
+    birl.to_unix(end_date) < birl.to_unix(start_date),
+    Error(error.InvalidDateSpecified),
+  )
+
+  use <- bool.guard(
+    string.is_empty(update_trip_request.destination |> string.trim),
+    Error(error.InvalidDestinationSpecified),
+  )
+
+  use _ <- result.try(trips_db.update_user_trip(
+    ctx,
+    trip_id,
+    update_trip_request,
+  ))
+
+  Ok(trip_id)
 }

@@ -1,5 +1,5 @@
-import gleam/io
 import gleam/dynamic.{type DecodeErrors}
+import gleam/io
 import gleam/json.{type DecodeError}
 import gleam/pgo.{type QueryError}
 import wisp

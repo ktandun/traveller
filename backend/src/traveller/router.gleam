@@ -2,7 +2,7 @@ import gleam/http
 import gleam/json
 import shared/auth_models
 import shared/constants
-import shared/id.{type Id, type UserId}
+import shared/id.{type Id, type TripId, type UserId}
 import shared/trip_models
 import traveller/json_util
 import traveller/routes/auth_routes
@@ -33,6 +33,14 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
         http.Get -> get_trips(req, ctx, user_id)
         http.Post -> post_trips(req, ctx, user_id)
         _ -> wisp.method_not_allowed([http.Get, http.Post])
+      }
+    }
+    ["api", "trips", trip_id] -> {
+      use user_id <- web.require_authenticated(req, ctx)
+
+      case req.method {
+        http.Put -> put_trip(req, ctx, user_id, trip_id)
+        _ -> wisp.method_not_allowed([http.Put])
       }
     }
     ["api", "trips", trip_id, "places"] -> {
@@ -224,4 +232,26 @@ fn post_trip_companions(
   ))
 
   wisp.ok()
+}
+
+fn put_trip(req: Request, ctx: Context, user_id: Id(UserId), trip_id: String) {
+  let trip_id = id.to_id(trip_id)
+
+  use request_body <- wisp.require_string_body(req)
+  use update_trip_request <- web.require_valid_json(json_util.try_decode(
+    request_body,
+    trip_models.update_trip_request_decoder(),
+  ))
+
+  use trip_id <- web.require_ok(trip_routes.handle_update_trip(
+    ctx,
+    user_id,
+    trip_id,
+    update_trip_request,
+  ))
+
+  trip_id
+  |> id.id_encoder
+  |> json.to_string_builder
+  |> wisp.json_response(200)
 }

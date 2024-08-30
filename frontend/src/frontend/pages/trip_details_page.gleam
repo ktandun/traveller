@@ -39,6 +39,16 @@ pub fn trip_details_view(app_model: AppModel) {
       html.button(
         [
           event.on_click(
+            events.TripDetailsPage(events.TripDetailsPageUserClickedUpdateTrip(
+              app_model.trip_details.trip_id,
+            )),
+          ),
+        ],
+        [element.text("Edit Trip")],
+      ),
+      html.button(
+        [
+          event.on_click(
             events.TripDetailsPage(events.TripDetailsPageUserClickedCreatePlace(
               app_model.trip_details.trip_id,
             )),
@@ -118,7 +128,15 @@ pub fn handle_trip_details_page_event(
 ) {
   case event {
     events.TripDetailsPageApiReturnedTripDetails(user_trip_places) -> #(
-      AppModel(..model, trip_details: user_trip_places),
+      AppModel(
+        ..model,
+        trip_details: user_trip_places,
+        trip_update: trip_models.UpdateTripRequest(
+          start_date: user_trip_places.start_date,
+          end_date: user_trip_places.end_date,
+          destination: user_trip_places.destination,
+        ),
+      ),
       effect.none(),
     )
     events.TripDetailsPageUserClickedRemovePlace(trip_place_id) -> #(
@@ -136,6 +154,10 @@ pub fn handle_trip_details_page_event(
         option.None,
         option.None,
       ),
+    )
+    events.TripDetailsPageUserClickedUpdateTrip(trip_id) -> #(
+      model,
+      modem.push("/trips/" <> trip_id <> "/update", option.None, option.None),
     )
     events.TripDetailsPageUserClickedCreatePlace(trip_id) -> #(
       model,

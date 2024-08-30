@@ -13,6 +13,7 @@ pub type AppEvent {
   TripDetailsPage(TripDetailsPageEvent)
   TripCompanionsPage(TripCompanionsPageEvent)
   TripCreatePage(TripCreatePageEvent)
+  TripUpdatePage(TripUpdatePageEvent)
   TripPlaceCreatePage(TripPlaceCreatePageEvent)
 }
 
@@ -26,6 +27,8 @@ pub type AppModel {
     trip_details: trip_models.UserTripPlaces,
     trip_create: trip_models.CreateTripRequest,
     trip_create_errors: String,
+    trip_update: trip_models.UpdateTripRequest,
+    trip_update_errors: String,
     trip_place_create: trip_models.CreateTripPlaceRequest,
     trip_place_create_errors: String,
   )
@@ -41,6 +44,8 @@ pub fn default_app_model() {
     trip_details: trip_models.default_user_trip_places(),
     trip_create: trip_models.default_create_trip_request(),
     trip_create_errors: "",
+    trip_update: trip_models.default_update_trip_request(),
+    trip_update_errors: "",
     trip_place_create: trip_models.default_create_trip_place_request(),
     trip_place_create_errors: "",
   )
@@ -62,6 +67,7 @@ pub type TripDetailsPageEvent {
   TripDetailsPageApiReturnedTripDetails(trip_models.UserTripPlaces)
   TripDetailsPageUserClickedRemovePlace(trip_place_id: String)
   TripDetailsPageUserClickedCreatePlace(trip_id: String)
+  TripDetailsPageUserClickedUpdateTrip(trip_id: String)
   TripDetailsPageUserClickedAddCompanions(trip_id: String)
 }
 
@@ -69,6 +75,12 @@ pub type TripCreatePageEvent {
   TripCreatePageUserInputCreateTripRequest(trip_models.CreateTripRequest)
   TripCreatePageUserClickedCreateTrip
   TripCreatePageApiReturnedResponse(Result(Id(TripId), HttpError))
+}
+
+pub type TripUpdatePageEvent {
+  TripUpdatePageUserInputUpdateTripRequest(trip_models.UpdateTripRequest)
+  TripUpdatePageUserClickedUpdateTrip(trip_id: String)
+  TripUpdatePageApiReturnedResponse(Result(Id(TripId), HttpError))
 }
 
 pub type TripPlaceCreatePageEvent {

@@ -83,4 +83,3 @@ pub fn handle_trips_dashboard_page_event(
     )
   }
 }
-

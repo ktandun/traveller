@@ -193,7 +193,10 @@ pub fn user_trip_companion_decoder() {
 
 pub fn user_trip_companion_encoder(data: UserTripCompanion) {
   json.object([
-    #("trip_companion_id", json.string(data.trip_companion_id |> string.lowercase)),
+    #(
+      "trip_companion_id",
+      json.string(data.trip_companion_id |> string.lowercase),
+    ),
     #("name", json.string(data.name)),
     #("email", json.string(data.email)),
   ])
@@ -286,7 +289,10 @@ pub fn update_trip_companions_request_encoder(data: UpdateTripCompanionsRequest)
 
 pub fn trip_companion_encoder(data: TripCompanion) {
   json.object([
-    #("trip_companion_id", json.string(data.trip_companion_id |> string.lowercase)),
+    #(
+      "trip_companion_id",
+      json.string(data.trip_companion_id |> string.lowercase),
+    ),
     #("name", json.string(data.name)),
     #("email", json.string(data.email)),
   ])
@@ -313,3 +319,35 @@ pub fn trip_companion_decoder() {
   |> decode.field("name", decode.string)
   |> decode.field("email", decode.string)
 }
+
+// 
+
+pub type UpdateTripRequest {
+  UpdateTripRequest(destination: String, start_date: String, end_date: String)
+}
+
+pub fn default_update_trip_request() {
+  UpdateTripRequest(destination: "", start_date: "", end_date: "")
+}
+
+pub fn update_trip_request_decoder() {
+  decode.into({
+    use destination <- decode.parameter
+    use start_date <- decode.parameter
+    use end_date <- decode.parameter
+
+    UpdateTripRequest(destination:, start_date:, end_date:)
+  })
+  |> decode.field("destination", decode.string)
+  |> decode.field("start_date", decode.string)
+  |> decode.field("end_date", decode.string)
+}
+
+pub fn update_trip_request_encoder(data: UpdateTripRequest) {
+  json.object([
+    #("destination", json.string(data.destination)),
+    #("start_date", json.string(data.start_date)),
+    #("end_date", json.string(data.end_date)),
+  ])
+}
+//
