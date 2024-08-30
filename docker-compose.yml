@@ -3,7 +3,7 @@ services:
     build:
       context: ./
     ports:
-      - "8000:8000"
+      - "8079:8000"
 
   traveller-postgres:
     image: postgres:14

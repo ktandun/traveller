@@ -5140,10 +5140,10 @@ function handle_trips_dashboard_page_event(model, event2) {
 
 // build/dev/javascript/frontend/frontend.mjs
 function path_to_route(path_segments2) {
-  if (path_segments2.hasLength(1) && path_segments2.head === "login") {
+  if (path_segments2.hasLength(1) && path_segments2.head === "index.html") {
+    return new TripsDashboard();
+  } else if (path_segments2.hasLength(1) && path_segments2.head === "login") {
     return new Login();
-  } else if (path_segments2.hasLength(1) && path_segments2.head === "signup") {
-    return new Signup();
   } else if (path_segments2.hasLength(1) && path_segments2.head === "dashboard") {
     return new TripsDashboard();
   } else if (path_segments2.hasLength(2) && path_segments2.head === "trips" && path_segments2.tail.head === "create") {
