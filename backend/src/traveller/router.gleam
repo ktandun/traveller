@@ -62,7 +62,9 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
       }
     }
 
-    _ -> wisp.not_found()
+    ["api", ..] -> wisp.not_found()
+
+    _ -> wisp.redirect(to: "/index.html")
   }
 }
 

@@ -1,0 +1,18 @@
+services:
+  traveller:
+    build:
+      context: ./
+    ports:
+      - "8000:8000"
+
+  traveller-postgres:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: traveller
+      POSTGRES_PASSWORD: traveller
+      POSTGRES_DB: traveller
+      PGDATA: /var/lib/postgresql/data
+    volumes:
+      - /Users/kenzietandun/traveller-postgres:/var/lib/postgresql/data
+    ports:
+      - "54322:5432"

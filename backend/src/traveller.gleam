@@ -16,9 +16,15 @@ pub fn main() {
 
   use db <- database.with_connection()
 
-  case os.get_env("DEPLOY_ENV") {
-    Ok("Production") -> Nil
-    _ -> setup.radiate()
+  let assert Ok(deploy_env) = os.get_env("DEPLOY_ENV")
+
+  case deploy_env {
+    "Production" -> {
+      Nil
+    }
+    _ -> {
+      setup.radiate()
+    }
   }
 
   let context =

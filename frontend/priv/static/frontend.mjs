@@ -2860,7 +2860,7 @@ var defaults = {
   handle_external_links: false,
   handle_internal_links: true
 };
-var initial_location = globalThis.window && window?.location?.href;
+var initial_location = window?.location?.href;
 var do_initial_uri = () => {
   if (!initial_location) {
     return new Error(void 0);

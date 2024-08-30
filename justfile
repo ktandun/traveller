@@ -14,16 +14,7 @@ build:
     cd frontend && gleam build
 
 buildprod:
-    docker build -t traveller .
-    docker run -d \
-      --name traveller-postgres \
-      -e POSTGRES_PASSWORD=traveller \
-      -e POSTGRES_USER=traveller \
-      -e POSTGRES_DB=traveller \
-      -e PGDATA=/var/lib/postgresql/data/pgdata \
-      -v /Users/kenzietandun/traveller-postgres:/var/lib/postgresql/data \
-      -p 127.0.0.1:54322:5432 \
-      postgres || true
+    docker compose up --build
 
 db:
     cd backend && pkill psql; dbmate drop && dbmate up
