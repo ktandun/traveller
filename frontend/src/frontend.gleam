@@ -1,5 +1,5 @@
 import decode
-import frontend/events.{type AppEvent, type AppModel, AppModel}
+import frontend/events.{type AppEvent, type AppModel, AppModel, Toast}
 import frontend/pages/login_page
 import frontend/pages/trip_companions_page
 import frontend/pages/trip_create_page
@@ -8,6 +8,7 @@ import frontend/pages/trip_place_create_page
 import frontend/pages/trip_update_page
 import frontend/pages/trips_dashboard_page
 import frontend/routes.{type Route}
+import frontend/toast
 import frontend/web
 import gleam/string
 import gleam/uri.{type Uri}
@@ -17,6 +18,7 @@ import lustre/effect.{type Effect}
 import lustre/element.{type Element}
 import lustre/element/html
 import modem
+import plinth/javascript/global
 import shared/trip_models
 
 pub fn main() {
@@ -96,6 +98,17 @@ pub fn update(model: AppModel, msg: AppEvent) -> #(AppModel, Effect(AppEvent)) {
         _ -> effect.none()
       })
     }
+    events.ShowToast -> #(
+      AppModel(..model, toast: Toast(..model.toast, visible: True)),
+      effect.from(fn(dispatch) {
+        global.set_timeout(1500, fn() { dispatch(events.HideToast) })
+        Nil
+      }),
+    )
+    events.HideToast -> #(
+      AppModel(..model, toast: Toast(..model.toast, visible: False)),
+      effect.none(),
+    )
     events.LoginPage(event) -> login_page.handle_login_page_event(model, event)
     events.TripsDashboardPage(event) ->
       trips_dashboard_page.handle_trips_dashboard_page_event(model, event)
@@ -116,6 +129,11 @@ pub fn view(app_model: AppModel) -> Element(AppEvent) {
   html.div([], [
     breadcrumbs(app_model),
     html.hr([]),
+    toast.simple_toast(
+      app_model.toast.visible,
+      app_model.toast.header,
+      app_model.toast.content,
+    ),
     case app_model.route {
       routes.Login -> login_page.login_view(app_model)
       routes.Signup -> html.h1([], [element.text("Signup")])

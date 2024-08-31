@@ -608,9 +608,6 @@ var DecodeError = class extends CustomType {
     this.path = path;
   }
 };
-function dynamic(value4) {
-  return new Ok(value4);
-}
 function classify(data) {
   return classify_dynamic(data);
 }
@@ -665,9 +662,9 @@ function push_path(error, name3) {
   return error.withFields({ path: prepend(name$2, error.path) });
 }
 function list(decoder_type) {
-  return (dynamic2) => {
+  return (dynamic) => {
     return try$(
-      shallow_list(dynamic2),
+      shallow_list(dynamic),
       (list3) => {
         let _pipe = list3;
         let _pipe$1 = try_map(_pipe, decoder_type);
@@ -2995,6 +2992,11 @@ function push(path, query, fragment) {
   );
 }
 
+// build/dev/javascript/plinth/global_ffi.mjs
+function setTimeout(delay, callback) {
+  return globalThis.setTimeout(callback, delay);
+}
+
 // build/dev/javascript/shared/shared/trip_models.mjs
 var UserTrip = class extends CustomType {
   constructor(trip_id, destination, start_date, end_date, places_count) {
@@ -3816,6 +3818,10 @@ var OnRouteChange = class extends CustomType {
     this[0] = x0;
   }
 };
+var ShowToast = class extends CustomType {
+};
+var HideToast = class extends CustomType {
+};
 var LoginPage = class extends CustomType {
   constructor(x0) {
     super();
@@ -3859,9 +3865,10 @@ var TripPlaceCreatePage = class extends CustomType {
   }
 };
 var AppModel = class extends CustomType {
-  constructor(route, show_loading, api_base_url2, login_request, trips_dashboard, trip_details, trip_create, trip_create_errors, trip_update, trip_update_errors, trip_place_create, trip_place_create_errors) {
+  constructor(route, toast, show_loading, api_base_url2, login_request, trips_dashboard, trip_details, trip_create, trip_create_errors, trip_update, trip_update_errors, trip_place_create, trip_place_create_errors) {
     super();
     this.route = route;
+    this.toast = toast;
     this.show_loading = show_loading;
     this.api_base_url = api_base_url2;
     this.login_request = login_request;
@@ -3873,6 +3880,14 @@ var AppModel = class extends CustomType {
     this.trip_update_errors = trip_update_errors;
     this.trip_place_create = trip_place_create;
     this.trip_place_create_errors = trip_place_create_errors;
+  }
+};
+var Toast = class extends CustomType {
+  constructor(visible, header, content) {
+    super();
+    this.visible = visible;
+    this.header = header;
+    this.content = content;
   }
 };
 var LoginPageUserUpdatedEmail = class extends CustomType {
@@ -4014,6 +4029,7 @@ var TripCompanionsPageApiReturnedResponse = class extends CustomType {
 function default_app_model() {
   return new AppModel(
     new Login(),
+    new Toast(false, "", ""),
     false,
     api_base_url,
     default_login_request(),
@@ -4060,6 +4076,9 @@ function post2(url, json, response_decoder, to_msg) {
     json,
     expect_json(response_decoder, to_msg)
   );
+}
+function post_without_response(url, json, to_msg) {
+  return post(url, json, expect_anything(to_msg));
 }
 function put(url, json, response_decoder, to_msg) {
   let req = (() => {
@@ -4207,6 +4226,38 @@ function handle_login_page_event(model, event2) {
   }
 }
 
+// build/dev/javascript/frontend/frontend/toast.mjs
+function simple_toast(show, header, content) {
+  return div(
+    toList([
+      class$(
+        "toast " + (() => {
+          if (show) {
+            return "show";
+          } else {
+            return "";
+          }
+        })()
+      )
+    ]),
+    toList([
+      div(
+        toList([class$("toast-header")]),
+        toList([text(header)])
+      ),
+      div(
+        toList([class$("toast-content")]),
+        toList([text(content)])
+      )
+    ])
+  );
+}
+function set_success_toast(model, content) {
+  return model.withFields({
+    toast: model.toast.withFields({ header: "Success \u2713", content })
+  });
+}
+
 // build/dev/javascript/frontend/frontend/uuid_util.mjs
 function gen_uuid() {
   return crypto.randomUUID();
@@ -4232,15 +4283,12 @@ function handle_trip_companions_page_event(model, event2) {
       })()
     );
     return [
-      model.withFields({ show_loading: true }),
-      post2(
+      model,
+      post_without_response(
         model.api_base_url + "/api/trips/" + trip_id + "/companions",
         update_trip_companions_request_encoder(
           update_trip_companions_request
         ),
-        (response) => {
-          return dynamic(response);
-        },
         (decode_result2) => {
           return new TripCompanionsPage(
             new TripCompanionsPageApiReturnedResponse(
@@ -4254,23 +4302,38 @@ function handle_trip_companions_page_event(model, event2) {
   } else if (event2 instanceof TripCompanionsPageApiReturnedResponse) {
     let trip_id = event2.trip_id;
     let response = event2[1];
-    let model$1 = model.withFields({ show_loading: false });
     if (response.isOk()) {
       return [
-        model$1,
-        push("/trips/" + trip_id, new None2(), new None2())
+        (() => {
+          let _pipe = model;
+          return set_success_toast(_pipe, "Companion updated");
+        })(),
+        batch(
+          toList([
+            from2(
+              (dispatch) => {
+                return dispatch(new ShowToast());
+              }
+            ),
+            push(
+              "/trips/" + trip_id,
+              new None2(),
+              new None2()
+            )
+          ])
+        )
       ];
     } else {
       let e = response[0];
       if (e instanceof OtherError && e[0] === 400) {
-        return [model$1, none()];
+        return [model, none()];
       } else if (e instanceof OtherError && e[0] === 401) {
         return [
-          model$1,
+          model,
           push("/login", new None2(), new None2())
         ];
       } else {
-        return [model$1, none()];
+        return [model, none()];
       }
     }
   } else if (event2 instanceof TripCompanionsPageUserUpdatedCompanion) {
@@ -4650,49 +4713,43 @@ function to_human_readable(date) {
     let _pipe = date;
     return split3(_pipe, "-");
   })();
-  if (!$.hasLength(3)) {
-    throw makeError(
-      "assignment_no_match",
-      "frontend/date_util",
-      5,
-      "to_human_readable",
-      "Assignment pattern did not match",
-      { value: $ }
-    );
+  if ($.hasLength(3)) {
+    let year = $.head;
+    let month = $.tail.head;
+    let day = $.tail.tail.head;
+    let month$1 = (() => {
+      if (month === "01") {
+        return "Jan";
+      } else if (month === "02") {
+        return "Feb";
+      } else if (month === "03") {
+        return "Mar";
+      } else if (month === "04") {
+        return "Apr";
+      } else if (month === "05") {
+        return "May";
+      } else if (month === "06") {
+        return "Jun";
+      } else if (month === "07") {
+        return "Jul";
+      } else if (month === "08") {
+        return "Aug";
+      } else if (month === "09") {
+        return "Sep";
+      } else if (month === "10") {
+        return "Okt";
+      } else if (month === "11") {
+        return "Nov";
+      } else if (month === "12") {
+        return "Dec";
+      } else {
+        return "";
+      }
+    })();
+    return day + " " + month$1 + " " + year;
+  } else {
+    return "";
   }
-  let year = $.head;
-  let month = $.tail.head;
-  let day = $.tail.tail.head;
-  let month$1 = (() => {
-    if (month === "01") {
-      return "Jan";
-    } else if (month === "02") {
-      return "Feb";
-    } else if (month === "03") {
-      return "Mar";
-    } else if (month === "04") {
-      return "Apr";
-    } else if (month === "05") {
-      return "May";
-    } else if (month === "06") {
-      return "Jun";
-    } else if (month === "07") {
-      return "Jul";
-    } else if (month === "08") {
-      return "Aug";
-    } else if (month === "09") {
-      return "Sep";
-    } else if (month === "10") {
-      return "Okt";
-    } else if (month === "11") {
-      return "Nov";
-    } else if (month === "12") {
-      return "Dec";
-    } else {
-      return "";
-    }
-  })();
-  return day + " " + month$1 + " " + year;
 }
 
 // build/dev/javascript/frontend/frontend/pages/trip_details_page.mjs
@@ -4844,17 +4901,34 @@ function trip_details_view(app_model) {
                       td(
                         toList([]),
                         toList([
-                          button(
+                          div(
+                            toList([class$("buttons")]),
                             toList([
-                              on_click(
-                                new TripDetailsPage(
-                                  new TripDetailsPageUserClickedRemovePlace(
-                                    place.trip_place_id
+                              button(
+                                toList([
+                                  on_click(
+                                    new TripDetailsPage(
+                                      new TripDetailsPageUserClickedRemovePlace(
+                                        place.trip_place_id
+                                      )
+                                    )
                                   )
-                                )
+                                ]),
+                                toList([text("Edit")])
+                              ),
+                              button(
+                                toList([
+                                  on_click(
+                                    new TripDetailsPage(
+                                      new TripDetailsPageUserClickedRemovePlace(
+                                        place.trip_place_id
+                                      )
+                                    )
+                                  )
+                                ]),
+                                toList([text("Remove")])
                               )
-                            ]),
-                            toList([text("Remove")])
+                            ])
                           )
                         ])
                       )
@@ -5545,6 +5619,26 @@ function update(model, msg) {
         }
       })()
     ];
+  } else if (msg instanceof ShowToast) {
+    return [
+      model.withFields({ toast: model.toast.withFields({ visible: true }) }),
+      from2(
+        (dispatch) => {
+          setTimeout(
+            1500,
+            () => {
+              return dispatch(new HideToast());
+            }
+          );
+          return void 0;
+        }
+      )
+    ];
+  } else if (msg instanceof HideToast) {
+    return [
+      model.withFields({ toast: model.toast.withFields({ visible: false }) }),
+      none()
+    ];
   } else if (msg instanceof LoginPage) {
     let event2 = msg[0];
     return handle_login_page_event(model, event2);
@@ -5642,6 +5736,11 @@ function view(app_model) {
     toList([
       breadcrumbs(app_model),
       hr(toList([])),
+      simple_toast(
+        app_model.toast.visible,
+        app_model.toast.header,
+        app_model.toast.content
+      ),
       (() => {
         let $ = app_model.route;
         if ($ instanceof Login) {
@@ -5702,7 +5801,7 @@ function main() {
     throw makeError(
       "assignment_no_match",
       "frontend",
-      24,
+      26,
       "main",
       "Assignment pattern did not match",
       { value: $ }

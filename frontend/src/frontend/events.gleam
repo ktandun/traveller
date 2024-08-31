@@ -1,6 +1,5 @@
 import env
 import frontend/routes.{type Route}
-import gleam/dynamic.{type Dynamic}
 import lustre_http.{type HttpError}
 import shared/auth_models
 import shared/id.{type Id, type TripId, type TripPlaceId, type UserId}
@@ -8,6 +7,9 @@ import shared/trip_models.{type UserTripCompanion}
 
 pub type AppEvent {
   OnRouteChange(Route)
+  ShowToast
+  HideToast
+  // page specific events
   LoginPage(LoginPageEvent)
   TripsDashboardPage(TripsDashboardPageEvent)
   TripDetailsPage(TripDetailsPageEvent)
@@ -20,6 +22,7 @@ pub type AppEvent {
 pub type AppModel {
   AppModel(
     route: Route,
+    toast: Toast,
     show_loading: Bool,
     api_base_url: String,
     login_request: auth_models.LoginRequest,
@@ -34,9 +37,14 @@ pub type AppModel {
   )
 }
 
+pub type Toast {
+  Toast(visible: Bool, header: String, content: String)
+}
+
 pub fn default_app_model() {
   AppModel(
     route: routes.Login,
+    toast: Toast(visible: False, header: "", content: ""),
     show_loading: False,
     api_base_url: env.api_base_url,
     login_request: auth_models.default_login_request(),
@@ -99,8 +107,5 @@ pub type TripCompanionsPageEvent {
   TripCompanionsPageUserUpdatedCompanion(UserTripCompanion)
   TripCompanionsPageUserClickedAddMoreCompanion
   TripCompanionsPageUserClickedSaveCompanions(trip_id: String)
-  TripCompanionsPageApiReturnedResponse(
-    trip_id: String,
-    Result(Dynamic, HttpError),
-  )
+  TripCompanionsPageApiReturnedResponse(trip_id: String, Result(Nil, HttpError))
 }

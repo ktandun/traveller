@@ -102,18 +102,32 @@ pub fn trip_details_view(app_model: AppModel) {
                 },
               ]),
               html.td([], [
-                html.button(
-                  [
-                    event.on_click(
-                      events.TripDetailsPage(
-                        events.TripDetailsPageUserClickedRemovePlace(
-                          place.trip_place_id,
+                html.div([attribute.class("buttons")], [
+                  html.button(
+                    [
+                      event.on_click(
+                        events.TripDetailsPage(
+                          events.TripDetailsPageUserClickedRemovePlace(
+                            place.trip_place_id,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                  [element.text("Remove")],
-                ),
+                    ],
+                    [element.text("Edit")],
+                  ),
+                  html.button(
+                    [
+                      event.on_click(
+                        events.TripDetailsPage(
+                          events.TripDetailsPageUserClickedRemovePlace(
+                            place.trip_place_id,
+                          ),
+                        ),
+                      ),
+                    ],
+                    [element.text("Remove")],
+                  ),
+                ]),
               ]),
             ])
           }),

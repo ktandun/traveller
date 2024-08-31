@@ -36,6 +36,14 @@ pub fn post(
   lustre_http.post(url, json, lustre_http.expect_json(response_decoder, to_msg))
 }
 
+pub fn post_without_response(
+  url: String,
+  json: Json,
+  to_msg: fn(Result(Nil, HttpError)) -> AppEvent,
+) -> Effect(AppEvent) {
+  lustre_http.post(url, json, lustre_http.expect_anything(to_msg))
+}
+
 pub fn put(
   url: String,
   json: Json,

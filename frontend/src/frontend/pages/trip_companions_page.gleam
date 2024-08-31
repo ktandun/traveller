@@ -1,7 +1,9 @@
 import frontend/events.{type AppModel, AppModel}
+import frontend/toast
 import frontend/uuid_util
 import frontend/web
 import gleam/dynamic
+import gleam/io
 import gleam/list
 import gleam/option
 import lustre/attribute
@@ -82,13 +84,12 @@ pub fn handle_trip_companions_page_event(
         )
 
       #(
-        AppModel(..model, show_loading: True),
-        web.post(
+        model,
+        web.post_without_response(
           model.api_base_url <> "/api/trips/" <> trip_id <> "/companions",
           trip_models.update_trip_companions_request_encoder(
             update_trip_companions_request,
           ),
-          fn(response) { dynamic.dynamic(response) },
           fn(decode_result) {
             events.TripCompanionsPage(
               events.TripCompanionsPageApiReturnedResponse(
@@ -101,11 +102,13 @@ pub fn handle_trip_companions_page_event(
       )
     }
     events.TripCompanionsPageApiReturnedResponse(trip_id, response) -> {
-      let model = AppModel(..model, show_loading: False)
       case response {
         Ok(_) -> #(
-          model,
-          modem.push("/trips/" <> trip_id, option.None, option.None),
+          model |> toast.set_success_toast(content: "Companion updated"),
+          effect.batch([
+            effect.from(fn(dispatch) { dispatch(events.ShowToast) }),
+            modem.push("/trips/" <> trip_id, option.None, option.None),
+          ]),
         )
         Error(e) -> {
           case e {
@@ -114,7 +117,9 @@ pub fn handle_trip_companions_page_event(
               model,
               modem.push("/login", option.None, option.None),
             )
-            _ -> #(model, effect.none())
+            _ -> {
+              #(model, effect.none())
+            }
           }
         }
       }
