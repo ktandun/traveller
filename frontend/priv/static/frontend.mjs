@@ -4026,6 +4026,24 @@ var TripCompanionsPageApiReturnedResponse = class extends CustomType {
     this[1] = x1;
   }
 };
+function set_default_trip_place_create(model) {
+  return model.withFields({
+    trip_place_create: default_create_trip_place_request(),
+    trip_place_create_errors: ""
+  });
+}
+function set_default_trip_create(model) {
+  return model.withFields({
+    trip_create: default_create_trip_request(),
+    trip_create_errors: ""
+  });
+}
+function set_default_trip_update(model) {
+  return model.withFields({
+    trip_update: default_update_trip_request(),
+    trip_update_errors: ""
+  });
+}
 function default_app_model() {
   return new AppModel(
     new Login(),
@@ -4300,7 +4318,6 @@ function handle_trip_companions_page_event(model, event2) {
       )
     ];
   } else if (event2 instanceof TripCompanionsPageApiReturnedResponse) {
-    let trip_id = event2.trip_id;
     let response = event2[1];
     if (response.isOk()) {
       return [
@@ -4308,19 +4325,10 @@ function handle_trip_companions_page_event(model, event2) {
           let _pipe = model;
           return set_success_toast(_pipe, "Companion updated");
         })(),
-        batch(
-          toList([
-            from2(
-              (dispatch) => {
-                return dispatch(new ShowToast());
-              }
-            ),
-            push(
-              "/trips/" + trip_id,
-              new None2(),
-              new None2()
-            )
-          ])
+        from2(
+          (dispatch) => {
+            return dispatch(new ShowToast());
+          }
         )
       ];
     } else {
@@ -4680,14 +4688,24 @@ function handle_trip_create_page_event(model, event2) {
       let trip_id = response[0];
       let trip_id$1 = id_value(trip_id);
       return [
-        model.withFields({
-          trip_create: default_create_trip_request(),
-          trip_create_errors: ""
-        }),
-        push(
-          "/trips/" + trip_id$1,
-          new None2(),
-          new None2()
+        (() => {
+          let _pipe = model;
+          let _pipe$1 = set_default_trip_create(_pipe);
+          return set_success_toast(_pipe$1, "Trip Created");
+        })(),
+        batch(
+          toList([
+            from2(
+              (dispatch) => {
+                return dispatch(new ShowToast());
+              }
+            ),
+            push(
+              "/trips/" + trip_id$1,
+              new None2(),
+              new None2()
+            )
+          ])
         )
       ];
     } else {
@@ -5161,10 +5179,25 @@ function handle_trip_place_create_page_event(model, event2) {
     let response = event2[1];
     if (response.isOk()) {
       return [
-        model.withFields({
-          trip_place_create: default_create_trip_place_request()
-        }),
-        push("/trips/" + trip_id, new None2(), new None2())
+        (() => {
+          let _pipe = model;
+          let _pipe$1 = set_default_trip_place_create(_pipe);
+          return set_success_toast(_pipe$1, "Place added");
+        })(),
+        batch(
+          toList([
+            from2(
+              (dispatch) => {
+                return dispatch(new ShowToast());
+              }
+            ),
+            push(
+              "/trips/" + trip_id,
+              new None2(),
+              new None2()
+            )
+          ])
+        )
       ];
     } else {
       return [model, none()];
@@ -5339,14 +5372,24 @@ function handle_trip_update_page_event(model, event2) {
       let trip_id = response[0];
       let trip_id$1 = id_value(trip_id);
       return [
-        model.withFields({
-          trip_update: default_update_trip_request(),
-          trip_update_errors: ""
-        }),
-        push(
-          "/trips/" + trip_id$1,
-          new None2(),
-          new None2()
+        (() => {
+          let _pipe = model;
+          let _pipe$1 = set_default_trip_update(_pipe);
+          return set_success_toast(_pipe$1, "Trip updated");
+        })(),
+        batch(
+          toList([
+            from2(
+              (dispatch) => {
+                return dispatch(new ShowToast());
+              }
+            ),
+            push(
+              "/trips/" + trip_id$1,
+              new None2(),
+              new None2()
+            )
+          ])
         )
       ];
     } else {

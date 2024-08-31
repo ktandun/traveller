@@ -37,6 +37,34 @@ pub type AppModel {
   )
 }
 
+pub fn set_default_login_request(model: AppModel) {
+  AppModel(..model, login_request: auth_models.default_login_request())
+}
+
+pub fn set_default_trip_place_create(model: AppModel) {
+  AppModel(
+    ..model,
+    trip_place_create: trip_models.default_create_trip_place_request(),
+    trip_place_create_errors: "",
+  )
+}
+
+pub fn set_default_trip_create(model: AppModel) {
+  AppModel(
+    ..model,
+    trip_create: trip_models.default_create_trip_request(),
+    trip_create_errors: "",
+  )
+}
+
+pub fn set_default_trip_update(model: AppModel) {
+  AppModel(
+    ..model,
+    trip_update: trip_models.default_update_trip_request(),
+    trip_update_errors: "",
+  )
+}
+
 pub type Toast {
   Toast(visible: Bool, header: String, content: String)
 }

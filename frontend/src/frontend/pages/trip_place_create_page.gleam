@@ -1,5 +1,6 @@
 import decode
 import frontend/events.{type AppModel, type TripPlaceCreatePageEvent, AppModel}
+import frontend/toast
 import frontend/web
 import gleam/io
 import gleam/option
@@ -111,11 +112,13 @@ pub fn handle_trip_place_create_page_event(
     events.TripPlaceCreatePageApiReturnedResponse(trip_id, response) ->
       case response {
         Ok(_) -> #(
-          AppModel(
-            ..model,
-            trip_place_create: trip_models.default_create_trip_place_request(),
-          ),
-          modem.push("/trips/" <> trip_id, option.None, option.None),
+          model
+            |> events.set_default_trip_place_create()
+            |> toast.set_success_toast("Place added"),
+          effect.batch([
+            effect.from(fn(dispatch) { dispatch(events.ShowToast) }),
+            modem.push("/trips/" <> trip_id, option.None, option.None),
+          ]),
         )
         Error(_) -> #(model, effect.none())
       }

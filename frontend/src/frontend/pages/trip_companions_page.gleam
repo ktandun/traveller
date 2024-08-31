@@ -101,14 +101,11 @@ pub fn handle_trip_companions_page_event(
         ),
       )
     }
-    events.TripCompanionsPageApiReturnedResponse(trip_id, response) -> {
+    events.TripCompanionsPageApiReturnedResponse(_trip_id, response) -> {
       case response {
         Ok(_) -> #(
           model |> toast.set_success_toast(content: "Companion updated"),
-          effect.batch([
-            effect.from(fn(dispatch) { dispatch(events.ShowToast) }),
-            modem.push("/trips/" <> trip_id, option.None, option.None),
-          ]),
+          effect.from(fn(dispatch) { dispatch(events.ShowToast) }),
         )
         Error(e) -> {
           case e {

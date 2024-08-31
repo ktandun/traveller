@@ -1,5 +1,6 @@
 import decode
 import frontend/events.{type AppModel, type TripCreatePageEvent, AppModel}
+import frontend/toast
 import frontend/web
 import gleam/option
 import lustre/attribute
@@ -117,12 +118,13 @@ pub fn handle_trip_create_page_event(
           let trip_id = id.id_value(trip_id)
 
           #(
-            AppModel(
-              ..model,
-              trip_create: trip_models.default_create_trip_request(),
-              trip_create_errors: "",
-            ),
-            modem.push("/trips/" <> trip_id, option.None, option.None),
+            model
+              |> events.set_default_trip_create()
+              |> toast.set_success_toast(content: "Trip Created"),
+            effect.batch([
+              effect.from(fn(dispatch) { dispatch(events.ShowToast) }),
+              modem.push("/trips/" <> trip_id, option.None, option.None),
+            ]),
           )
         }
         Error(e) -> {
