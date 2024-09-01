@@ -127,20 +127,7 @@ pub fn handle_trip_create_page_event(
             ]),
           )
         }
-        Error(e) -> {
-          case e {
-            lustre_http.OtherError(400, error) -> #(
-              AppModel(..model, trip_create_errors: error),
-              effect.none(),
-            )
-
-            lustre_http.OtherError(401, _) -> #(
-              model,
-              modem.push("/login", option.None, option.None),
-            )
-            _ -> #(model, effect.none())
-          }
-        }
+        Error(e) -> web.error_to_app_event(e, model)
       }
     }
   }

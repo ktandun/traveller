@@ -3924,12 +3924,6 @@ var TripDetailsPageApiReturnedTripDetails = class extends CustomType {
     this[0] = x0;
   }
 };
-var TripDetailsPageUserClickedRemovePlace = class extends CustomType {
-  constructor(trip_place_id) {
-    super();
-    this.trip_place_id = trip_place_id;
-  }
-};
 var TripDetailsPageUserClickedCreatePlace = class extends CustomType {
   constructor(trip_id) {
     super();
@@ -4087,7 +4081,79 @@ function on_input(msg) {
   );
 }
 
+// build/dev/javascript/frontend/frontend/toast.mjs
+function simple_toast(show, header, content) {
+  return div(
+    toList([
+      class$(
+        "toast " + (() => {
+          if (show) {
+            return "show";
+          } else {
+            return "";
+          }
+        })()
+      )
+    ]),
+    toList([
+      div(
+        toList([class$("toast-header")]),
+        toList([text(header)])
+      ),
+      div(
+        toList([class$("toast-content")]),
+        toList([text(content)])
+      )
+    ])
+  );
+}
+function set_success_toast(model, content) {
+  return model.withFields({
+    toast: model.toast.withFields({ header: "Success \u2713", content })
+  });
+}
+function set_form_validation_failed_toast(model) {
+  return model.withFields({
+    toast: model.toast.withFields({
+      header: "Invalid data",
+      content: "Some fields have invalid data"
+    })
+  });
+}
+
 // build/dev/javascript/frontend/frontend/web.mjs
+function error_to_app_event(error, model) {
+  if (error instanceof OtherError && error[0] === 400) {
+    return [
+      (() => {
+        let _pipe = model;
+        return set_form_validation_failed_toast(_pipe);
+      })(),
+      batch(
+        toList([
+          from2(
+            (dispatch) => {
+              return dispatch(new ShowToast());
+            }
+          )
+        ])
+      )
+    ];
+  } else if (error instanceof Unauthorized) {
+    return [
+      model,
+      push("/login", new None2(), new None2())
+    ];
+  } else if (error instanceof OtherError && error[0] === 403) {
+    return [model, push("/403", new None2(), new None2())];
+  } else if (error instanceof NotFound) {
+    return [model, push("/404", new None2(), new None2())];
+  } else if (error instanceof InternalServerError) {
+    return [model, push("/500", new None2(), new None2())];
+  } else {
+    return [model, none()];
+  }
+}
 function post2(url, json, response_decoder, to_msg) {
   return post(
     url,
@@ -4120,20 +4186,6 @@ function get3(url, response_decoder, to_msg) {
   return get2(
     url,
     expect_json(response_decoder, to_msg)
-  );
-}
-function delete$2(url, to_msg) {
-  let req = (() => {
-    let _pipe2 = to(url);
-    return unwrap2(_pipe2, new$4());
-  })();
-  let _pipe = req;
-  let _pipe$1 = set_method(_pipe, new Delete());
-  return send2(
-    _pipe$1,
-    expect_anything((response) => {
-      return to_msg(response);
-    })
   );
 }
 
@@ -4225,55 +4277,24 @@ function handle_login_page_event(model, event2) {
           return from(_pipe, response);
         },
         (result) => {
-          if (result.isOk()) {
-            let user_id = result[0];
-            return new LoginPage(
-              new LoginPageApiReturnedResponse(user_id)
-            );
-          } else {
-            return new OnRouteChange(new Login());
-          }
+          return new LoginPage(
+            new LoginPageApiReturnedResponse(result)
+          );
         }
       )
     ];
   } else {
-    return [
-      model.withFields({ show_loading: false }),
-      push("/dashboard", new None2(), new None2())
-    ];
+    let response = event2[0];
+    if (response.isOk()) {
+      return [
+        model.withFields({ show_loading: false }),
+        push("/dashboard", new None2(), new None2())
+      ];
+    } else {
+      let e = response[0];
+      return error_to_app_event(e, model);
+    }
   }
-}
-
-// build/dev/javascript/frontend/frontend/toast.mjs
-function simple_toast(show, header, content) {
-  return div(
-    toList([
-      class$(
-        "toast " + (() => {
-          if (show) {
-            return "show";
-          } else {
-            return "";
-          }
-        })()
-      )
-    ]),
-    toList([
-      div(
-        toList([class$("toast-header")]),
-        toList([text(header)])
-      ),
-      div(
-        toList([class$("toast-content")]),
-        toList([text(content)])
-      )
-    ])
-  );
-}
-function set_success_toast(model, content) {
-  return model.withFields({
-    toast: model.toast.withFields({ header: "Success \u2713", content })
-  });
 }
 
 // build/dev/javascript/frontend/frontend/uuid_util.mjs
@@ -4333,16 +4354,7 @@ function handle_trip_companions_page_event(model, event2) {
       ];
     } else {
       let e = response[0];
-      if (e instanceof OtherError && e[0] === 400) {
-        return [model, none()];
-      } else if (e instanceof OtherError && e[0] === 401) {
-        return [
-          model,
-          push("/login", new None2(), new None2())
-        ];
-      } else {
-        return [model, none()];
-      }
+      return error_to_app_event(e, model);
     }
   } else if (event2 instanceof TripCompanionsPageUserUpdatedCompanion) {
     let companion = event2[0];
@@ -4710,17 +4722,7 @@ function handle_trip_create_page_event(model, event2) {
       ];
     } else {
       let e = response[0];
-      if (e instanceof OtherError && e[0] === 400) {
-        let error = e[1];
-        return [model.withFields({ trip_create_errors: error }), none()];
-      } else if (e instanceof OtherError && e[0] === 401) {
-        return [
-          model,
-          push("/login", new None2(), new None2())
-        ];
-      } else {
-        return [model, none()];
-      }
+      return error_to_app_event(e, model);
     }
   }
 }
@@ -4871,8 +4873,7 @@ function trip_details_view(app_model) {
                 toList([
                   th(toList([]), toList([text("Place")])),
                   th(toList([]), toList([text("Date")])),
-                  th(toList([]), toList([text("Maps Link")])),
-                  th(toList([]), toList([text("Actions")]))
+                  th(toList([]), toList([text("Maps Link")]))
                 ])
               )
             ])
@@ -4887,7 +4888,15 @@ function trip_details_view(app_model) {
                   return tr(
                     toList([]),
                     toList([
-                      td(toList([]), toList([text(place.name)])),
+                      td(
+                        toList([]),
+                        toList([
+                          a(
+                            toList([href("")]),
+                            toList([text(place.name)])
+                          )
+                        ])
+                      ),
                       td(
                         toList([]),
                         toList([
@@ -4915,40 +4924,6 @@ function trip_details_view(app_model) {
                             }
                           })()
                         ])
-                      ),
-                      td(
-                        toList([]),
-                        toList([
-                          div(
-                            toList([class$("buttons")]),
-                            toList([
-                              button(
-                                toList([
-                                  on_click(
-                                    new TripDetailsPage(
-                                      new TripDetailsPageUserClickedRemovePlace(
-                                        place.trip_place_id
-                                      )
-                                    )
-                                  )
-                                ]),
-                                toList([text("Edit")])
-                              ),
-                              button(
-                                toList([
-                                  on_click(
-                                    new TripDetailsPage(
-                                      new TripDetailsPageUserClickedRemovePlace(
-                                        place.trip_place_id
-                                      )
-                                    )
-                                  )
-                                ]),
-                                toList([text("Remove")])
-                              )
-                            ])
-                          )
-                        ])
                       )
                     ])
                   );
@@ -4961,42 +4936,26 @@ function trip_details_view(app_model) {
     ])
   );
 }
-function delete_trip_place(api_base_url2, trip_id, trip_place_id) {
-  return delete$2(
-    api_base_url2 + "/api/trips/" + trip_id + "/places/" + trip_place_id,
-    (result) => {
-      if (result.isOk()) {
-        return new OnRouteChange(new TripDetails(trip_id));
-      } else {
-        return new OnRouteChange(new Login());
-      }
-    }
-  );
-}
 function handle_trip_details_page_event(model, event2) {
   if (event2 instanceof TripDetailsPageApiReturnedTripDetails) {
-    let user_trip_places = event2[0];
-    return [
-      model.withFields({
-        trip_details: user_trip_places,
-        trip_update: new UpdateTripRequest(
-          user_trip_places.destination,
-          user_trip_places.start_date,
-          user_trip_places.end_date
-        )
-      }),
-      none()
-    ];
-  } else if (event2 instanceof TripDetailsPageUserClickedRemovePlace) {
-    let trip_place_id = event2.trip_place_id;
-    return [
-      model,
-      delete_trip_place(
-        model.api_base_url,
-        model.trip_details.trip_id,
-        trip_place_id
-      )
-    ];
+    let result = event2[0];
+    if (result.isOk()) {
+      let user_trip_places = result[0];
+      return [
+        model.withFields({
+          trip_details: user_trip_places,
+          trip_update: new UpdateTripRequest(
+            user_trip_places.destination,
+            user_trip_places.start_date,
+            user_trip_places.end_date
+          )
+        }),
+        none()
+      ];
+    } else {
+      let e = result[0];
+      return error_to_app_event(e, model);
+    }
   } else if (event2 instanceof TripDetailsPageUserClickedAddCompanions) {
     let trip_id = event2.trip_id;
     return [
@@ -5037,14 +4996,9 @@ function load_trip_details(api_base_url2, trip_id) {
       return from(_pipe, response);
     },
     (result) => {
-      if (result.isOk()) {
-        let user_trip_places = result[0];
-        return new TripDetailsPage(
-          new TripDetailsPageApiReturnedTripDetails(user_trip_places)
-        );
-      } else {
-        return new OnRouteChange(new Login());
-      }
+      return new TripDetailsPage(
+        new TripDetailsPageApiReturnedTripDetails(result)
+      );
     }
   );
 }

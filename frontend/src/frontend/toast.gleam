@@ -34,3 +34,14 @@ pub fn set_failed_toast(model: AppModel, content content: String) {
     toast: events.Toast(..model.toast, header: "Failed :(", content:),
   )
 }
+
+pub fn set_form_validation_failed_toast(model: AppModel) {
+  AppModel(
+    ..model,
+    toast: events.Toast(
+      ..model.toast,
+      header: "Invalid data",
+      content: "Some fields have invalid data",
+    ),
+  )
+}

@@ -80,7 +80,6 @@ pub fn trip_details_view(app_model: AppModel) {
           html.th([], [element.text("Place")]),
           html.th([], [element.text("Date")]),
           html.th([], [element.text("Maps Link")]),
-          html.th([], [element.text("Actions")]),
         ]),
       ]),
       html.tbody(
@@ -88,7 +87,9 @@ pub fn trip_details_view(app_model: AppModel) {
         app_model.trip_details.user_trip_places
           |> list.map(fn(place) {
             html.tr([], [
-              html.td([], [element.text(place.name)]),
+              html.td([], [
+                html.a([attribute.href("")], [element.text(place.name)]),
+              ]),
               html.td([], [
                 element.text(date_util.to_human_readable(place.date)),
               ]),
@@ -100,34 +101,6 @@ pub fn trip_details_view(app_model: AppModel) {
                     ])
                   _ -> element.text("")
                 },
-              ]),
-              html.td([], [
-                html.div([attribute.class("buttons")], [
-                  html.button(
-                    [
-                      event.on_click(
-                        events.TripDetailsPage(
-                          events.TripDetailsPageUserClickedRemovePlace(
-                            place.trip_place_id,
-                          ),
-                        ),
-                      ),
-                    ],
-                    [element.text("Edit")],
-                  ),
-                  html.button(
-                    [
-                      event.on_click(
-                        events.TripDetailsPage(
-                          events.TripDetailsPageUserClickedRemovePlace(
-                            place.trip_place_id,
-                          ),
-                        ),
-                      ),
-                    ],
-                    [element.text("Remove")],
-                  ),
-                ]),
               ]),
             ])
           }),
@@ -141,26 +114,22 @@ pub fn handle_trip_details_page_event(
   event: TripDetailsPageEvent,
 ) {
   case event {
-    events.TripDetailsPageApiReturnedTripDetails(user_trip_places) -> #(
-      AppModel(
-        ..model,
-        trip_details: user_trip_places,
-        trip_update: trip_models.UpdateTripRequest(
-          start_date: user_trip_places.start_date,
-          end_date: user_trip_places.end_date,
-          destination: user_trip_places.destination,
-        ),
-      ),
-      effect.none(),
-    )
-    events.TripDetailsPageUserClickedRemovePlace(trip_place_id) -> #(
-      model,
-      delete_trip_place(
-        model.api_base_url,
-        model.trip_details.trip_id,
-        trip_place_id,
-      ),
-    )
+    events.TripDetailsPageApiReturnedTripDetails(result) ->
+      case result {
+        Ok(user_trip_places) -> #(
+          AppModel(
+            ..model,
+            trip_details: user_trip_places,
+            trip_update: trip_models.UpdateTripRequest(
+              start_date: user_trip_places.start_date,
+              end_date: user_trip_places.end_date,
+              destination: user_trip_places.destination,
+            ),
+          ),
+          effect.none(),
+        )
+        Error(e) -> web.error_to_app_event(e, model)
+      }
     events.TripDetailsPageUserClickedAddCompanions(trip_id) -> #(
       model,
       modem.push(
@@ -184,22 +153,6 @@ pub fn handle_trip_details_page_event(
   }
 }
 
-pub fn delete_trip_place(
-  api_base_url: String,
-  trip_id: String,
-  trip_place_id: String,
-) -> Effect(AppEvent) {
-  web.delete(
-    api_base_url <> "/api/trips/" <> trip_id <> "/places/" <> trip_place_id,
-    fn(result) {
-      case result {
-        Ok(_) -> events.OnRouteChange(routes.TripDetails(trip_id))
-        Error(_e) -> events.OnRouteChange(routes.Login)
-      }
-    },
-  )
-}
-
 pub fn load_trip_details(
   api_base_url: String,
   trip_id: String,
@@ -210,13 +163,9 @@ pub fn load_trip_details(
       trip_models.user_trip_places_decoder() |> decode.from(response)
     },
     fn(result) {
-      case result {
-        Ok(user_trip_places) ->
-          events.TripDetailsPage(events.TripDetailsPageApiReturnedTripDetails(
-            user_trip_places,
-          ))
-        Error(_e) -> events.OnRouteChange(routes.Login)
-      }
+      events.TripDetailsPage(events.TripDetailsPageApiReturnedTripDetails(
+        result,
+      ))
     },
   )
 }

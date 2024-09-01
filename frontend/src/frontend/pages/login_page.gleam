@@ -1,14 +1,12 @@
 import decode
-import frontend/events.{type AppEvent, type AppModel}
-import frontend/routes
+import frontend/events.{type AppModel}
 import frontend/web
 import gleam/option
 import lustre/attribute
-import lustre/effect.{type Effect}
+import lustre/effect
 import lustre/element
 import lustre/element/html
 import lustre/event
-import lustre_http
 import modem
 import shared/auth_models
 import shared/id
@@ -74,17 +72,17 @@ pub fn handle_login_page_event(
         auth_models.login_request_encoder(model.login_request),
         fn(response) { id.id_decoder() |> decode.from(response) },
         fn(result) {
-          case result {
-            Ok(user_id) ->
-              events.LoginPage(events.LoginPageApiReturnedResponse(user_id))
-            Error(_e) -> events.OnRouteChange(routes.Login)
-          }
+          events.LoginPage(events.LoginPageApiReturnedResponse(result))
         },
       ),
     )
-    events.LoginPageApiReturnedResponse(_user_id) -> #(
-      events.AppModel(..model, show_loading: False),
-      modem.push("/dashboard", option.None, option.None),
-    )
+    events.LoginPageApiReturnedResponse(response) ->
+      case response {
+        Ok(_) -> #(
+          events.AppModel(..model, show_loading: False),
+          modem.push("/dashboard", option.None, option.None),
+        )
+        Error(e) -> web.error_to_app_event(e, model)
+      }
   }
 }

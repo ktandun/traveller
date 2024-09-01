@@ -91,7 +91,7 @@ pub type LoginPageEvent {
   LoginPageUserUpdatedEmail(email: String)
   LoginPageUserUpdatedPassword(password: String)
   LoginPageUserClickedSubmit
-  LoginPageApiReturnedResponse(Id(UserId))
+  LoginPageApiReturnedResponse(Result(Id(UserId), HttpError))
 }
 
 pub type TripsDashboardPageEvent {
@@ -100,8 +100,9 @@ pub type TripsDashboardPageEvent {
 }
 
 pub type TripDetailsPageEvent {
-  TripDetailsPageApiReturnedTripDetails(trip_models.UserTripPlaces)
-  TripDetailsPageUserClickedRemovePlace(trip_place_id: String)
+  TripDetailsPageApiReturnedTripDetails(
+    Result(trip_models.UserTripPlaces, HttpError),
+  )
   TripDetailsPageUserClickedCreatePlace(trip_id: String)
   TripDetailsPageUserClickedUpdateTrip(trip_id: String)
   TripDetailsPageUserClickedAddCompanions(trip_id: String)

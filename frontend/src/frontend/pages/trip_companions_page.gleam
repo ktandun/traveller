@@ -2,17 +2,12 @@ import frontend/events.{type AppModel, AppModel}
 import frontend/toast
 import frontend/uuid_util
 import frontend/web
-import gleam/dynamic
-import gleam/io
 import gleam/list
-import gleam/option
 import lustre/attribute
 import lustre/effect
 import lustre/element
 import lustre/element/html
 import lustre/event
-import lustre_http
-import modem
 import shared/trip_models
 
 pub fn trip_companions_view(app_model: AppModel, trip_id: String) {
@@ -107,18 +102,7 @@ pub fn handle_trip_companions_page_event(
           model |> toast.set_success_toast(content: "Companion updated"),
           effect.from(fn(dispatch) { dispatch(events.ShowToast) }),
         )
-        Error(e) -> {
-          case e {
-            lustre_http.OtherError(400, _) -> #(model, effect.none())
-            lustre_http.OtherError(401, _) -> #(
-              model,
-              modem.push("/login", option.None, option.None),
-            )
-            _ -> {
-              #(model, effect.none())
-            }
-          }
-        }
+        Error(e) -> web.error_to_app_event(e, model)
       }
     }
     events.TripCompanionsPageUserUpdatedCompanion(companion) -> {
