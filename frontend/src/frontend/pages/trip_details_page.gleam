@@ -1,26 +1,22 @@
-import decode
 import frontend/date_util
-import frontend/events.{
-  type AppEvent, type AppModel, type TripDetailsPageEvent, AppModel,
-}
-import frontend/routes
+import frontend/events.{type AppModel, type TripDetailsPageEvent, AppModel}
 import frontend/web
 import gleam/list
 import gleam/option
 import lustre/attribute
-import lustre/effect.{type Effect}
+import lustre/effect
 import lustre/element
 import lustre/element/html
 import lustre/event
 import modem
 import shared/trip_models
 
-pub fn trip_details_view(app_model: AppModel) {
+pub fn trip_details_view(model: AppModel) {
   html.div([], [
     html.h2([], [
       element.text("Trip to "),
       html.span([attribute.class("text-cursive")], [
-        element.text(app_model.trip_details.destination),
+        element.text(model.trip_details.destination),
       ]),
     ]),
     html.div([], [
@@ -28,9 +24,9 @@ pub fn trip_details_view(app_model: AppModel) {
         html.dt([], [element.text("Dates")]),
         html.dd([], [
           element.text(
-            date_util.to_human_readable(app_model.trip_details.start_date)
+            date_util.to_human_readable(model.trip_details.start_date)
             <> " to "
-            <> date_util.to_human_readable(app_model.trip_details.end_date),
+            <> date_util.to_human_readable(model.trip_details.end_date),
           ),
         ]),
       ]),
@@ -40,7 +36,7 @@ pub fn trip_details_view(app_model: AppModel) {
         [
           event.on_click(
             events.TripDetailsPage(events.TripDetailsPageUserClickedUpdateTrip(
-              app_model.trip_details.trip_id,
+              model.trip_details.trip_id,
             )),
           ),
         ],
@@ -50,12 +46,12 @@ pub fn trip_details_view(app_model: AppModel) {
         [
           event.on_click(
             events.TripDetailsPage(events.TripDetailsPageUserClickedCreatePlace(
-              app_model.trip_details.trip_id,
+              model.trip_details.trip_id,
             )),
           ),
         ],
         [
-          element.text(case app_model.trip_details.user_trip_places {
+          element.text(case model.trip_details.user_trip_places {
             [] -> "Add First Place"
             _ -> "Add More Places"
           }),
@@ -66,7 +62,7 @@ pub fn trip_details_view(app_model: AppModel) {
           event.on_click(
             events.TripDetailsPage(
               events.TripDetailsPageUserClickedAddCompanions(
-                app_model.trip_details.trip_id,
+                model.trip_details.trip_id,
               ),
             ),
           ),
@@ -84,7 +80,7 @@ pub fn trip_details_view(app_model: AppModel) {
       ]),
       html.tbody(
         [],
-        app_model.trip_details.user_trip_places
+        model.trip_details.user_trip_places
           |> list.map(fn(place) {
             html.tr([], [
               html.td([], [
@@ -151,21 +147,4 @@ pub fn handle_trip_details_page_event(
       ),
     )
   }
-}
-
-pub fn load_trip_details(
-  api_base_url: String,
-  trip_id: String,
-) -> Effect(AppEvent) {
-  web.get(
-    api_base_url <> "/api/trips/" <> trip_id <> "/places",
-    fn(response) {
-      trip_models.user_trip_places_decoder() |> decode.from(response)
-    },
-    fn(result) {
-      events.TripDetailsPage(events.TripDetailsPageApiReturnedTripDetails(
-        result,
-      ))
-    },
-  )
 }

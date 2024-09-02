@@ -6,6 +6,7 @@ import shared/id.{type Id, type TripId, type TripPlaceId, type UserId}
 import shared/trip_models.{type UserTripCompanion}
 
 pub type AppEvent {
+  NoEvent
   OnRouteChange(Route)
   ShowToast
   HideToast
@@ -96,7 +97,7 @@ pub type LoginPageEvent {
 
 pub type TripsDashboardPageEvent {
   TripsDashboardPageUserClickedCreateTripButton
-  TripsDashboardPageApiReturnedTrips(trip_models.UserTrips)
+  TripsDashboardPageApiReturnedTrips(Result(trip_models.UserTrips, HttpError))
 }
 
 pub type TripDetailsPageEvent {

@@ -1,3 +1,4 @@
+import frontend/api
 import frontend/events.{type AppModel, AppModel}
 import frontend/toast
 import frontend/uuid_util
@@ -10,7 +11,7 @@ import lustre/element/html
 import lustre/event
 import shared/trip_models
 
-pub fn trip_companions_view(app_model: AppModel, trip_id: String) {
+pub fn trip_companions_view(model: AppModel, trip_id: String) {
   html.div([], [
     html.h3([], [element.text("Add Companions")]),
     html.div([attribute.class("buttons")], [
@@ -22,7 +23,7 @@ pub fn trip_companions_view(app_model: AppModel, trip_id: String) {
         ],
         [
           element.text(case
-            list.is_empty(app_model.trip_details.user_trip_companions)
+            list.is_empty(model.trip_details.user_trip_companions)
           {
             True -> "Add First Companion"
             False -> "Add More"
@@ -51,7 +52,7 @@ pub fn trip_companions_view(app_model: AppModel, trip_id: String) {
         ]),
         html.tbody(
           [],
-          list.map(app_model.trip_details.user_trip_companions, fn(companion) {
+          list.map(model.trip_details.user_trip_companions, fn(companion) {
             companion_input(companion)
           }),
         ),
@@ -66,7 +67,7 @@ pub fn handle_trip_companions_page_event(
 ) {
   case event {
     events.TripCompanionsPageUserClickedSaveCompanions(trip_id) -> {
-      let update_trip_companions_request =
+      let update_request =
         trip_models.UpdateTripCompanionsRequest(
           trip_companions: model.trip_details.user_trip_companions
           |> list.map(fn(companion) {
@@ -78,23 +79,7 @@ pub fn handle_trip_companions_page_event(
           }),
         )
 
-      #(
-        model,
-        web.post_without_response(
-          model.api_base_url <> "/api/trips/" <> trip_id <> "/companions",
-          trip_models.update_trip_companions_request_encoder(
-            update_trip_companions_request,
-          ),
-          fn(decode_result) {
-            events.TripCompanionsPage(
-              events.TripCompanionsPageApiReturnedResponse(
-                trip_id,
-                decode_result,
-              ),
-            )
-          },
-        ),
-      )
+      #(model, api.send_update_trip_companions_request(trip_id, update_request))
     }
     events.TripCompanionsPageApiReturnedResponse(_trip_id, response) -> {
       case response {

@@ -10,7 +10,11 @@ import lustre/event
 import modem
 import shared/trip_models
 
-pub fn trip_place_create_view(model: AppModel, trip_id: String) {
+pub fn trip_place_details_view(
+  model: AppModel,
+  trip_id: String,
+  trip_place_id: String,
+) {
   html.div([], [
     html.h3([], [element.text("Add a Place")]),
     html.form([], [
@@ -95,7 +99,7 @@ pub fn trip_place_create_view(model: AppModel, trip_id: String) {
   ])
 }
 
-pub fn handle_trip_place_create_page_event(
+pub fn handle_trip_place_details_page_event(
   model: AppModel,
   event: TripPlaceCreatePageEvent,
 ) {

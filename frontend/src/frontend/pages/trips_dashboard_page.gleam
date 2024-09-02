@@ -1,22 +1,17 @@
-import decode
 import frontend/date_util
-import frontend/events.{
-  type AppEvent, type AppModel, type TripsDashboardPageEvent, AppModel,
-}
-import frontend/routes
+import frontend/events.{type AppModel, type TripsDashboardPageEvent, AppModel}
+import frontend/web
 import gleam/int
 import gleam/list
 import gleam/option
 import lustre/attribute
-import lustre/effect.{type Effect}
+import lustre/effect
 import lustre/element
 import lustre/element/html
 import lustre/event
-import lustre_http
 import modem
-import shared/trip_models
 
-pub fn trips_dashboard_view(app_model: AppModel) {
+pub fn trips_dashboard_view(model: AppModel) {
   html.div([], [
     html.h1([], [
       element.text("Planned"),
@@ -29,7 +24,7 @@ pub fn trips_dashboard_view(app_model: AppModel) {
         )),
       ],
       [
-        element.text(case app_model.trips_dashboard.user_trips {
+        element.text(case model.trips_dashboard.user_trips {
           [] -> "Create Your First Trip"
           _ -> "Create New Trip"
         }),
@@ -46,7 +41,7 @@ pub fn trips_dashboard_view(app_model: AppModel) {
       ]),
       html.tbody(
         [],
-        app_model.trips_dashboard.user_trips
+        model.trips_dashboard.user_trips
           |> list.map(fn(user_trip) {
             html.tr([], [
               html.td([], [
@@ -77,9 +72,13 @@ pub fn handle_trips_dashboard_page_event(
       model,
       modem.push("/trips/create", option.None, option.None),
     )
-    events.TripsDashboardPageApiReturnedTrips(user_trips) -> #(
-      AppModel(..model, trips_dashboard: user_trips, show_loading: False),
-      effect.none(),
-    )
+    events.TripsDashboardPageApiReturnedTrips(result) ->
+      case result {
+        Ok(user_trips) -> #(
+          AppModel(..model, trips_dashboard: user_trips, show_loading: False),
+          effect.none(),
+        )
+        Error(e) -> web.error_to_app_event(e, model)
+      }
   }
 }

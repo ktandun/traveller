@@ -1,0 +1,255 @@
+import decode
+import env
+import frontend/events.{type AppEvent}
+import gleam/dynamic.{type Decoder}
+import gleam/http
+import gleam/http/request
+import gleam/json.{type Json}
+import gleam/option.{type Option}
+import gleam/result
+import gleam/string
+import lustre_http.{type HttpError}
+import shared/auth_models
+import shared/id
+import shared/trip_models
+
+pub type IncompleteRequest
+
+pub type ReadyToFireRequest
+
+pub type RequestMethod {
+  Get
+  Post
+  Delete
+  Put
+}
+
+pub opaque type ApiRequest(ready, decoder, app_event) {
+  ApiRequest(
+    url: String,
+    method: RequestMethod,
+    json: Option(Json),
+    response_decoder: Option(Decoder(decoder)),
+    to_msg: fn(Result(decoder, HttpError)) -> app_event,
+    to_nil_msg: fn(Result(Nil, HttpError)) -> app_event,
+  )
+}
+
+pub fn new_request() -> ApiRequest(IncompleteRequest, decoder, AppEvent) {
+  ApiRequest(
+    url: "",
+    method: Get,
+    json: option.None,
+    response_decoder: option.None,
+    to_msg: fn(_) { events.NoEvent },
+    to_nil_msg: fn(_) { events.NoEvent },
+  )
+}
+
+pub fn with_url(
+  api_request: ApiRequest(IncompleteRequest, decoder, app_event),
+  url: String,
+) {
+  ApiRequest(..api_request, url: env.api_base_url <> url)
+}
+
+pub fn with_method(
+  api_request: ApiRequest(IncompleteRequest, decoder, app_event),
+  method: RequestMethod,
+) {
+  ApiRequest(..api_request, method:)
+}
+
+pub fn with_json_body(
+  api_request: ApiRequest(IncompleteRequest, decoder, app_event),
+  json: Json,
+) {
+  ApiRequest(..api_request, json: option.Some(json))
+}
+
+pub fn with_response_decoder(
+  api_request: ApiRequest(IncompleteRequest, decoder, app_event),
+  response_decoder: Decoder(decoder),
+) {
+  ApiRequest(..api_request, response_decoder: option.Some(response_decoder))
+}
+
+pub fn with_to_event(
+  api_request: ApiRequest(IncompleteRequest, decoder, app_event),
+  to_msg: fn(Result(decoder, HttpError)) -> app_event,
+) {
+  ApiRequest(..api_request, to_msg:)
+}
+
+pub fn build(
+  api_request: ApiRequest(IncompleteRequest, decoder, app_event),
+) -> ApiRequest(ReadyToFireRequest, decoder, app_event) {
+  // validate request here
+
+  let assert True =
+    string.starts_with(api_request.url, "http://")
+    || string.starts_with(api_request.url, "https://")
+
+  ApiRequest(
+    url: api_request.url,
+    method: api_request.method,
+    json: api_request.json,
+    response_decoder: api_request.response_decoder,
+    to_msg: api_request.to_msg,
+    to_nil_msg: api_request.to_nil_msg,
+  )
+}
+
+pub fn send(api_request: ApiRequest(ReadyToFireRequest, decoder, app_event)) {
+  let req =
+    request.to(api_request.url)
+    |> result.unwrap(request.new())
+
+  let req = case api_request.json {
+    option.Some(json) ->
+      req
+      |> request.set_header("Content-Type", "application/json")
+      |> request.set_body(json.to_string(json))
+    _ -> req
+  }
+
+  let method = case api_request.method {
+    Get -> http.Get
+    Put -> http.Put
+    Delete -> http.Delete
+    Post -> http.Post
+  }
+
+  case api_request.response_decoder {
+    option.Some(decoder) ->
+      req
+      |> request.set_method(method)
+      |> lustre_http.send(lustre_http.expect_json(decoder, api_request.to_msg))
+    _ ->
+      req
+      |> request.set_method(method)
+      |> lustre_http.send(lustre_http.expect_anything(api_request.to_nil_msg))
+  }
+}
+
+// ---------------------------------
+// --------- API REQUESTS ----------
+// ---------------------------------
+
+pub fn send_login_request(login_request: auth_models.LoginRequest) {
+  new_request()
+  |> with_url("/api/login")
+  |> with_method(Post)
+  |> with_json_body(auth_models.login_request_encoder(login_request))
+  |> with_response_decoder(fn(response) {
+    id.id_decoder() |> decode.from(response)
+  })
+  |> with_to_event(fn(result) {
+    events.LoginPage(events.LoginPageApiReturnedResponse(result))
+  })
+  |> build
+  |> send
+}
+
+pub fn send_update_trip_companions_request(
+  trip_id: String,
+  update_request: trip_models.UpdateTripCompanionsRequest,
+) {
+  new_request()
+  |> with_url("/api/trips/" <> trip_id <> "/companions")
+  |> with_method(Post)
+  |> with_json_body(trip_models.update_trip_companions_request_encoder(
+    update_request,
+  ))
+  |> with_to_event(fn(decode_result) {
+    events.TripCompanionsPage(events.TripCompanionsPageApiReturnedResponse(
+      trip_id,
+      decode_result,
+    ))
+  })
+  |> build
+  |> send
+}
+
+pub fn send_get_trip_details_request(trip_id: String) {
+  new_request()
+  |> with_url("/api/trips/" <> trip_id <> "/places")
+  |> with_method(Get)
+  |> with_response_decoder(fn(response) {
+    trip_models.user_trip_places_decoder() |> decode.from(response)
+  })
+  |> with_to_event(fn(result) {
+    events.TripDetailsPage(events.TripDetailsPageApiReturnedTripDetails(result))
+  })
+  |> build
+  |> send
+}
+
+pub fn send_get_user_trips_request() {
+  new_request()
+  |> with_url("/api/trips/")
+  |> with_method(Get)
+  |> with_response_decoder(fn(response) {
+    trip_models.user_trips_decoder() |> decode.from(response)
+  })
+  |> with_to_event(fn(result) {
+    events.TripsDashboardPage(events.TripsDashboardPageApiReturnedTrips(result))
+  })
+  |> build
+  |> send
+}
+
+pub fn send_create_trip_request() {
+  new_request()
+  |> with_url("/api/trips/")
+  |> with_method(Post)
+  |> with_response_decoder(fn(response) {
+    id.id_decoder() |> decode.from(response)
+  })
+  |> with_to_event(fn(result) {
+    events.TripCreatePage(events.TripCreatePageApiReturnedResponse(result))
+  })
+  |> build
+  |> send
+}
+
+pub fn send_create_trip_place_request(
+  trip_id: String,
+  create_request: trip_models.CreateTripPlaceRequest,
+) {
+  new_request()
+  |> with_url("/api/trips/" <> trip_id <> "/places")
+  |> with_method(Post)
+  |> with_json_body(trip_models.create_trip_place_request_encoder(
+    create_request,
+  ))
+  |> with_response_decoder(fn(response) {
+    id.id_decoder() |> decode.from(response)
+  })
+  |> with_to_event(fn(decode_result) {
+    events.TripPlaceCreatePage(events.TripPlaceCreatePageApiReturnedResponse(
+      trip_id,
+      decode_result,
+    ))
+  })
+  |> build
+  |> send
+}
+
+pub fn send_trip_update_request(
+  trip_id: String,
+  update_request: trip_models.UpdateTripRequest,
+) {
+  new_request()
+  |> with_url("/api/trips/" <> trip_id)
+  |> with_method(Put)
+  |> with_json_body(trip_models.update_trip_request_encoder(update_request))
+  |> with_response_decoder(fn(response) {
+    id.id_decoder() |> decode.from(response)
+  })
+  |> with_to_event(fn(result) {
+    events.TripUpdatePage(events.TripUpdatePageApiReturnedResponse(result))
+  })
+  |> build
+  |> send
+}

@@ -1,4 +1,4 @@
-import decode
+import frontend/api
 import frontend/events.{type AppModel, type TripCreatePageEvent, AppModel}
 import frontend/toast
 import frontend/web
@@ -8,12 +8,11 @@ import lustre/effect
 import lustre/element
 import lustre/element/html
 import lustre/event
-import lustre_http
 import modem
 import shared/id
 import shared/trip_models
 
-pub fn trip_create_view(app_model: AppModel) {
+pub fn trip_create_view(model: AppModel) {
   html.div([], [
     html.h3([], [element.text("Create a New Trip")]),
     html.form([], [
@@ -23,17 +22,14 @@ pub fn trip_create_view(app_model: AppModel) {
           event.on_input(fn(start_date) {
             events.TripCreatePage(
               events.TripCreatePageUserInputCreateTripRequest(
-                trip_models.CreateTripRequest(
-                  ..app_model.trip_create,
-                  start_date:,
-                ),
+                trip_models.CreateTripRequest(..model.trip_create, start_date:),
               ),
             )
           }),
           attribute.name("from"),
           attribute.type_("date"),
           attribute.required(True),
-          attribute.value(app_model.trip_create.start_date),
+          attribute.value(model.trip_create.start_date),
         ]),
         html.span([attribute.class("validity")], []),
       ]),
@@ -43,18 +39,15 @@ pub fn trip_create_view(app_model: AppModel) {
           event.on_input(fn(end_date) {
             events.TripCreatePage(
               events.TripCreatePageUserInputCreateTripRequest(
-                trip_models.CreateTripRequest(
-                  ..app_model.trip_create,
-                  end_date:,
-                ),
+                trip_models.CreateTripRequest(..model.trip_create, end_date:),
               ),
             )
           }),
-          attribute.min(app_model.trip_create.start_date),
+          attribute.min(model.trip_create.start_date),
           attribute.name("to"),
           attribute.type_("date"),
           attribute.required(True),
-          attribute.value(app_model.trip_create.end_date),
+          attribute.value(model.trip_create.end_date),
         ]),
         html.span([attribute.class("validity")], []),
       ]),
@@ -64,10 +57,7 @@ pub fn trip_create_view(app_model: AppModel) {
           event.on_input(fn(destination) {
             events.TripCreatePage(
               events.TripCreatePageUserInputCreateTripRequest(
-                trip_models.CreateTripRequest(
-                  ..app_model.trip_create,
-                  destination:,
-                ),
+                trip_models.CreateTripRequest(..model.trip_create, destination:),
               ),
             )
           }),
@@ -75,12 +65,12 @@ pub fn trip_create_view(app_model: AppModel) {
           attribute.placeholder("Where are you going?"),
           attribute.type_("text"),
           attribute.required(True),
-          attribute.value(app_model.trip_create.destination),
+          attribute.value(model.trip_create.destination),
         ]),
         html.span([attribute.class("validity")], []),
       ]),
     ]),
-    html.div([], [element.text(app_model.trip_create_errors)]),
+    html.div([], [element.text(model.trip_create_errors)]),
     html.button(
       [
         event.on_click(events.TripCreatePage(
@@ -103,14 +93,7 @@ pub fn handle_trip_create_page_event(
     )
     events.TripCreatePageUserClickedCreateTrip -> #(
       model,
-      web.post(
-        model.api_base_url <> "/api/trips",
-        trip_models.create_trip_request_encoder(model.trip_create),
-        fn(response) { id.id_decoder() |> decode.from(response) },
-        fn(result) {
-          events.TripCreatePage(events.TripCreatePageApiReturnedResponse(result))
-        },
-      ),
+      api.send_create_trip_request(),
     )
     events.TripCreatePageApiReturnedResponse(response) -> {
       case response {

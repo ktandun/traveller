@@ -1,7 +1,9 @@
-import frontend/events.{type AppModel, AppModel}
+import frontend/events.{type AppModel, AppModel, Toast}
 import lustre/attribute
+import lustre/effect
 import lustre/element
 import lustre/element/html
+import plinth/javascript/global
 
 pub fn simple_toast(show: Bool, header: String, content: String) {
   html.div(
@@ -18,6 +20,23 @@ pub fn simple_toast(show: Bool, header: String, content: String) {
       html.div([attribute.class("toast-header")], [element.text(header)]),
       html.div([attribute.class("toast-content")], [element.text(content)]),
     ],
+  )
+}
+
+pub fn show_toast(model: AppModel) {
+  #(
+    AppModel(..model, toast: Toast(..model.toast, visible: True)),
+    effect.from(fn(dispatch) {
+      global.set_timeout(2500, fn() { dispatch(events.HideToast) })
+      Nil
+    }),
+  )
+}
+
+pub fn hide_toast(model: AppModel) {
+  #(
+    AppModel(..model, toast: Toast(..model.toast, visible: False)),
+    effect.none(),
   )
 }
 

@@ -1,5 +1,5 @@
-import decode
-import frontend/events.{type AppModel}
+import frontend/api
+import frontend/events.{type AppModel, type LoginPageEvent}
 import frontend/web
 import gleam/option
 import lustre/attribute
@@ -9,9 +9,8 @@ import lustre/element/html
 import lustre/event
 import modem
 import shared/auth_models
-import shared/id
 
-pub fn login_view(app_model: AppModel) {
+pub fn login_view(model: AppModel) {
   html.div([], [
     html.h3([attribute.class("text-cursive")], [element.text("Login")]),
     html.div([], [
@@ -20,7 +19,7 @@ pub fn login_view(app_model: AppModel) {
         event.on_input(fn(input) {
           events.LoginPage(events.LoginPageUserUpdatedEmail(input))
         }),
-        attribute.value(app_model.login_request.email),
+        attribute.value(model.login_request.email),
         attribute.name("email"),
         attribute.type_("email"),
       ]),
@@ -31,7 +30,7 @@ pub fn login_view(app_model: AppModel) {
         event.on_input(fn(input) {
           events.LoginPage(events.LoginPageUserUpdatedPassword(input))
         }),
-        attribute.value(app_model.login_request.password),
+        attribute.value(model.login_request.password),
         attribute.name("password"),
         attribute.type_("password"),
       ]),
@@ -43,10 +42,7 @@ pub fn login_view(app_model: AppModel) {
   ])
 }
 
-pub fn handle_login_page_event(
-  model: events.AppModel,
-  event: events.LoginPageEvent,
-) {
+pub fn handle_login_page_event(model: AppModel, event: LoginPageEvent) {
   case event {
     events.LoginPageUserUpdatedEmail(email) -> #(
       events.AppModel(
@@ -67,14 +63,7 @@ pub fn handle_login_page_event(
     )
     events.LoginPageUserClickedSubmit -> #(
       events.AppModel(..model, show_loading: True),
-      web.post(
-        model.api_base_url <> "/api/login",
-        auth_models.login_request_encoder(model.login_request),
-        fn(response) { id.id_decoder() |> decode.from(response) },
-        fn(result) {
-          events.LoginPage(events.LoginPageApiReturnedResponse(result))
-        },
-      ),
+      api.send_login_request(model.login_request),
     )
     events.LoginPageApiReturnedResponse(response) ->
       case response {
