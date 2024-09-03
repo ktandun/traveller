@@ -1,4 +1,3 @@
-import birl
 import gleam/bool
 import gleam/list
 import gleam/result
@@ -45,31 +44,19 @@ pub fn handle_get_trips(
 pub fn handle_create_trip(
   ctx: Context,
   user_id: Id(UserId),
-  create_trip_request: CreateTripRequest,
+  create_request: CreateTripRequest,
 ) -> Result(Id(TripId), AppError) {
-  let now = birl.now()
-
-  use #(start_year, start_month, start_date) <- result.try(
-    date_util.from_yyyy_mm_dd(create_trip_request.start_date),
-  )
-  use #(end_year, end_month, end_date) <- result.try(date_util.from_yyyy_mm_dd(
-    create_trip_request.end_date,
-  ))
-  let start_date =
-    birl.set_day(now, birl.Day(start_year, start_month, start_date))
-  let end_date = birl.set_day(now, birl.Day(end_year, end_month, end_date))
-
   use <- bool.guard(
-    birl.to_unix(end_date) < birl.to_unix(start_date),
+    date_util.is_before(create_request.end_date, create_request.start_date),
     Error(error.InvalidDateSpecified),
   )
 
   use <- bool.guard(
-    string.is_empty(create_trip_request.destination |> string.trim),
+    string.is_empty(create_request.destination |> string.trim),
     Error(error.InvalidDestinationSpecified),
   )
 
-  trips_db.create_user_trip(ctx, user_id, create_trip_request)
+  trips_db.create_user_trip(ctx, user_id, create_request)
 }
 
 /// Deletes a trip place for a user
@@ -94,13 +81,10 @@ pub fn handle_create_trip_place(
     trips_db.get_user_trip_dates_by_trip_id(ctx, user_id, trip_id),
   )
 
-  use is_date_valid <- result.try(date_util.is_date_within(
-    request.date,
-    start_date,
-    end_date,
-  ))
-
-  use <- bool.guard(!is_date_valid, Error(error.InvalidDateSpecified))
+  use <- bool.guard(
+    !date_util.is_date_within(request.date, start_date, end_date),
+    Error(error.InvalidDateSpecified),
+  )
 
   let trip_place_id = ctx.uuid_provider() |> uuid.to_string |> id.to_id()
 
@@ -143,20 +127,11 @@ pub fn handle_update_trip(
 ) -> Result(Id(TripId), AppError) {
   use _ <- result.try(trips_db.ensure_trip_id_exists(ctx, user_id, trip_id))
 
-  let now = birl.now()
-
-  use #(start_year, start_month, start_date) <- result.try(
-    date_util.from_yyyy_mm_dd(update_trip_request.start_date),
-  )
-  use #(end_year, end_month, end_date) <- result.try(date_util.from_yyyy_mm_dd(
-    update_trip_request.end_date,
-  ))
-  let start_date =
-    birl.set_day(now, birl.Day(start_year, start_month, start_date))
-  let end_date = birl.set_day(now, birl.Day(end_year, end_month, end_date))
-
   use <- bool.guard(
-    birl.to_unix(end_date) < birl.to_unix(start_date),
+    date_util.is_before(
+      update_trip_request.end_date,
+      update_trip_request.start_date,
+    ),
     Error(error.InvalidDateSpecified),
   )
 

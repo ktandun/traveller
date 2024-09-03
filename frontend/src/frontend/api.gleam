@@ -1,5 +1,6 @@
-import decode
+import gleam/io
 import env
+import frontend/decode_util
 import frontend/events.{type AppEvent}
 import gleam/dynamic.{type Decoder}
 import gleam/http
@@ -12,6 +13,7 @@ import lustre_http.{type HttpError}
 import shared/auth_models
 import shared/id
 import shared/trip_models
+import toy
 
 pub type IncompleteRequest
 
@@ -142,7 +144,9 @@ pub fn send_login_request(login_request: auth_models.LoginRequest) {
   |> with_method(Post)
   |> with_json_body(auth_models.login_request_encoder(login_request))
   |> with_response_decoder(fn(response) {
-    id.id_decoder() |> decode.from(response)
+    response
+    |> toy.decode(id.id_decoder())
+    |> decode_util.map_toy_error_to_decode_errors()
   })
   |> with_to_event(fn(result) {
     events.LoginPage(events.LoginPageApiReturnedResponse(result))
@@ -176,7 +180,9 @@ pub fn send_get_trip_details_request(trip_id: String) {
   |> with_url("/api/trips/" <> trip_id <> "/places")
   |> with_method(Get)
   |> with_response_decoder(fn(response) {
-    trip_models.user_trip_places_decoder() |> decode.from(response)
+    response
+    |> toy.decode(trip_models.user_trip_places_decoder())
+    |> decode_util.map_toy_error_to_decode_errors()
   })
   |> with_to_event(fn(result) {
     events.TripDetailsPage(events.TripDetailsPageApiReturnedTripDetails(result))
@@ -190,7 +196,10 @@ pub fn send_get_user_trips_request() {
   |> with_url("/api/trips/")
   |> with_method(Get)
   |> with_response_decoder(fn(response) {
-    trip_models.user_trips_decoder() |> decode.from(response)
+    io.debug(response)
+    response
+    |> toy.decode(trip_models.user_trips_decoder())
+    |> decode_util.map_toy_error_to_decode_errors()
   })
   |> with_to_event(fn(result) {
     events.TripsDashboardPage(events.TripsDashboardPageApiReturnedTrips(result))
@@ -199,12 +208,17 @@ pub fn send_get_user_trips_request() {
   |> send
 }
 
-pub fn send_create_trip_request() {
+pub fn send_create_trip_request(create_request: trip_models.CreateTripRequest) {
   new_request()
   |> with_url("/api/trips/")
   |> with_method(Post)
+  |> with_json_body(trip_models.create_trip_request_encoder(
+    create_request,
+  ))
   |> with_response_decoder(fn(response) {
-    id.id_decoder() |> decode.from(response)
+    response
+    |> toy.decode(id.id_decoder())
+    |> decode_util.map_toy_error_to_decode_errors()
   })
   |> with_to_event(fn(result) {
     events.TripCreatePage(events.TripCreatePageApiReturnedResponse(result))
@@ -224,7 +238,9 @@ pub fn send_create_trip_place_request(
     create_request,
   ))
   |> with_response_decoder(fn(response) {
-    id.id_decoder() |> decode.from(response)
+    response
+    |> toy.decode(id.id_decoder())
+    |> decode_util.map_toy_error_to_decode_errors()
   })
   |> with_to_event(fn(decode_result) {
     events.TripPlaceCreatePage(events.TripPlaceCreatePageApiReturnedResponse(
@@ -245,7 +261,9 @@ pub fn send_trip_update_request(
   |> with_method(Put)
   |> with_json_body(trip_models.update_trip_request_encoder(update_request))
   |> with_response_decoder(fn(response) {
-    id.id_decoder() |> decode.from(response)
+    response
+    |> toy.decode(id.id_decoder())
+    |> decode_util.map_toy_error_to_decode_errors()
   })
   |> with_to_event(fn(result) {
     events.TripUpdatePage(events.TripUpdatePageApiReturnedResponse(result))

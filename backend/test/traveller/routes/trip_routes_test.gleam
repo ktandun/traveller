@@ -1,3 +1,4 @@
+import birl
 import gleam/list
 import gleeunit/should
 import shared/id
@@ -12,7 +13,7 @@ pub fn trips_unauthorised_test() {
   use ctx <- test_utils.with_context()
 
   let response =
-    testing.get("/trips", [])
+    testing.get("/api/trips", [])
     |> router.handle_request(ctx)
 
   response.status
@@ -23,7 +24,7 @@ pub fn get_user_trips_test() {
   use ctx <- test_utils.with_context()
 
   let response =
-    testing.get("/trips", [])
+    testing.get("/api/trips", [])
     |> test_utils.set_auth_cookie
     |> router.handle_request(ctx)
 
@@ -44,13 +45,13 @@ pub fn create_user_trips_test() {
   let json =
     trip_models.CreateTripRequest(
       destination: "India " <> test_utils.gen_uuid() |> uuid.to_string(),
-      start_date: "2024-01-01",
-      end_date: "2025-01-01",
+      start_date: birl.Day(2024, 01, 01),
+      end_date: birl.Day(2025, 01, 01),
     )
     |> trip_models.create_trip_request_encoder
 
   let response =
-    testing.post_json("/trips", [], json)
+    testing.post_json("/api/trips", [], json)
     |> test_utils.set_json_header
     |> test_utils.set_auth_cookie
     |> router.handle_request(ctx)
@@ -67,13 +68,13 @@ pub fn create_user_trips_unauthenticated_test() {
   let json =
     trip_models.CreateTripRequest(
       destination: "India " <> test_utils.gen_uuid() |> uuid.to_string(),
-      start_date: "2024-01-01",
-      end_date: "2025-01-01",
+      start_date: birl.Day(2024, 01, 01),
+      end_date: birl.Day(2025, 01, 01),
     )
     |> trip_models.create_trip_request_encoder
 
   let response =
-    testing.post_json("/trips", [], json)
+    testing.post_json("/api/trips", [], json)
     |> test_utils.set_json_header
     |> router.handle_request(ctx)
 
@@ -85,7 +86,7 @@ pub fn get_user_trip_places_test() {
   use ctx <- test_utils.with_context()
 
   let response =
-    testing.get("/trips/" <> test_utils.testing_trip_id <> "/places", [])
+    testing.get("/api/trips/" <> test_utils.testing_trip_id <> "/places", [])
     |> test_utils.set_auth_cookie
     |> router.handle_request(ctx)
 
@@ -106,7 +107,7 @@ pub fn get_user_trip_places_with_invalid_trip_id_test() {
   ["514acc18-c3cc-4abe-8bca-0df710c2553b", "heyyyyyyyyyyyyyyyyyyyyyyyyyyyy"]
   |> list.each(fn(id) {
     let response =
-      testing.get("/trips/" <> id <> "/places", [])
+      testing.get("/api/trips/" <> id <> "/places", [])
       |> test_utils.set_auth_cookie
       |> router.handle_request(ctx)
 

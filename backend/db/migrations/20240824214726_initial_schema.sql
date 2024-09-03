@@ -133,8 +133,8 @@ CREATE OR REPLACE FUNCTION trips_view ()
         user_id uuid,
         trip_id uuid,
         destination varchar(255),
-        start_date text,
-        end_date text,
+        start_date date,
+        end_date date,
         places json,
         companions json
     )
@@ -163,8 +163,8 @@ trips AS (
         ut.user_id AS user_id,
         t.trip_id AS trip_id,
         t.destination AS destination,
-        to_char(t.start_date, 'YYYY-MM-DD') AS start_date,
-        to_char(t.end_date, 'YYYY-MM-DD') AS end_date
+        t.start_date AS start_date,
+        t.end_date AS end_date
     FROM
         user_trips ut
         LEFT JOIN trips t ON ut.trip_id = t.trip_id

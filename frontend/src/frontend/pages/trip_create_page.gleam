@@ -3,12 +3,14 @@ import frontend/events.{type AppModel, type TripCreatePageEvent, AppModel}
 import frontend/toast
 import frontend/web
 import gleam/option
+import gleam/result
 import lustre/attribute
 import lustre/effect
 import lustre/element
 import lustre/element/html
 import lustre/event
 import modem
+import shared/date_util_shared
 import shared/id
 import shared/trip_models
 
@@ -22,7 +24,7 @@ pub fn trip_create_view(model: AppModel) {
           event.on_input(fn(start_date) {
             events.TripCreatePage(
               events.TripCreatePageUserInputCreateTripRequest(
-                trip_models.CreateTripRequest(..model.trip_create, start_date:),
+                events.CreateTripForm(..model.trip_create, start_date:),
               ),
             )
           }),
@@ -39,7 +41,7 @@ pub fn trip_create_view(model: AppModel) {
           event.on_input(fn(end_date) {
             events.TripCreatePage(
               events.TripCreatePageUserInputCreateTripRequest(
-                trip_models.CreateTripRequest(..model.trip_create, end_date:),
+                events.CreateTripForm(..model.trip_create, end_date:),
               ),
             )
           }),
@@ -57,7 +59,7 @@ pub fn trip_create_view(model: AppModel) {
           event.on_input(fn(destination) {
             events.TripCreatePage(
               events.TripCreatePageUserInputCreateTripRequest(
-                trip_models.CreateTripRequest(..model.trip_create, destination:),
+                events.CreateTripForm(..model.trip_create, destination:),
               ),
             )
           }),
@@ -91,10 +93,26 @@ pub fn handle_trip_create_page_event(
       AppModel(..model, trip_create: create_trip_request),
       effect.none(),
     )
-    events.TripCreatePageUserClickedCreateTrip -> #(
-      model,
-      api.send_create_trip_request(),
-    )
+
+    events.TripCreatePageUserClickedCreateTrip -> {
+      let form = model.trip_create
+
+      let start_date = date_util_shared.from_yyyy_mm_dd(form.start_date)
+      let end_date = date_util_shared.from_yyyy_mm_dd(form.end_date)
+
+      case start_date, end_date {
+        Ok(start_date), Ok(end_date) -> #(
+          model,
+          api.send_create_trip_request(trip_models.CreateTripRequest(
+            destination: form.destination,
+            start_date:,
+            end_date:,
+          )),
+        )
+        _, _ -> #(model, effect.none())
+      }
+    }
+
     events.TripCreatePageApiReturnedResponse(response) -> {
       case response {
         Ok(trip_id) -> {

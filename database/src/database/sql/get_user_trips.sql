@@ -1,8 +1,8 @@
 SELECT
     LOWER(t.trip_id::TEXT) AS trip_id,
     t.destination,
-    to_char(t.start_date, 'YYYY-MM-DD') AS start_date,
-    to_char(t.end_date, 'YYYY-MM-DD') AS end_date,
+    t.start_date AS start_date,
+    t.end_date AS end_date,
     COUNT(tp.trip_place_id) AS places_count
 FROM
     trips t

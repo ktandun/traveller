@@ -29,11 +29,11 @@ pub type AppModel {
     login_request: auth_models.LoginRequest,
     trips_dashboard: trip_models.UserTrips,
     trip_details: trip_models.UserTripPlaces,
-    trip_create: trip_models.CreateTripRequest,
+    trip_create: CreateTripForm,
     trip_create_errors: String,
-    trip_update: trip_models.UpdateTripRequest,
+    trip_update: TripUpdateForm,
     trip_update_errors: String,
-    trip_place_create: trip_models.CreateTripPlaceRequest,
+    trip_place_create: TripPlaceCreateForm,
     trip_place_create_errors: String,
   )
 }
@@ -45,7 +45,7 @@ pub fn set_default_login_request(model: AppModel) {
 pub fn set_default_trip_place_create(model: AppModel) {
   AppModel(
     ..model,
-    trip_place_create: trip_models.default_create_trip_place_request(),
+    trip_place_create: default_trip_place_create_form(),
     trip_place_create_errors: "",
   )
 }
@@ -53,7 +53,7 @@ pub fn set_default_trip_place_create(model: AppModel) {
 pub fn set_default_trip_create(model: AppModel) {
   AppModel(
     ..model,
-    trip_create: trip_models.default_create_trip_request(),
+    trip_create: default_create_trip_form(),
     trip_create_errors: "",
   )
 }
@@ -61,7 +61,7 @@ pub fn set_default_trip_create(model: AppModel) {
 pub fn set_default_trip_update(model: AppModel) {
   AppModel(
     ..model,
-    trip_update: trip_models.default_update_trip_request(),
+    trip_update: default_trip_update_form(),
     trip_update_errors: "",
   )
 }
@@ -79,11 +79,11 @@ pub fn default_app_model() {
     login_request: auth_models.default_login_request(),
     trips_dashboard: trip_models.default_user_trips(),
     trip_details: trip_models.default_user_trip_places(),
-    trip_create: trip_models.default_create_trip_request(),
+    trip_create: default_create_trip_form(),
     trip_create_errors: "",
-    trip_update: trip_models.default_update_trip_request(),
+    trip_update: default_trip_update_form(),
     trip_update_errors: "",
-    trip_place_create: trip_models.default_create_trip_place_request(),
+    trip_place_create: default_trip_place_create_form(),
     trip_place_create_errors: "",
   )
 }
@@ -109,16 +109,40 @@ pub type TripDetailsPageEvent {
   TripDetailsPageUserClickedAddCompanions(trip_id: String)
 }
 
+pub type CreateTripForm {
+  CreateTripForm(start_date: String, end_date: String, destination: String)
+}
+
+pub fn default_create_trip_form() {
+  CreateTripForm(start_date: "", end_date: "", destination: "")
+}
+
 pub type TripCreatePageEvent {
-  TripCreatePageUserInputCreateTripRequest(trip_models.CreateTripRequest)
+  TripCreatePageUserInputCreateTripRequest(CreateTripForm)
   TripCreatePageUserClickedCreateTrip
   TripCreatePageApiReturnedResponse(Result(Id(TripId), HttpError))
 }
 
+pub type TripUpdateForm {
+  TripUpdateForm(destination: String, start_date: String, end_date: String)
+}
+
+pub fn default_trip_update_form() {
+  TripUpdateForm(destination: "", start_date: "", end_date: "")
+}
+
 pub type TripUpdatePageEvent {
-  TripUpdatePageUserInputUpdateTripRequest(trip_models.UpdateTripRequest)
+  TripUpdatePageUserInputUpdateTripRequest(TripUpdateForm)
   TripUpdatePageUserClickedUpdateTrip(trip_id: String)
   TripUpdatePageApiReturnedResponse(Result(Id(TripId), HttpError))
+}
+
+pub type TripPlaceCreateForm {
+  TripPlaceCreateForm(place: String, date: String, google_maps_link: String)
+}
+
+pub fn default_trip_place_create_form() {
+  TripPlaceCreateForm(place: "", date: "", google_maps_link: "")
 }
 
 pub type TripPlaceCreatePageEvent {
@@ -126,9 +150,7 @@ pub type TripPlaceCreatePageEvent {
     trip_id: String,
     Result(Id(TripPlaceId), HttpError),
   )
-  TripPlaceCreatePageUserInputCreateTripPlaceRequest(
-    trip_models.CreateTripPlaceRequest,
-  )
+  TripPlaceCreatePageUserInputCreateTripPlaceRequest(TripPlaceCreateForm)
   TripPlaceCreatePageUserClickedSubmit(trip_id: String)
 }
 

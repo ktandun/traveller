@@ -161,7 +161,10 @@ pub fn upsert_trip_companion(db, arg_1, arg_2, arg_3, arg_4) {
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type GetUserTripDatesByTripIdRow {
-  GetUserTripDatesByTripIdRow(start_date: String, end_date: String)
+  GetUserTripDatesByTripIdRow(
+    start_date: #(Int, Int, Int),
+    end_date: #(Int, Int, Int),
+  )
 }
 
 /// Runs the `get_user_trip_dates_by_trip_id` query
@@ -177,8 +180,8 @@ pub fn get_user_trip_dates_by_trip_id(db, arg_1, arg_2) {
       use end_date <- decode.parameter
       GetUserTripDatesByTripIdRow(start_date: start_date, end_date: end_date)
     })
-    |> decode.field(0, decode.string)
-    |> decode.field(1, decode.string)
+    |> decode.field(0, date_decoder())
+    |> decode.field(1, date_decoder())
 
   "SELECT
     start_date,
@@ -276,8 +279,8 @@ pub type GetUserTripPlacesRow {
   GetUserTripPlacesRow(
     trip_id: Uuid,
     destination: String,
-    start_date: String,
-    end_date: String,
+    start_date: #(Int, Int, Int),
+    end_date: #(Int, Int, Int),
     places: String,
     companions: String,
   )
@@ -309,8 +312,8 @@ pub fn get_user_trip_places(db, arg_1, arg_2) {
     })
     |> decode.field(0, uuid_decoder())
     |> decode.field(1, decode.string)
-    |> decode.field(2, decode.string)
-    |> decode.field(3, decode.string)
+    |> decode.field(2, date_decoder())
+    |> decode.field(3, date_decoder())
     |> decode.field(4, decode.string)
     |> decode.field(5, decode.string)
 
@@ -517,8 +520,8 @@ pub type GetUserTripsRow {
   GetUserTripsRow(
     trip_id: String,
     destination: String,
-    start_date: String,
-    end_date: String,
+    start_date: #(Int, Int, Int),
+    end_date: #(Int, Int, Int),
     places_count: Int,
   )
 }
@@ -547,15 +550,15 @@ pub fn get_user_trips(db, arg_1) {
     })
     |> decode.field(0, decode.string)
     |> decode.field(1, decode.string)
-    |> decode.field(2, decode.string)
-    |> decode.field(3, decode.string)
+    |> decode.field(2, date_decoder())
+    |> decode.field(3, date_decoder())
     |> decode.field(4, decode.int)
 
   "SELECT
     LOWER(t.trip_id::TEXT) AS trip_id,
     t.destination,
-    to_char(t.start_date, 'YYYY-MM-DD') AS start_date,
-    to_char(t.end_date, 'YYYY-MM-DD') AS end_date,
+    t.start_date AS start_date,
+    t.end_date AS end_date,
     COUNT(tp.trip_place_id) AS places_count
 FROM
     trips t
@@ -617,6 +620,16 @@ WHERE
 
 
 // --- UTILS -------------------------------------------------------------------
+
+/// A decoder to decode `date`s coming from a Postgres query.
+///
+fn date_decoder() {
+  use dynamic <- decode.then(decode.dynamic)
+  case pgo.decode_date(dynamic) {
+    Ok(date) -> decode.into(date)
+    Error(_) -> decode.fail("date")
+  }
+}
 
 /// A decoder to decode `Uuid`s coming from a Postgres query.
 ///

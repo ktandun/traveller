@@ -1,4 +1,3 @@
-import frontend/date_util
 import frontend/events.{type AppModel, type TripsDashboardPageEvent, AppModel}
 import frontend/web
 import gleam/int
@@ -10,6 +9,7 @@ import lustre/element
 import lustre/element/html
 import lustre/event
 import modem
+import shared/date_util_shared
 
 pub fn trips_dashboard_view(model: AppModel) {
   html.div([], [
@@ -50,10 +50,14 @@ pub fn trips_dashboard_view(model: AppModel) {
                 ]),
               ]),
               html.td([], [
-                element.text(date_util.to_human_readable(user_trip.start_date)),
+                element.text(date_util_shared.to_human_readable(
+                  user_trip.start_date,
+                )),
               ]),
               html.td([], [
-                element.text(date_util.to_human_readable(user_trip.end_date)),
+                element.text(date_util_shared.to_human_readable(
+                  user_trip.end_date,
+                )),
               ]),
               html.td([], [element.text(int.to_string(user_trip.places_count))]),
             ])

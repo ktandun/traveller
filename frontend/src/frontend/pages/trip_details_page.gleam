@@ -1,4 +1,4 @@
-import frontend/date_util
+import shared/date_util_shared
 import frontend/events.{type AppModel, type TripDetailsPageEvent, AppModel}
 import frontend/web
 import gleam/list
@@ -24,9 +24,9 @@ pub fn trip_details_view(model: AppModel) {
         html.dt([], [element.text("Dates")]),
         html.dd([], [
           element.text(
-            date_util.to_human_readable(model.trip_details.start_date)
+            date_util_shared.to_human_readable(model.trip_details.start_date)
             <> " to "
-            <> date_util.to_human_readable(model.trip_details.end_date),
+            <> date_util_shared.to_human_readable(model.trip_details.end_date),
           ),
         ]),
       ]),
@@ -87,7 +87,7 @@ pub fn trip_details_view(model: AppModel) {
                 html.a([attribute.href("")], [element.text(place.name)]),
               ]),
               html.td([], [
-                element.text(date_util.to_human_readable(place.date)),
+                element.text(date_util_shared.to_human_readable(place.date)),
               ]),
               html.td([], [
                 case place.google_maps_link {
@@ -116,9 +116,9 @@ pub fn handle_trip_details_page_event(
           AppModel(
             ..model,
             trip_details: user_trip_places,
-            trip_update: trip_models.UpdateTripRequest(
-              start_date: user_trip_places.start_date,
-              end_date: user_trip_places.end_date,
+            trip_update: events.TripUpdateForm(
+              start_date: user_trip_places.start_date |> date_util_shared.to_yyyy_mm_dd,
+              end_date: user_trip_places.end_date |> date_util_shared.to_yyyy_mm_dd,
               destination: user_trip_places.destination,
             ),
           ),

@@ -1,6 +1,7 @@
 import gleam/dynamic.{type DecodeErrors}
 import gleam/io
-import gleam/json.{type DecodeError}
+import gleam/json
+import toy.{type ToyError}
 import gleam/pgo.{type QueryError}
 import wisp
 
@@ -8,7 +9,8 @@ pub type AppError {
   DatabaseError(QueryError)
   QueryNotReturningSingleResult(String)
   InvalidLogin
-  DecodeError(DecodeError)
+  BodyNotJsonError
+  DecodeError(List(ToyError))
   JsonDecodeError(DecodeErrors)
   UserAlreadyRegistered
   UserUnauthenticated

@@ -59,7 +59,7 @@ pub fn set_form_validation_failed_toast(model: AppModel) {
     ..model,
     toast: events.Toast(
       ..model.toast,
-      header: "Invalid data",
+      header: "Request failed",
       content: "Some fields have invalid data",
     ),
   )

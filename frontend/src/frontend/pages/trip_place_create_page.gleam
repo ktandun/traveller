@@ -8,6 +8,7 @@ import lustre/element
 import lustre/element/html
 import lustre/event
 import modem
+import shared/date_util_shared
 import shared/trip_models
 
 pub fn trip_place_create_view(model: AppModel, trip_id: String) {
@@ -20,10 +21,7 @@ pub fn trip_place_create_view(model: AppModel, trip_id: String) {
           event.on_input(fn(place) {
             events.TripPlaceCreatePage(
               events.TripPlaceCreatePageUserInputCreateTripPlaceRequest(
-                trip_models.CreateTripPlaceRequest(
-                  ..model.trip_place_create,
-                  place:,
-                ),
+                events.TripPlaceCreateForm(..model.trip_place_create, place:),
               ),
             )
           }),
@@ -40,15 +38,16 @@ pub fn trip_place_create_view(model: AppModel, trip_id: String) {
           event.on_input(fn(date) {
             events.TripPlaceCreatePage(
               events.TripPlaceCreatePageUserInputCreateTripPlaceRequest(
-                trip_models.CreateTripPlaceRequest(
-                  ..model.trip_place_create,
-                  date:,
-                ),
+                events.TripPlaceCreateForm(..model.trip_place_create, date:),
               ),
             )
           }),
-          attribute.min(model.trip_details.start_date),
-          attribute.max(model.trip_details.end_date),
+          attribute.min(
+            model.trip_details.start_date |> date_util_shared.to_yyyy_mm_dd,
+          ),
+          attribute.max(
+            model.trip_details.end_date |> date_util_shared.to_yyyy_mm_dd,
+          ),
           attribute.name("date"),
           attribute.type_("date"),
           attribute.required(True),
@@ -62,9 +61,9 @@ pub fn trip_place_create_view(model: AppModel, trip_id: String) {
           event.on_input(fn(google_maps_link) {
             events.TripPlaceCreatePage(
               events.TripPlaceCreatePageUserInputCreateTripPlaceRequest(
-                trip_models.CreateTripPlaceRequest(
+                events.TripPlaceCreateForm(
                   ..model.trip_place_create,
-                  google_maps_link: option.Some(google_maps_link),
+                  google_maps_link: google_maps_link,
                 ),
               ),
             )
@@ -73,10 +72,7 @@ pub fn trip_place_create_view(model: AppModel, trip_id: String) {
           attribute.placeholder("https://..."),
           attribute.type_("text"),
           attribute.required(True),
-          attribute.value(case model.trip_place_create.google_maps_link {
-            option.Some(val) -> val
-            _ -> ""
-          }),
+          attribute.value(model.trip_place_create.google_maps_link),
         ]),
         html.span([attribute.class("validity")], []),
       ]),
@@ -119,9 +115,24 @@ pub fn handle_trip_place_create_page_event(
         )
         Error(_) -> #(model, effect.none())
       }
-    events.TripPlaceCreatePageUserClickedSubmit(trip_id) -> #(
-      model,
-      api.send_create_trip_place_request(trip_id, model.trip_place_create),
-    )
+    events.TripPlaceCreatePageUserClickedSubmit(trip_id) -> {
+      let form = model.trip_place_create
+      let date = date_util_shared.from_yyyy_mm_dd(form.date)
+
+      case date {
+        Ok(date) -> #(
+          model,
+          api.send_create_trip_place_request(
+            trip_id,
+            trip_models.CreateTripPlaceRequest(
+              place: form.place,
+              date:,
+              google_maps_link: option.Some(form.google_maps_link),
+            ),
+          ),
+        )
+        _ -> #(model, effect.none())
+      }
+    }
   }
 }

@@ -105,6 +105,10 @@ fn json_with_status(json: Json, status: Int) -> Response {
 pub fn error_to_response(error: AppError) -> Response {
   case error {
     error.DecodeError(e) -> error.json_codec_decode_error(e)
+    error.BodyNotJsonError ->
+      [#("title", json.string("BODY_NOT_JSON"))]
+      |> json.object()
+      |> json_with_status(400)
     error.QueryNotReturningSingleResult(e) ->
       [#("title", json.string("QUERY_NOT_RETURNING_SINGLE_ROW:" <> e))]
       |> json.object()

@@ -1,51 +1,31 @@
 import birl
-import gleam/int
 import gleam/result
-import gleam/string
+import shared/date_util_shared
 import traveller/error.{type AppError}
 
-pub fn from_yyyy_mm_dd(date_str: String) -> Result(#(Int, Int, Int), AppError) {
-  case string.split(date_str, on: "-") {
-    [yyyy, mm, dd] -> {
-      use yyyy <- result.try(
-        int.parse(yyyy)
-        |> result.map_error(fn(_) { error.InvalidDateSpecified }),
-      )
+pub fn from_date_tuple(date: #(Int, Int, Int)) -> birl.Day {
+  let #(year, mon, day) = date
+  birl.Day(year, mon, day)
+}
 
-      use mm <- result.try(
-        int.parse(mm)
-        |> result.map_error(fn(_) { error.InvalidDateSpecified }),
-      )
-
-      use dd <- result.try(
-        int.parse(dd)
-        |> result.map_error(fn(_) { error.InvalidDateSpecified }),
-      )
-
-      Ok(#(yyyy, mm, dd))
-    }
-    _ -> Error(error.InvalidDateSpecified)
-  }
+pub fn from_yyyy_mm_dd(date_str: String) -> Result(birl.Day, AppError) {
+  date_util_shared.from_yyyy_mm_dd(date_str)
+  |> result.map_error(fn(_) { error.InvalidDateSpecified })
 }
 
 pub fn is_date_within(
-  date: String,
-  start from: String,
-  end to: String,
-) -> Result(Bool, AppError) {
-  let now = birl.now()
+  date: birl.Day,
+  start from: birl.Day,
+  end to: birl.Day,
+) -> Bool {
+  is_before(from, date) && is_before(date, to)
+}
 
-  use #(year, month, date) <- result.try(from_yyyy_mm_dd(date))
-  use #(start_year, start_month, start_date) <- result.try(from_yyyy_mm_dd(from))
-  use #(end_year, end_month, end_date) <- result.try(from_yyyy_mm_dd(to))
+pub fn is_before(start from: birl.Day, end to: birl.Day) -> Bool {
+  let now = birl.now() |> birl.set_time_of_day(birl.TimeOfDay(0, 0, 0, 0))
 
-  let date = birl.set_day(now, birl.Day(year, month, date))
-  let start_date =
-    birl.set_day(now, birl.Day(start_year, start_month, start_date))
-  let end_date = birl.set_day(now, birl.Day(end_year, end_month, end_date))
+  let start_date = birl.set_day(now, from)
+  let end_date = birl.set_day(now, to)
 
-  Ok(
-    birl.to_unix(start_date) <= birl.to_unix(date)
-    && birl.to_unix(date) <= birl.to_unix(end_date),
-  )
+  birl.to_unix(start_date) <= birl.to_unix(end_date)
 }

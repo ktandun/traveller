@@ -1,5 +1,5 @@
-import decode
 import gleam/json
+import toy
 
 //
 
@@ -12,13 +12,10 @@ pub fn default_login_request() {
 }
 
 pub fn login_request_decoder() {
-  decode.into({
-    use email <- decode.parameter
-    use password <- decode.parameter
-    LoginRequest(email:, password:)
-  })
-  |> decode.field("email", decode.string)
-  |> decode.field("password", decode.string)
+  use email <- toy.field("email", toy.string |> toy.string_email)
+  use password <- toy.field("password", toy.string |> toy.string_min(8))
+
+  toy.decoded(LoginRequest(email:, password:))
 }
 
 pub fn login_request_encoder(data: LoginRequest) {
@@ -35,13 +32,10 @@ pub type SignupRequest {
 }
 
 pub fn signup_request_decoder() {
-  decode.into({
-    use email <- decode.parameter
-    use password <- decode.parameter
-    SignupRequest(email:, password:)
-  })
-  |> decode.field("email", decode.string)
-  |> decode.field("password", decode.string)
+  use email <- toy.field("email", toy.string |> toy.string_email)
+  use password <- toy.field("password", toy.string |> toy.string_min(8))
+
+  toy.decoded(SignupRequest(email:, password:))
 }
 
 pub fn signup_request_encoder(data: SignupRequest) {

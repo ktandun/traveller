@@ -10,6 +10,7 @@ import lustre/element/html
 import lustre/event
 import modem
 import shared/id
+import shared/date_util_shared
 import shared/trip_models
 
 pub fn trip_update_view(model: AppModel, trip_id: String) {
@@ -27,7 +28,7 @@ pub fn trip_update_view(model: AppModel, trip_id: String) {
           event.on_input(fn(start_date) {
             events.TripUpdatePage(
               events.TripUpdatePageUserInputUpdateTripRequest(
-                trip_models.UpdateTripRequest(..model.trip_update, start_date:),
+                events.TripUpdateForm(..model.trip_update, start_date:),
               ),
             )
           }),
@@ -44,7 +45,7 @@ pub fn trip_update_view(model: AppModel, trip_id: String) {
           event.on_input(fn(end_date) {
             events.TripUpdatePage(
               events.TripUpdatePageUserInputUpdateTripRequest(
-                trip_models.UpdateTripRequest(..model.trip_update, end_date:),
+                events.TripUpdateForm(..model.trip_update, end_date:),
               ),
             )
           }),
@@ -62,7 +63,7 @@ pub fn trip_update_view(model: AppModel, trip_id: String) {
           event.on_input(fn(destination) {
             events.TripUpdatePage(
               events.TripUpdatePageUserInputUpdateTripRequest(
-                trip_models.UpdateTripRequest(..model.trip_update, destination:),
+                events.TripUpdateForm(..model.trip_update, destination:),
               ),
             )
           }),
@@ -98,10 +99,25 @@ pub fn handle_trip_update_page_event(
       AppModel(..model, trip_update: update_trip_request),
       effect.none(),
     )
-    events.TripUpdatePageUserClickedUpdateTrip(trip_id) -> #(
-      model,
-      api.send_trip_update_request(trip_id, model.trip_update),
-    )
+    events.TripUpdatePageUserClickedUpdateTrip(trip_id) -> {
+      let form = model.trip_update
+
+
+      let start_date = date_util_shared.from_yyyy_mm_dd(form.start_date)
+      let end_date = date_util_shared.from_yyyy_mm_dd(form.end_date)
+
+      case start_date, end_date {
+        Ok(start_date), Ok(end_date) -> #(
+          model,
+          api.send_trip_update_request(trip_id, trip_models.UpdateTripRequest(
+            destination: form.destination,
+            start_date:,
+            end_date:,
+          )),
+        )
+        _, _ -> #(model, effect.none())
+      }
+    }
     events.TripUpdatePageApiReturnedResponse(response) -> {
       case response {
         Ok(trip_id) -> {

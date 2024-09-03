@@ -1,6 +1,7 @@
-import decode
 import gleam/json
 import gleam/string
+import shared/custom_decoders
+import toy
 
 pub type UserId
 
@@ -15,11 +16,8 @@ pub opaque type Id(entity) {
 }
 
 pub fn id_decoder() {
-  decode.into({
-    use id <- decode.parameter
-    Id(id)
-  })
-  |> decode.field("id", decode.string)
+  use id <- toy.field("id", custom_decoders.uuid_decoder("id"))
+  toy.decoded(Id(id))
 }
 
 pub fn id_encoder(data: Id(a)) {

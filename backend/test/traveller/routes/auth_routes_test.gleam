@@ -19,7 +19,7 @@ pub fn signup_successful_test() {
     |> auth_models.signup_request_encoder()
 
   let response =
-    testing.post_json("/signup", [], json)
+    testing.post_json("/api/signup", [], json)
     |> router.handle_request(ctx)
 
   let response =
@@ -36,7 +36,7 @@ pub fn signup_invalid_test() {
     |> auth_models.signup_request_encoder()
 
   let response =
-    testing.post_json("/signup", [], json)
+    testing.post_json("/api/signup", [], json)
     |> router.handle_request(ctx)
 
   let response =
@@ -53,7 +53,7 @@ pub fn login_successful_test() {
     |> auth_models.login_request_encoder
 
   let response =
-    testing.post_json("/login", [], json)
+    testing.post_json("/api/login", [], json)
     |> router.handle_request(ctx)
 
   io.debug(testing.string_body(response))
@@ -72,7 +72,7 @@ pub fn login_invalid_login_test() {
     |> auth_models.login_request_encoder
 
   let response =
-    testing.post_json("/login", [], json)
+    testing.post_json("/api/login", [], json)
     |> router.handle_request(ctx)
 
   response.status
@@ -83,7 +83,7 @@ pub fn login_invalid_json_test() {
   use ctx <- test_utils.with_context()
 
   let response =
-    testing.post("/login", [], "{hey}")
+    testing.post("/api/login", [], "{hey}")
     |> test_utils.set_json_header
     |> router.handle_request(ctx)
 

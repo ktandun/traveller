@@ -1,16 +1,19 @@
+import birl
 import database/sql
-import decode
 import gleam/list
 import gleam/option
 import gleam/pgo
 import gleam/result
 import gleam/string
+import shared/date_util_shared
 import shared/id.{type Id, type TripId, type TripPlaceId, type UserId}
 import shared/trip_models.{
   type CreateTripPlaceRequest, type CreateTripRequest, type TripCompanion,
   type UpdateTripRequest,
 }
+import toy
 import traveller/database
+import traveller/date_util
 import traveller/error.{type AppError}
 import traveller/json_util
 import traveller/uuid_util
@@ -41,8 +44,8 @@ pub fn get_user_trips(
       trip_models.UserTrip(
         trip_id: trip_id,
         destination:,
-        start_date:,
-        end_date:,
+        start_date: date_util.from_date_tuple(start_date),
+        end_date: date_util.from_date_tuple(end_date),
         places_count:,
       )
     }),
@@ -53,7 +56,7 @@ pub fn get_user_trip_dates_by_trip_id(
   ctx: Context,
   user_id: Id(UserId),
   trip_id: Id(TripId),
-) -> Result(#(String, String), AppError) {
+) -> Result(#(birl.Day, birl.Day), AppError) {
   let user_id = uuid_util.from_string(id.id_value(user_id))
   let trip_id = uuid_util.from_string(id.id_value(trip_id))
 
@@ -69,7 +72,10 @@ pub fn get_user_trip_dates_by_trip_id(
 
   let sql.GetUserTripDatesByTripIdRow(start_date, end_date) = row
 
-  Ok(#(start_date, end_date))
+  Ok(#(
+    start_date |> date_util.from_date_tuple,
+    end_date |> date_util.from_date_tuple,
+  ))
 }
 
 pub fn create_user_trip(
@@ -86,8 +92,8 @@ pub fn create_user_trip(
       user_id |> uuid.to_string,
       new_trip_id |> uuid.to_string,
       create_trip_request.destination,
-      create_trip_request.start_date,
-      create_trip_request.end_date,
+      create_trip_request.start_date |> date_util_shared.to_yyyy_mm_dd,
+      create_trip_request.end_date |> date_util_shared.to_yyyy_mm_dd,
     )
     |> database.to_app_error(),
   )
@@ -124,19 +130,19 @@ pub fn get_user_trip_places(
 
   use user_trip_places <- result.try(json_util.try_decode(
     places,
-    trip_models.user_trip_place_decoder() |> decode.list(),
+    toy.list(trip_models.user_trip_place_decoder()),
   ))
 
   use user_trip_companions <- result.try(json_util.try_decode(
     companions,
-    trip_models.user_trip_companion_decoder() |> decode.list(),
+    toy.list(trip_models.user_trip_companion_decoder()),
   ))
 
   Ok(trip_models.UserTripPlaces(
     trip_id: trip_id |> uuid.to_string,
     destination:,
-    start_date:,
-    end_date:,
+    start_date: start_date |> date_util.from_date_tuple,
+    end_date: end_date |> date_util.from_date_tuple,
     user_trip_places:,
     user_trip_companions:,
   ))
@@ -194,7 +200,7 @@ pub fn upsert_trip_place(
     trip_place_id,
     trip_id,
     request.place,
-    request.date,
+    request.date |> date_util_shared.to_yyyy_mm_dd,
     request.google_maps_link |> option.unwrap(""),
   )
   |> result.map(fn(_) { Nil })
@@ -246,8 +252,8 @@ pub fn update_user_trip(
       ctx.db,
       trip_id |> id.id_value,
       update_trip_request.destination,
-      update_trip_request.start_date,
-      update_trip_request.end_date,
+      update_trip_request.start_date |> date_util_shared.to_yyyy_mm_dd,
+      update_trip_request.end_date |> date_util_shared.to_yyyy_mm_dd,
     )
     |> database.to_app_error(),
   )
