@@ -31,19 +31,19 @@ pub fn to_human_readable(date: birl.Day) -> String {
   let birl.Day(year, month, day) = date
 
   let month = case int.to_string(month) {
-    "01" -> "Jan"
-    "02" -> "Feb"
-    "03" -> "Mar"
-    "04" -> "Apr"
-    "05" -> "May"
-    "06" -> "Jun"
-    "07" -> "Jul"
-    "08" -> "Aug"
-    "09" -> "Sep"
+    "1" -> "Jan"
+    "2" -> "Feb"
+    "3" -> "Mar"
+    "4" -> "Apr"
+    "5" -> "May"
+    "6" -> "Jun"
+    "7" -> "Jul"
+    "8" -> "Aug"
+    "9" -> "Sep"
     "10" -> "Okt"
     "11" -> "Nov"
     "12" -> "Dec"
-    _ -> ""
+    _ -> " "
   }
 
   int.to_string(day) <> " " <> month <> " " <> int.to_string(year)

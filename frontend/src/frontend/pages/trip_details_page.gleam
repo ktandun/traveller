@@ -9,7 +9,6 @@ import lustre/element
 import lustre/element/html
 import lustre/event
 import modem
-import shared/trip_models
 
 pub fn trip_details_view(model: AppModel) {
   html.div([], [

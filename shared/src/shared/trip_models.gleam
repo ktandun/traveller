@@ -1,9 +1,9 @@
+import shared/date_util_shared
 import birl
 import gleam/json
 import gleam/option.{type Option}
 import gleam/string
 import shared/custom_decoders
-import shared/custom_encoders
 import toy
 
 const default_day = birl.Day(1, 1, 1)
@@ -45,9 +45,9 @@ pub fn user_trip_encoder(data: UserTrip) {
     #("destination", json.string(data.destination)),
     #(
       "start_date",
-      json.string(data.start_date |> custom_encoders.day_to_string),
+      json.string(data.start_date |> date_util_shared.to_yyyy_mm_dd),
     ),
-    #("end_date", json.string(data.end_date |> custom_encoders.day_to_string)),
+    #("end_date", json.string(data.end_date |> date_util_shared.to_yyyy_mm_dd)),
     #("places_count", json.int(data.places_count)),
   ])
 }
@@ -121,7 +121,7 @@ pub fn user_trip_place_encoder(data: UserTripPlace) {
   json.object([
     #("trip_place_id", json.string(data.trip_place_id |> string.lowercase)),
     #("name", json.string(data.name)),
-    #("date", json.string(data.date |> custom_encoders.day_to_string)),
+    #("date", json.string(data.date |> date_util_shared.to_yyyy_mm_dd)),
     #("google_maps_link", json.nullable(data.google_maps_link, of: json.string)),
   ])
 }
@@ -159,9 +159,9 @@ pub fn user_trip_places_encoder(data: UserTripPlaces) {
     #("destination", json.string(data.destination)),
     #(
       "start_date",
-      json.string(data.start_date |> custom_encoders.day_to_string),
+      json.string(data.start_date |> date_util_shared.to_yyyy_mm_dd),
     ),
-    #("end_date", json.string(data.end_date |> custom_encoders.day_to_string)),
+    #("end_date", json.string(data.end_date |> date_util_shared.to_yyyy_mm_dd)),
     #(
       "user_trip_places",
       json.array(from: data.user_trip_places, of: user_trip_place_encoder),
@@ -237,9 +237,9 @@ pub fn create_trip_request_encoder(data: CreateTripRequest) {
     #("destination", json.string(data.destination)),
     #(
       "start_date",
-      json.string(data.start_date |> custom_encoders.day_to_string),
+      json.string(data.start_date |> date_util_shared.to_yyyy_mm_dd),
     ),
-    #("end_date", json.string(data.end_date |> custom_encoders.day_to_string)),
+    #("end_date", json.string(data.end_date |> date_util_shared.to_yyyy_mm_dd)),
   ])
 }
 
@@ -275,7 +275,7 @@ pub fn create_trip_place_request_decoder() {
 pub fn create_trip_place_request_encoder(data: CreateTripPlaceRequest) {
   json.object([
     #("place", json.string(data.place)),
-    #("date", json.string(data.date |> custom_encoders.day_to_string)),
+    #("date", json.string(data.date |> date_util_shared.to_yyyy_mm_dd)),
     #("google_maps_link", json.nullable(data.google_maps_link, of: json.string)),
   ])
 }
@@ -364,9 +364,9 @@ pub fn update_trip_request_encoder(data: UpdateTripRequest) {
     #("destination", json.string(data.destination)),
     #(
       "start_date",
-      json.string(data.start_date |> custom_encoders.day_to_string),
+      json.string(data.start_date |> date_util_shared.to_yyyy_mm_dd),
     ),
-    #("end_date", json.string(data.end_date |> custom_encoders.day_to_string)),
+    #("end_date", json.string(data.end_date |> date_util_shared.to_yyyy_mm_dd)),
   ])
 }
 //

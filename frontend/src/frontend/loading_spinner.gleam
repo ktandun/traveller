@@ -15,3 +15,7 @@ pub fn simple_loading_spinner(app_model: AppModel) {
     False -> html.div([attribute.class("loading-screen-placeholder")], [])
   }
 }
+
+pub fn hide_loading_spinner(model: AppModel) {
+  AppModel(..model, show_loading: False)
+}
