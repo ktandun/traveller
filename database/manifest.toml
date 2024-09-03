@@ -24,7 +24,7 @@ packages = [
   { name = "pg_types", version = "0.4.0", build_tools = ["rebar3"], requirements = [], otp_app = "pg_types", source = "hex", outer_checksum = "B02EFA785CAECECF9702C681C80A9CA12A39F9161A846CE17B01FB20AEEED7EB" },
   { name = "pgo", version = "0.14.0", build_tools = ["rebar3"], requirements = ["backoff", "opentelemetry_api", "pg_types"], otp_app = "pgo", source = "hex", outer_checksum = "71016C22599936E042DC0012EE4589D24C71427D266292F775EBF201D97DF9C9" },
   { name = "simplifile", version = "2.1.0", build_tools = ["gleam"], requirements = ["filepath", "gleam_stdlib"], otp_app = "simplifile", source = "hex", outer_checksum = "BDD04F5D31D6D34E2EDFAEF0B68A6297AEC939888C3BFCE61133DE13857F6DA2" },
-  { name = "squirrel", version = "1.5.0", build_tools = ["gleam"], requirements = ["argv", "decode", "envoy", "eval", "filepath", "glam", "gleam_community_ansi", "gleam_crypto", "gleam_json", "gleam_stdlib", "justin", "mug", "pgo", "simplifile", "term_size", "tom", "youid"], source = "local", path = "../squirrel" },
+  { name = "squirrel", version = "1.6.0", build_tools = ["gleam"], requirements = ["argv", "decode", "envoy", "eval", "filepath", "glam", "gleam_community_ansi", "gleam_crypto", "gleam_json", "gleam_stdlib", "justin", "mug", "pgo", "simplifile", "term_size", "tom", "youid"], otp_app = "squirrel", source = "hex", outer_checksum = "36A24C29265A8C51A0BA87783F695C559BD3A5E648C4AB10AF193CAA593B0A99" },
   { name = "term_size", version = "1.0.1", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "term_size", source = "hex", outer_checksum = "D00BD2BC8FB3EBB7E6AE076F3F1FF2AC9D5ED1805F004D0896C784D06C6645F1" },
   { name = "thoas", version = "1.2.1", build_tools = ["rebar3"], requirements = [], otp_app = "thoas", source = "hex", outer_checksum = "E38697EDFFD6E91BD12CEA41B155115282630075C2A727E7A6B2947F5408B86A" },
   { name = "tom", version = "1.0.1", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "tom", source = "hex", outer_checksum = "9EECB60150E834A07238BD5C7DF1FF07F7D4C5862BB8A773923D1981C7875FB0" },
@@ -36,5 +36,5 @@ decode = { version = ">= 0.2.0 and < 1.0.0" }
 gleam_pgo = { version = ">= 0.13.0 and < 1.0.0" }
 gleam_stdlib = { version = ">= 0.39.0 and < 2.0.0" }
 gleeunit = { version = ">= 1.0.0 and < 2.0.0" }
-squirrel = { path = "../squirrel" }
+squirrel = { version = ">= 1.6.0 and < 2.0.0" }
 youid = { version = ">= 1.2.0 and < 2.0.0" }

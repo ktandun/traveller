@@ -5,7 +5,7 @@ import youid/uuid.{type Uuid}
 /// A row you get from running the `find_user_by_userid` query
 /// defined in `./src/database/sql/find_user_by_userid.sql`.
 ///
-/// > 🐿️ This type definition was generated automatically using v1.5.0 of the
+/// > 🐿️ This type definition was generated automatically using v1.6.0 of the
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type FindUserByUseridRow {
@@ -15,7 +15,7 @@ pub type FindUserByUseridRow {
 /// Runs the `find_user_by_userid` query
 /// defined in `./src/database/sql/find_user_by_userid.sql`.
 ///
-/// > 🐿️ This function was generated automatically using v1.5.0 of
+/// > 🐿️ This function was generated automatically using v1.6.0 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub fn find_user_by_userid(db, arg_1) {
@@ -40,7 +40,7 @@ WHERE
 /// A row you get from running the `find_trip_by_trip_id` query
 /// defined in `./src/database/sql/find_trip_by_trip_id.sql`.
 ///
-/// > 🐿️ This type definition was generated automatically using v1.5.0 of the
+/// > 🐿️ This type definition was generated automatically using v1.6.0 of the
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type FindTripByTripIdRow {
@@ -50,7 +50,7 @@ pub type FindTripByTripIdRow {
 /// Runs the `find_trip_by_trip_id` query
 /// defined in `./src/database/sql/find_trip_by_trip_id.sql`.
 ///
-/// > 🐿️ This function was generated automatically using v1.5.0 of
+/// > 🐿️ This function was generated automatically using v1.6.0 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub fn find_trip_by_trip_id(db, arg_1, arg_2) {
@@ -80,7 +80,7 @@ WHERE
 /// A row you get from running the `check_user_login` query
 /// defined in `./src/database/sql/check_user_login.sql`.
 ///
-/// > 🐿️ This type definition was generated automatically using v1.5.0 of the
+/// > 🐿️ This type definition was generated automatically using v1.6.0 of the
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type CheckUserLoginRow {
@@ -90,7 +90,7 @@ pub type CheckUserLoginRow {
 /// Runs the `check_user_login` query
 /// defined in `./src/database/sql/check_user_login.sql`.
 ///
-/// > 🐿️ This function was generated automatically using v1.5.0 of
+/// > 🐿️ This function was generated automatically using v1.6.0 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub fn check_user_login(db, arg_1, arg_2) {
@@ -113,7 +113,7 @@ pub fn check_user_login(db, arg_1, arg_2) {
 /// A row you get from running the `upsert_trip_companion` query
 /// defined in `./src/database/sql/upsert_trip_companion.sql`.
 ///
-/// > 🐿️ This type definition was generated automatically using v1.5.0 of the
+/// > 🐿️ This type definition was generated automatically using v1.6.0 of the
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type UpsertTripCompanionRow {
@@ -123,7 +123,7 @@ pub type UpsertTripCompanionRow {
 /// Runs the `upsert_trip_companion` query
 /// defined in `./src/database/sql/upsert_trip_companion.sql`.
 ///
-/// > 🐿️ This function was generated automatically using v1.5.0 of
+/// > 🐿️ This function was generated automatically using v1.6.0 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub fn upsert_trip_companion(db, arg_1, arg_2, arg_3, arg_4) {
@@ -157,7 +157,7 @@ pub fn upsert_trip_companion(db, arg_1, arg_2, arg_3, arg_4) {
 /// A row you get from running the `get_user_trip_dates_by_trip_id` query
 /// defined in `./src/database/sql/get_user_trip_dates_by_trip_id.sql`.
 ///
-/// > 🐿️ This type definition was generated automatically using v1.5.0 of the
+/// > 🐿️ This type definition was generated automatically using v1.6.0 of the
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type GetUserTripDatesByTripIdRow {
@@ -170,7 +170,7 @@ pub type GetUserTripDatesByTripIdRow {
 /// Runs the `get_user_trip_dates_by_trip_id` query
 /// defined in `./src/database/sql/get_user_trip_dates_by_trip_id.sql`.
 ///
-/// > 🐿️ This function was generated automatically using v1.5.0 of
+/// > 🐿️ This function was generated automatically using v1.6.0 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub fn get_user_trip_dates_by_trip_id(db, arg_1, arg_2) {
@@ -204,7 +204,7 @@ WHERE
 /// A row you get from running the `delete_trip_companions` query
 /// defined in `./src/database/sql/delete_trip_companions.sql`.
 ///
-/// > 🐿️ This type definition was generated automatically using v1.5.0 of the
+/// > 🐿️ This type definition was generated automatically using v1.6.0 of the
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type DeleteTripCompanionsRow {
@@ -214,7 +214,7 @@ pub type DeleteTripCompanionsRow {
 /// Runs the `delete_trip_companions` query
 /// defined in `./src/database/sql/delete_trip_companions.sql`.
 ///
-/// > 🐿️ This function was generated automatically using v1.5.0 of
+/// > 🐿️ This function was generated automatically using v1.6.0 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub fn delete_trip_companions(db, arg_1) {
@@ -238,7 +238,7 @@ pub fn delete_trip_companions(db, arg_1) {
 /// A row you get from running the `create_user` query
 /// defined in `./src/database/sql/create_user.sql`.
 ///
-/// > 🐿️ This type definition was generated automatically using v1.5.0 of the
+/// > 🐿️ This type definition was generated automatically using v1.6.0 of the
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type CreateUserRow {
@@ -248,7 +248,7 @@ pub type CreateUserRow {
 /// Runs the `create_user` query
 /// defined in `./src/database/sql/create_user.sql`.
 ///
-/// > 🐿️ This function was generated automatically using v1.5.0 of
+/// > 🐿️ This function was generated automatically using v1.6.0 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub fn create_user(db, arg_1, arg_2) {
@@ -272,7 +272,7 @@ RETURNING
 /// A row you get from running the `get_user_trip_places` query
 /// defined in `./src/database/sql/get_user_trip_places.sql`.
 ///
-/// > 🐿️ This type definition was generated automatically using v1.5.0 of the
+/// > 🐿️ This type definition was generated automatically using v1.6.0 of the
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type GetUserTripPlacesRow {
@@ -289,7 +289,7 @@ pub type GetUserTripPlacesRow {
 /// Runs the `get_user_trip_places` query
 /// defined in `./src/database/sql/get_user_trip_places.sql`.
 ///
-/// > 🐿️ This function was generated automatically using v1.5.0 of
+/// > 🐿️ This function was generated automatically using v1.6.0 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub fn get_user_trip_places(db, arg_1, arg_2) {
@@ -342,7 +342,7 @@ WHERE
 /// A row you get from running the `create_trip` query
 /// defined in `./src/database/sql/create_trip.sql`.
 ///
-/// > 🐿️ This type definition was generated automatically using v1.5.0 of the
+/// > 🐿️ This type definition was generated automatically using v1.6.0 of the
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type CreateTripRow {
@@ -352,7 +352,7 @@ pub type CreateTripRow {
 /// Runs the `create_trip` query
 /// defined in `./src/database/sql/create_trip.sql`.
 ///
-/// > 🐿️ This function was generated automatically using v1.5.0 of
+/// > 🐿️ This function was generated automatically using v1.6.0 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub fn create_trip(db, arg_1, arg_2, arg_3, arg_4, arg_5) {
@@ -384,7 +384,7 @@ pub fn create_trip(db, arg_1, arg_2, arg_3, arg_4, arg_5) {
 /// A row you get from running the `upsert_trip_place` query
 /// defined in `./src/database/sql/upsert_trip_place.sql`.
 ///
-/// > 🐿️ This type definition was generated automatically using v1.5.0 of the
+/// > 🐿️ This type definition was generated automatically using v1.6.0 of the
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type UpsertTripPlaceRow {
@@ -394,7 +394,7 @@ pub type UpsertTripPlaceRow {
 /// Runs the `upsert_trip_place` query
 /// defined in `./src/database/sql/upsert_trip_place.sql`.
 ///
-/// > 🐿️ This function was generated automatically using v1.5.0 of
+/// > 🐿️ This function was generated automatically using v1.6.0 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub fn upsert_trip_place(db, arg_1, arg_2, arg_3, arg_4, arg_5) {
@@ -436,7 +436,7 @@ pub fn upsert_trip_place(db, arg_1, arg_2, arg_3, arg_4, arg_5) {
 /// A row you get from running the `update_trip` query
 /// defined in `./src/database/sql/update_trip.sql`.
 ///
-/// > 🐿️ This type definition was generated automatically using v1.5.0 of the
+/// > 🐿️ This type definition was generated automatically using v1.6.0 of the
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type UpdateTripRow {
@@ -446,7 +446,7 @@ pub type UpdateTripRow {
 /// Runs the `update_trip` query
 /// defined in `./src/database/sql/update_trip.sql`.
 ///
-/// > 🐿️ This function was generated automatically using v1.5.0 of
+/// > 🐿️ This function was generated automatically using v1.6.0 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub fn update_trip(db, arg_1, arg_2, arg_3, arg_4) {
@@ -480,7 +480,7 @@ pub fn update_trip(db, arg_1, arg_2, arg_3, arg_4) {
 /// Runs the `delete_trip_place` query
 /// defined in `./src/database/sql/delete_trip_place.sql`.
 ///
-/// > 🐿️ This function was generated automatically using v1.5.0 of
+/// > 🐿️ This function was generated automatically using v1.6.0 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub fn delete_trip_place(db, arg_1, arg_2, arg_3) {
@@ -513,7 +513,7 @@ WHERE trip_id IN (
 /// A row you get from running the `get_user_trips` query
 /// defined in `./src/database/sql/get_user_trips.sql`.
 ///
-/// > 🐿️ This type definition was generated automatically using v1.5.0 of the
+/// > 🐿️ This type definition was generated automatically using v1.6.0 of the
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type GetUserTripsRow {
@@ -529,7 +529,7 @@ pub type GetUserTripsRow {
 /// Runs the `get_user_trips` query
 /// defined in `./src/database/sql/get_user_trips.sql`.
 ///
-/// > 🐿️ This function was generated automatically using v1.5.0 of
+/// > 🐿️ This function was generated automatically using v1.6.0 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub fn get_user_trips(db, arg_1) {
@@ -587,7 +587,7 @@ ORDER BY
 /// A row you get from running the `find_user_by_email` query
 /// defined in `./src/database/sql/find_user_by_email.sql`.
 ///
-/// > 🐿️ This type definition was generated automatically using v1.5.0 of the
+/// > 🐿️ This type definition was generated automatically using v1.6.0 of the
 /// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub type FindUserByEmailRow {
@@ -597,7 +597,7 @@ pub type FindUserByEmailRow {
 /// Runs the `find_user_by_email` query
 /// defined in `./src/database/sql/find_user_by_email.sql`.
 ///
-/// > 🐿️ This function was generated automatically using v1.5.0 of
+/// > 🐿️ This function was generated automatically using v1.6.0 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
 pub fn find_user_by_email(db, arg_1) {
