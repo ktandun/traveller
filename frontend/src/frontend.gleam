@@ -69,7 +69,6 @@ fn path_to_route(path_segments: List(String)) -> Route {
 
 // Root handler for all the events in the app
 pub fn update(model: AppModel, msg: AppEvent) -> #(AppModel, Effect(AppEvent)) {
-  io.debug(msg)
   case msg {
     // Handle page-specific on-load events
     events.OnRouteChange(route) -> #(AppModel(..model, route:), case route {
@@ -117,6 +116,7 @@ pub fn view(model: AppModel) -> Element(AppEvent) {
       model.toast.visible,
       model.toast.header,
       model.toast.content,
+      model.toast.status,
     ),
     // Global loading spinner
     loading_spinner.simple_loading_spinner(model),

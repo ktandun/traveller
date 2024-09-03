@@ -1,10 +1,10 @@
-import gleam/io
 import env
 import frontend/decode_util
 import frontend/events.{type AppEvent}
 import gleam/dynamic.{type Decoder}
 import gleam/http
 import gleam/http/request
+import gleam/io
 import gleam/json.{type Json}
 import gleam/option.{type Option}
 import gleam/result
@@ -81,6 +81,13 @@ pub fn with_to_event(
   to_msg: fn(Result(decoder, HttpError)) -> app_event,
 ) {
   ApiRequest(..api_request, to_msg:)
+}
+
+pub fn with_ignore_response_to_event(
+  api_request: ApiRequest(IncompleteRequest, decoder, app_event),
+  to_nil_msg: fn(Result(Nil, HttpError)) -> app_event,
+) {
+  ApiRequest(..api_request, to_nil_msg:)
 }
 
 pub fn build(
@@ -165,7 +172,7 @@ pub fn send_update_trip_companions_request(
   |> with_json_body(trip_models.update_trip_companions_request_encoder(
     update_request,
   ))
-  |> with_to_event(fn(decode_result) {
+  |> with_ignore_response_to_event(fn(decode_result) {
     events.TripCompanionsPage(events.TripCompanionsPageApiReturnedResponse(
       trip_id,
       decode_result,
@@ -212,9 +219,7 @@ pub fn send_create_trip_request(create_request: trip_models.CreateTripRequest) {
   new_request()
   |> with_url("/api/trips/")
   |> with_method(Post)
-  |> with_json_body(trip_models.create_trip_request_encoder(
-    create_request,
-  ))
+  |> with_json_body(trip_models.create_trip_request_encoder(create_request))
   |> with_response_decoder(fn(response) {
     response
     |> toy.decode(id.id_decoder())

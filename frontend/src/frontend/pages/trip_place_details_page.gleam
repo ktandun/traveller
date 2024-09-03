@@ -15,6 +15,7 @@ pub fn trip_place_details_view(
   trip_id: String,
   trip_place_id: String,
 ) {
+  todo
 }
 
 pub fn handle_trip_place_details_page_event(

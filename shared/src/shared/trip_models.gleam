@@ -1,9 +1,9 @@
-import shared/date_util_shared
 import birl
 import gleam/json
 import gleam/option.{type Option}
 import gleam/string
 import shared/custom_decoders
+import shared/date_util_shared
 import toy
 
 const default_day = birl.Day(1, 1, 1)
@@ -325,7 +325,10 @@ pub fn trip_companion_decoder() {
     toy.string |> toy.string_nonempty,
   )
   use name <- toy.field("name", toy.string |> toy.string_nonempty)
-  use email <- toy.field("email", toy.string |> toy.string_nonempty)
+  use email <- toy.field(
+    "email",
+    toy.string |> toy.string_email |> toy.string_nonempty,
+  )
 
   toy.decoded(TripCompanion(trip_companion_id:, name:, email:))
 }

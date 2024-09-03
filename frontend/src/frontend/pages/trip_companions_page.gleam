@@ -3,6 +3,8 @@ import frontend/events.{type AppModel, AppModel}
 import frontend/toast
 import frontend/uuid_util
 import frontend/web
+import gleam/http/response
+import gleam/io
 import gleam/list
 import lustre/attribute
 import lustre/effect
@@ -57,6 +59,58 @@ pub fn trip_companions_view(model: AppModel, trip_id: String) {
           }),
         ),
       ]),
+    ]),
+  ])
+}
+
+fn companion_input(companion: trip_models.UserTripCompanion) {
+  html.tr([], [
+    html.td([], [
+      html.input([
+        event.on_input(fn(name) {
+          events.TripCompanionsPage(
+            events.TripCompanionsPageUserUpdatedCompanion(
+              trip_models.UserTripCompanion(..companion, name:),
+            ),
+          )
+        }),
+        attribute.name("companion-name-" <> companion.trip_companion_id),
+        attribute.type_("text"),
+        attribute.required(True),
+        attribute.value(companion.name),
+      ]),
+      html.span([attribute.class("validity")], []),
+    ]),
+    html.td([], [
+      html.input([
+        event.on_input(fn(email) {
+          events.TripCompanionsPage(
+            events.TripCompanionsPageUserUpdatedCompanion(
+              trip_models.UserTripCompanion(..companion, email:),
+            ),
+          )
+        }),
+        attribute.name("companion-email-" <> companion.trip_companion_id),
+        attribute.type_("email"),
+        attribute.required(True),
+        attribute.value(companion.email),
+      ]),
+      html.span([attribute.class("validity")], []),
+    ]),
+    html.td([], [
+      html.button(
+        [
+          attribute.type_("button"),
+          event.on_click(
+            events.TripCompanionsPage(
+              events.TripCompanionsPageUserClickedRemoveCompanion(
+                companion.trip_companion_id,
+              ),
+            ),
+          ),
+        ],
+        [element.text("Remove")],
+      ),
     ]),
   ])
 }
@@ -146,56 +200,4 @@ pub fn handle_trip_companions_page_event(
       )
     }
   }
-}
-
-fn companion_input(companion: trip_models.UserTripCompanion) {
-  html.tr([], [
-    html.td([], [
-      html.input([
-        event.on_input(fn(name) {
-          events.TripCompanionsPage(
-            events.TripCompanionsPageUserUpdatedCompanion(
-              trip_models.UserTripCompanion(..companion, name:),
-            ),
-          )
-        }),
-        attribute.name("companion-name-" <> companion.trip_companion_id),
-        attribute.type_("text"),
-        attribute.required(True),
-        attribute.value(companion.name),
-      ]),
-      html.span([attribute.class("validity")], []),
-    ]),
-    html.td([], [
-      html.input([
-        event.on_input(fn(email) {
-          events.TripCompanionsPage(
-            events.TripCompanionsPageUserUpdatedCompanion(
-              trip_models.UserTripCompanion(..companion, email:),
-            ),
-          )
-        }),
-        attribute.name("companion-email-" <> companion.trip_companion_id),
-        attribute.type_("email"),
-        attribute.required(True),
-        attribute.value(companion.email),
-      ]),
-      html.span([attribute.class("validity")], []),
-    ]),
-    html.td([], [
-      html.button(
-        [
-          attribute.type_("button"),
-          event.on_click(
-            events.TripCompanionsPage(
-              events.TripCompanionsPageUserClickedRemoveCompanion(
-                companion.trip_companion_id,
-              ),
-            ),
-          ),
-        ],
-        [element.text("Remove")],
-      ),
-    ]),
-  ])
 }

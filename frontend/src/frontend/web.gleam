@@ -2,6 +2,7 @@ import frontend/events.{type AppEvent, type AppModel}
 import frontend/loading_spinner
 import frontend/routes
 import frontend/toast
+import gleam/io
 import gleam/option
 import lustre/effect.{type Effect}
 import lustre_http.{type HttpError}
@@ -50,6 +51,9 @@ pub fn error_to_app_event(error: HttpError, model: AppModel) {
       model,
       modem.push("/500", option.None, option.None),
     )
-    _ -> #(model, effect.none())
+    e -> {
+      io.debug(e)
+      #(model, effect.none())
+    }
   }
 }

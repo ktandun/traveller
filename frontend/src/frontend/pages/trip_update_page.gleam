@@ -9,8 +9,8 @@ import lustre/element
 import lustre/element/html
 import lustre/event
 import modem
-import shared/id
 import shared/date_util_shared
+import shared/id
 import shared/trip_models
 
 pub fn trip_update_view(model: AppModel, trip_id: String) {
@@ -102,18 +102,20 @@ pub fn handle_trip_update_page_event(
     events.TripUpdatePageUserClickedUpdateTrip(trip_id) -> {
       let form = model.trip_update
 
-
       let start_date = date_util_shared.from_yyyy_mm_dd(form.start_date)
       let end_date = date_util_shared.from_yyyy_mm_dd(form.end_date)
 
       case start_date, end_date {
         Ok(start_date), Ok(end_date) -> #(
           model,
-          api.send_trip_update_request(trip_id, trip_models.UpdateTripRequest(
-            destination: form.destination,
-            start_date:,
-            end_date:,
-          )),
+          api.send_trip_update_request(
+            trip_id,
+            trip_models.UpdateTripRequest(
+              destination: form.destination,
+              start_date:,
+              end_date:,
+            ),
+          ),
         )
         _, _ -> #(model, effect.none())
       }

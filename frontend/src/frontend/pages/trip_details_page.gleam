@@ -1,4 +1,3 @@
-import shared/date_util_shared
 import frontend/events.{type AppModel, type TripDetailsPageEvent, AppModel}
 import frontend/web
 import gleam/list
@@ -9,6 +8,7 @@ import lustre/element
 import lustre/element/html
 import lustre/event
 import modem
+import shared/date_util_shared
 
 pub fn trip_details_view(model: AppModel) {
   html.div([], [
@@ -116,8 +116,10 @@ pub fn handle_trip_details_page_event(
             ..model,
             trip_details: user_trip_places,
             trip_update: events.TripUpdateForm(
-              start_date: user_trip_places.start_date |> date_util_shared.to_yyyy_mm_dd,
-              end_date: user_trip_places.end_date |> date_util_shared.to_yyyy_mm_dd,
+              start_date: user_trip_places.start_date
+                |> date_util_shared.to_yyyy_mm_dd,
+              end_date: user_trip_places.end_date
+                |> date_util_shared.to_yyyy_mm_dd,
               destination: user_trip_places.destination,
             ),
           ),

@@ -41,8 +41,7 @@ pub fn uuid_decoder(field_name: String) {
 
           case regex.check(with: re, content: val) {
             True -> Ok(val)
-            False ->
-              Error(Nil)
+            False -> Error(Nil)
           }
         }
         |> result.replace_error([toy.ToyError(toy.InvalidType("uuid", val), [])])

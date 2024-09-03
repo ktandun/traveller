@@ -1,8 +1,8 @@
 import gleam/dynamic.{type DecodeErrors}
 import gleam/io
 import gleam/json
-import toy.{type ToyError}
 import gleam/pgo.{type QueryError}
+import toy.{type ToyError}
 import wisp
 
 pub type AppError {

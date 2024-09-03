@@ -67,13 +67,18 @@ pub fn set_default_trip_update(model: AppModel) {
 }
 
 pub type Toast {
-  Toast(visible: Bool, header: String, content: String)
+  Toast(visible: Bool, header: String, content: String, status: ToastStatus)
+}
+
+pub type ToastStatus {
+  Success
+  Failed
 }
 
 pub fn default_app_model() {
   AppModel(
     route: routes.Login,
-    toast: Toast(visible: False, header: "", content: ""),
+    toast: Toast(visible: False, header: "", content: "", status: Success),
     show_loading: False,
     api_base_url: env.api_base_url,
     login_request: auth_models.default_login_request(),

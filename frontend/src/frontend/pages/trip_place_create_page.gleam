@@ -1,6 +1,7 @@
 import frontend/api
 import frontend/events.{type AppModel, type TripPlaceCreatePageEvent, AppModel}
 import frontend/toast
+import frontend/web
 import gleam/option
 import lustre/attribute
 import lustre/effect
@@ -113,7 +114,7 @@ pub fn handle_trip_place_create_page_event(
             modem.push("/trips/" <> trip_id, option.None, option.None),
           ]),
         )
-        Error(_) -> #(model, effect.none())
+        Error(e) -> web.error_to_app_event(e, model)
       }
     events.TripPlaceCreatePageUserClickedSubmit(trip_id) -> {
       let form = model.trip_place_create

@@ -123,7 +123,6 @@
       top: 30px;
       right: 30px;
       background-color: var(--bg);
-      border: 2px solid var(--accent);
       border-radius: var(--standard-border-radius);
 
       .toast-header {
@@ -137,6 +136,13 @@
     .toast.show {
       visibility: visible;
       animation: fadein 0.5s, fadeout 0.5s 2.5s;
+    }
+
+    .toast.success {
+      border: 2px solid green;
+    }
+    .toast.failed {
+      border: 2px solid red;
     }
 
     @keyframes fadein {

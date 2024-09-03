@@ -1,6 +1,6 @@
-import gleam/dynamic.{DecodeError, type DecodeError}
-import gleam/result
+import gleam/dynamic.{type DecodeError, DecodeError}
 import gleam/list
+import gleam/result
 import toy.{type ToyError}
 
 pub fn map_toy_error_to_decode_errors(
