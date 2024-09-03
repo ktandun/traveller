@@ -214,6 +214,24 @@ END
 $f$
 LANGUAGE PLPGSQL;
 
+CREATE OR REPLACE FUNCTION update_trip (trip_id text, destination text, start_date text, end_date text)
+    RETURNS text
+    AS $f$
+BEGIN
+    UPDATE
+        trips
+    SET
+        destination = update_trip.destination,
+        start_date = update_trip.start_date::date,
+        end_date = update_trip.end_date::date
+    WHERE
+        trips.trip_id = update_trip.trip_id::uuid;
+    --
+    RETURN update_trip.trip_id;
+END
+$f$
+LANGUAGE PLPGSQL;
+
 SELECT
     create_user (user_id => 'ab995595-008e-4ab5-94bb-7845f5d48626', email => 'test@example.com', PASSWORD => crypt('password', gen_salt('bf', 8)));
 

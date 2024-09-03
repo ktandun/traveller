@@ -21,7 +21,15 @@ build:
     cd frontend && gleam build
 
 buildprod:
-    docker compose up --build
+    docker compose down
+    docker compose build
+    docker compose up --no-start
+    docker compose start traveller-postgres
+    sleep 10
+    cd backend && dbmate -e PRODUCTION_DATABASE_URL drop
+    cd backend && dbmate -e PRODUCTION_DATABASE_URL up
+    docker compose up
+    kill -9 $(pgrep autossh) || autossh -f -N -M 0 -R localhost:8079:localhost:8079 ci
 
 db:
     cd backend && pkill psql; dbmate drop && dbmate up

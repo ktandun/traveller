@@ -1,5 +1,6 @@
 import database/sql
 import gleam/dynamic
+import gleam/http/response
 import gleam/int
 import gleam/json.{type DecodeError, type Json}
 import gleam/pgo.{
@@ -9,6 +10,7 @@ import gleam/pgo.{
 import gleam/result
 import shared/constants
 import shared/id.{type Id, type UserId}
+import simplifile
 import traveller/error.{type AppError, JsonDecodeError}
 import wisp.{type Request, type Response}
 import youid/uuid.{type Uuid}
@@ -37,6 +39,16 @@ pub fn middleware(
   use <- wisp.serve_static(req, under: "/", from: ctx.static_directory)
 
   handle_request(req)
+}
+
+pub fn fallback_to_index_html(ctx: Context) {
+  case simplifile.is_file(ctx.static_directory <> "/index.html") {
+    Ok(True) ->
+      response.new(200)
+      |> response.set_header("content-type", "text/html; charset=utf-8")
+      |> response.set_body(wisp.File(ctx.static_directory <> "/index.html"))
+    _ -> wisp.not_found()
+  }
 }
 
 pub fn try_or(

@@ -415,5 +415,4 @@ ALTER TABLE ONLY public.user_trips
 
 INSERT INTO public.schema_migrations (version) VALUES
     ('20240815005645'),
-    ('20240824214726'),
-    ('20240830102525');
+    ('20240824214726');

@@ -2,7 +2,7 @@ import gleam/http
 import gleam/json
 import shared/auth_models
 import shared/constants
-import shared/id.{type Id, type TripId, type UserId}
+import shared/id.{type Id, type UserId}
 import shared/trip_models
 import traveller/json_util
 import traveller/routes/auth_routes
@@ -72,7 +72,9 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
 
     ["api", ..] -> wisp.not_found()
 
-    _ -> wisp.redirect(to: "/index.html")
+    // In production build the index.html should be served by frontend 
+    // when user goes to URL that does not start with /api/
+    _ -> web.fallback_to_index_html(ctx)
   }
 }
 
