@@ -203,7 +203,6 @@ pub fn send_get_user_trips_request() {
   |> with_url("/api/trips/")
   |> with_method(Get)
   |> with_response_decoder(fn(response) {
-    io.debug(response)
     response
     |> toy.decode(trip_models.user_trips_decoder())
     |> decode_util.map_toy_error_to_decode_errors()

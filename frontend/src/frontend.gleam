@@ -53,7 +53,7 @@ fn on_url_change(uri: Uri) -> AppEvent {
 // Defines all the routes in this app
 fn path_to_route(path_segments: List(String)) -> Route {
   case path_segments {
-    ["index.html"] -> routes.TripsDashboard
+    [] -> routes.TripsDashboard
     ["login"] -> routes.Login
     ["dashboard"] -> routes.TripsDashboard
     ["trips", "create"] -> routes.TripCreate

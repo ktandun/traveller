@@ -1,5 +1,4 @@
 import gleam/dynamic.{type DecodeErrors}
-import gleam/io
 import gleam/json
 import gleam/pgo.{type QueryError}
 import toy.{type ToyError}
@@ -21,8 +20,6 @@ pub type AppError {
 }
 
 pub fn json_codec_decode_error(e) {
-  io.debug(e)
-
   let response =
     [#("title", json.string("JSON_CODEC_DECODE_ERROR"))]
     |> json.object()

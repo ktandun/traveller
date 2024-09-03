@@ -56,8 +56,6 @@ pub fn login_successful_test() {
     testing.post_json("/api/login", [], json)
     |> router.handle_request(ctx)
 
-  io.debug(testing.string_body(response))
-
   let response =
     json_util.try_decode(testing.string_body(response), id.id_decoder())
 
