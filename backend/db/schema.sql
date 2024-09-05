@@ -10,6 +10,13 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+-- *not* creating schema, since initdb creates it
+
+
+--
 -- Name: pgcrypto; Type: EXTENSION; Schema: -; Owner: -
 --
 
@@ -40,6 +47,36 @@ BEGIN
             u.email = check_user_login.email
             AND u.password = CRYPT(check_user_login.PASSWORD, u.password)
         LIMIT 1);
+END
+$$;
+
+
+--
+-- Name: create_place_activity(text, text, text, text, text, text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.create_place_activity(place_activity_id text, trip_place_id text, name text, information_url text, start_time text, end_time text, entry_fee text) RETURNS text
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    --place_activity_id uuid PRIMARY KEY,
+    --trip_place_id uuid REFERENCES trip_places (trip_place_id) NOT NULL,
+    --name text NOT NULL,
+    --information_url text,
+    --start_time time(0) without time zone,
+    --end_time time(0) without time zone,
+    --entry_fee numeric(18, 8)
+    INSERT INTO place_activities (place_activity_id, trip_place_id, name, information_url, start_time, end_time, entry_fee)
+    SELECT
+        create_place_activity.place_activity_id::uuid,
+        create_place_activity.trip_place_id::uuid,
+        create_place_activity.name,
+        create_place_activity.information_url,
+        create_place_activity.start_time::time,
+        create_place_activity.end_time::time,
+        create_place_activity.entry_fee::numeric;
+    --
+    RETURN create_place_activity.place_activity_id;
 END
 $$;
 
@@ -94,10 +131,33 @@ $$;
 
 
 --
+-- Name: place_activities_view(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.place_activities_view() RETURNS TABLE(place_activity_id uuid, trip_place_id uuid, name text, information_url text, start_time time without time zone, end_time time without time zone, entry_free numeric)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        pa.place_activity_id,
+        pa.trip_place_id,
+        pa.name,
+        pa.information_url,
+        pa.start_time,
+        pa.end_time,
+        pa.entry_free
+    FROM
+        place_activities pa;
+END;
+$$;
+
+
+--
 -- Name: trips_view(); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.trips_view() RETURNS TABLE(user_id uuid, trip_id uuid, destination character varying, start_date date, end_date date, places json, companions json)
+CREATE FUNCTION public.trips_view() RETURNS TABLE(user_id uuid, trip_id uuid, destination text, start_date date, end_date date, places json, companions json)
     LANGUAGE plpgsql
     AS $$
 BEGIN
@@ -249,6 +309,21 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+-- Name: place_activities; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.place_activities (
+    place_activity_id uuid NOT NULL,
+    trip_place_id uuid NOT NULL,
+    name text NOT NULL,
+    information_url text,
+    start_time time(0) without time zone,
+    end_time time(0) without time zone,
+    entry_fee numeric(18,2)
+);
+
+
+--
 -- Name: schema_migrations; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -264,8 +339,8 @@ CREATE TABLE public.schema_migrations (
 CREATE TABLE public.trip_companions (
     trip_companion_id uuid NOT NULL,
     trip_id uuid NOT NULL,
-    name character varying(255) NOT NULL,
-    email character varying(255) NOT NULL
+    name text NOT NULL,
+    email text NOT NULL
 );
 
 
@@ -276,7 +351,7 @@ CREATE TABLE public.trip_companions (
 CREATE TABLE public.trip_places (
     trip_place_id uuid NOT NULL,
     trip_id uuid NOT NULL,
-    name character varying(255) NOT NULL,
+    name text NOT NULL,
     date date NOT NULL,
     google_maps_link text
 );
@@ -288,7 +363,7 @@ CREATE TABLE public.trip_places (
 
 CREATE TABLE public.trips (
     trip_id uuid NOT NULL,
-    destination character varying(255) NOT NULL,
+    destination text NOT NULL,
     start_date date NOT NULL,
     end_date date NOT NULL
 );
@@ -311,9 +386,17 @@ CREATE TABLE public.user_trips (
 CREATE TABLE public.users (
     user_id uuid NOT NULL,
     created_utc timestamp without time zone DEFAULT timezone('utc'::text, now()),
-    email character varying(255) NOT NULL,
-    password character varying(255) NOT NULL
+    email text NOT NULL,
+    password text NOT NULL
 );
+
+
+--
+-- Name: place_activities place_activities_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.place_activities
+    ADD CONSTRAINT place_activities_pkey PRIMARY KEY (place_activity_id);
 
 
 --
@@ -370,6 +453,14 @@ ALTER TABLE ONLY public.users
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (user_id);
+
+
+--
+-- Name: place_activities place_activities_trip_place_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.place_activities
+    ADD CONSTRAINT place_activities_trip_place_id_fkey FOREIGN KEY (trip_place_id) REFERENCES public.trip_places(trip_place_id);
 
 
 --
