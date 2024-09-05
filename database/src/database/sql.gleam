@@ -464,6 +464,46 @@ pub fn update_trip(db, arg_1, arg_2, arg_3, arg_4) {
   )
 }
 
+/// A row you get from running the `get_place_activities` query
+/// defined in `./src/database/sql/get_place_activities.sql`.
+///
+/// > 🐿️ This type definition was generated automatically using v1.6.0 of the
+/// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub type GetPlaceActivitiesRow {
+  GetPlaceActivitiesRow(json_build_object: String)
+}
+
+/// Runs the `get_place_activities` query
+/// defined in `./src/database/sql/get_place_activities.sql`.
+///
+/// > 🐿️ This function was generated automatically using v1.6.0 of
+/// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub fn get_place_activities(db, arg_1, arg_2) {
+  let decoder =
+    decode.into({
+      use json_build_object <- decode.parameter
+      GetPlaceActivitiesRow(json_build_object: json_build_object)
+    })
+    |> decode.field(0, decode.string)
+
+  "SELECT
+    json_build_object('trip_id', trip_id, 'trip_place_id', trip_place_id, 'place_activities', place_activities)
+FROM
+    place_activities_view ()
+WHERE
+    trip_id = $1
+    AND trip_place_id = $2;
+
+"
+  |> pgo.execute(
+    db,
+    [pgo.text(uuid.to_string(arg_1)), pgo.text(uuid.to_string(arg_2))],
+    decode.from(decoder, _),
+  )
+}
+
 /// Runs the `delete_trip_place` query
 /// defined in `./src/database/sql/delete_trip_place.sql`.
 ///

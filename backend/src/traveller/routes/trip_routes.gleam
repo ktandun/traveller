@@ -4,7 +4,7 @@ import gleam/result
 import gleam/string
 import shared/id.{type Id, type TripId, type TripPlaceId, type UserId}
 import shared/trip_models.{
-  type CreateTripPlaceRequest, type CreateTripRequest,
+  type CreateTripPlaceRequest, type CreateTripRequest, type PlaceActivities,
   type UpdateTripCompanionsRequest, type UpdateTripRequest, type UserTrips,
 }
 import traveller/database/trips_db
@@ -147,4 +147,22 @@ pub fn handle_update_trip(
   ))
 
   Ok(trip_id)
+}
+
+// Update trip details
+pub fn handle_get_place_activities(
+  ctx: Context,
+  user_id: Id(UserId),
+  trip_id: Id(TripId),
+  trip_place_id: Id(TripPlaceId),
+) -> Result(PlaceActivities, AppError) {
+  use _ <- result.try(trips_db.ensure_trip_id_exists(ctx, user_id, trip_id))
+
+  use place_activities <- result.try(trips_db.get_place_activities(
+    ctx,
+    trip_id,
+    trip_place_id,
+  ))
+
+  Ok(place_activities)
 }

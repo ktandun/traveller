@@ -1,4 +1,5 @@
 import birl
+import gleam/io
 import gleam/list
 import gleeunit/should
 import shared/id
@@ -114,4 +115,42 @@ pub fn get_user_trip_places_with_invalid_trip_id_test() {
     response.status
     |> should.equal(400)
   })
+}
+
+pub fn get_place_activities_test() {
+  use ctx <- test_utils.with_context()
+
+  let response =
+    testing.get(
+      "/api/trips/"
+        <> test_utils.testing_trip_id
+        <> "/places/"
+        <> test_utils.testing_trip_place_id
+        <> "/activities",
+      [],
+    )
+    |> test_utils.set_auth_cookie
+    |> router.handle_request(ctx)
+
+  response.status
+  |> should.equal(200)
+}
+
+pub fn get_place_activities_no_results_test() {
+  use ctx <- test_utils.with_context()
+
+  let response =
+    testing.get(
+      "/api/trips/"
+        <> test_utils.testing_trip_id
+        <> "/places/"
+        <> "65916ea8-c637-4921-89a0-97d3661ce782"
+        <> "/activities",
+      [],
+    )
+    |> test_utils.set_auth_cookie
+    |> router.handle_request(ctx)
+
+  response.status
+  |> should.equal(200)
 }

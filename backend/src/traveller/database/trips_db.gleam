@@ -1,5 +1,6 @@
 import birl
 import database/sql
+import gleam/io
 import gleam/list
 import gleam/option
 import gleam/pgo
@@ -8,8 +9,8 @@ import gleam/string
 import shared/date_util_shared
 import shared/id.{type Id, type TripId, type TripPlaceId, type UserId}
 import shared/trip_models.{
-  type CreateTripPlaceRequest, type CreateTripRequest, type TripCompanion,
-  type UpdateTripRequest,
+  type CreateTripPlaceRequest, type CreateTripRequest, type PlaceActivities,
+  type TripCompanion, type UpdateTripRequest,
 }
 import toy
 import traveller/database
@@ -260,4 +261,29 @@ pub fn update_user_trip(
 
   trip_id
   |> Ok
+}
+
+pub fn get_place_activities(
+  ctx: Context,
+  trip_id: Id(TripId),
+  trip_place_id: Id(TripPlaceId),
+) -> Result(PlaceActivities, AppError) {
+  let trip_id = uuid_util.from_string(id.id_value(trip_id))
+  let trip_place_id = uuid_util.from_string(id.id_value(trip_place_id))
+
+  use query_result <- result.try(
+    sql.get_place_activities(ctx.db, trip_id, trip_place_id)
+    |> database.to_app_error(),
+  )
+
+  use row <- database.require_single_row(query_result, "get_place_activities")
+
+  let sql.GetPlaceActivitiesRow(row) = row
+
+  use place_activities <- result.try(json_util.try_decode(
+    row,
+    trip_models.place_activities_decoder(),
+  ))
+
+  Ok(place_activities)
 }

@@ -127,21 +127,26 @@ $$;
 -- Name: place_activities_view(); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.place_activities_view() RETURNS TABLE(place_activity_id uuid, trip_place_id uuid, name text, information_url text, start_time time without time zone, end_time time without time zone, entry_free numeric)
+CREATE FUNCTION public.place_activities_view() RETURNS TABLE(trip_id uuid, trip_place_id uuid, place_activities json)
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    RETURN QUERY
+    RETURN QUERY WITH activities AS (
+        SELECT
+            pa.trip_place_id,
+            json_agg(json_build_object('place_activity_id', pa.place_activity_id, 'name', pa.name, 'information_url', pa.information_url, 'start_time', pa.start_time, 'end_time', pa.end_time, 'entry_fee', pa.entry_fee)) AS activities
+        FROM
+            place_activities pa
+        GROUP BY
+            pa.trip_place_id
+)
     SELECT
-        pa.place_activity_id,
-        pa.trip_place_id,
-        pa.name,
-        pa.information_url,
-        pa.start_time,
-        pa.end_time,
-        pa.entry_free
-    FROM
-        place_activities pa;
+        tp.trip_id,
+        tp.trip_place_id,
+        coalesce(a.activities, '[]'::json) AS place_activities
+FROM
+    trip_places tp
+    LEFT JOIN activities a ON a.trip_place_id = tp.trip_place_id;
 END;
 $$;
 
@@ -192,7 +197,7 @@ SELECT
     tp.start_date,
     tp.end_date,
     coalesce(p.places, '[]'::json) AS places,
-    COALESCE(c.companions, '[]'::json) AS companions
+    coalesce(c.companions, '[]'::json) AS companions
 FROM
     trips tp
     LEFT JOIN companions c ON tp.trip_id = c.trip_id
