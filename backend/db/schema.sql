@@ -127,14 +127,14 @@ $$;
 -- Name: place_activities_view(); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.place_activities_view() RETURNS TABLE(trip_id uuid, trip_place_id uuid, place_activities json)
+CREATE FUNCTION public.place_activities_view() RETURNS TABLE(trip_id uuid, trip_place_id uuid, place_name text, place_activities json)
     LANGUAGE plpgsql
     AS $$
 BEGIN
     RETURN QUERY WITH activities AS (
         SELECT
             pa.trip_place_id,
-            json_agg(json_build_object('place_activity_id', pa.place_activity_id, 'name', pa.name, 'information_url', pa.information_url, 'start_time', pa.start_time, 'end_time', pa.end_time, 'entry_fee', pa.entry_fee)) AS activities
+            json_agg(json_build_object('place_activity_id', pa.place_activity_id, 'name', pa.name, 'information_url', pa.information_url, 'start_time', TO_CHAR(pa.start_time, 'HH24:MI'), 'end_time', TO_CHAR(pa.end_time, 'HH24:MI'), 'entry_fee', pa.entry_fee)) AS activities
         FROM
             place_activities pa
         GROUP BY
@@ -143,6 +143,7 @@ BEGIN
     SELECT
         tp.trip_id,
         tp.trip_place_id,
+        tp.name AS place_name,
         coalesce(a.activities, '[]'::json) AS place_activities
 FROM
     trip_places tp

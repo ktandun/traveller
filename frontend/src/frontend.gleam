@@ -6,13 +6,12 @@ import frontend/pages/login_page
 import frontend/pages/trip_companions_page
 import frontend/pages/trip_create_page
 import frontend/pages/trip_details_page
+import frontend/pages/trip_place_activities_page
 import frontend/pages/trip_place_create_page
-import frontend/pages/trip_place_details_page
 import frontend/pages/trip_update_page
 import frontend/pages/trips_dashboard_page
 import frontend/routes.{type Route}
 import frontend/toast
-import gleam/io
 import gleam/string
 import gleam/uri.{type Uri}
 import lustre
@@ -62,7 +61,7 @@ fn path_to_route(path_segments: List(String)) -> Route {
     ["trips", trip_id, "add-companions"] -> routes.TripCompanions(trip_id)
     ["trips", trip_id, "places", "create"] -> routes.TripPlaceCreate(trip_id)
     ["trips", trip_id, "places", trip_place_id] ->
-      routes.TripPlaceDetails(trip_id, trip_place_id)
+      routes.TripPlaceActivities(trip_id, trip_place_id)
     _ -> routes.FourOFour
   }
 }
@@ -74,7 +73,6 @@ pub fn update(model: AppModel, msg: AppEvent) -> #(AppModel, Effect(AppEvent)) {
     events.OnRouteChange(route) -> #(AppModel(..model, route:), case route {
       routes.TripsDashboard -> api.send_get_user_trips_request()
       routes.TripPlaceCreate(trip_id)
-      | routes.TripPlaceDetails(trip_id, _trip_place_id)
       | routes.TripCompanions(trip_id)
       | routes.TripUpdate(trip_id) ->
         case string.is_empty(model.trip_details.destination) {
@@ -82,6 +80,14 @@ pub fn update(model: AppModel, msg: AppEvent) -> #(AppModel, Effect(AppEvent)) {
           False -> effect.none()
         }
       routes.TripDetails(trip_id) -> api.send_get_trip_details_request(trip_id)
+      routes.TripPlaceActivities(trip_id, trip_place_id) ->
+        effect.batch([
+          api.send_get_place_activities_request(trip_id, trip_place_id),
+          case string.is_empty(model.trip_details.destination) {
+            True -> api.send_get_trip_details_request(trip_id)
+            False -> effect.none()
+          },
+        ])
       _ -> effect.none()
     })
 
@@ -102,6 +108,11 @@ pub fn update(model: AppModel, msg: AppEvent) -> #(AppModel, Effect(AppEvent)) {
       trip_place_create_page.handle_trip_place_create_page_event(model, event)
     events.TripCompanionsPage(event) ->
       trip_companions_page.handle_trip_companions_page_event(model, event)
+    events.TripPlaceActivitiesPage(event) ->
+      trip_place_activities_page.handle_trip_place_activities_page_event(
+        model,
+        event,
+      )
 
     events.NoEvent -> #(model, effect.none())
   }
@@ -125,8 +136,8 @@ pub fn view(model: AppModel) -> Element(AppEvent) {
       routes.Signup -> html.h1([], [element.text("Signup")])
       routes.TripsDashboard -> trips_dashboard_page.trips_dashboard_view(model)
       routes.TripDetails(_trip_id) -> trip_details_page.trip_details_view(model)
-      routes.TripPlaceDetails(trip_id, trip_place_id) ->
-        trip_place_details_page.trip_place_details_view(
+      routes.TripPlaceActivities(trip_id, trip_place_id) ->
+        trip_place_activities_page.trip_place_activities_view(
           model,
           trip_id,
           trip_place_id,

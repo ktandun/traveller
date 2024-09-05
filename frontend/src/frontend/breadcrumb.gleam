@@ -11,6 +11,7 @@ pub fn simple_breadcrumb(model: AppModel) {
       routes.TripDetails(trip_id)
       | routes.TripUpdate(trip_id)
       | routes.TripPlaceCreate(trip_id)
+      | routes.TripPlaceActivities(trip_id, _)
       | routes.TripCompanions(trip_id) ->
         html.span([], [
           element.text(" > "),

@@ -1,9 +1,9 @@
 import frontend/api
 import frontend/events.{type AppModel, type TripCreatePageEvent, AppModel}
+import frontend/form_components
 import frontend/toast
 import frontend/web
 import gleam/option
-import gleam/result
 import lustre/attribute
 import lustre/effect
 import lustre/element
@@ -18,59 +18,45 @@ pub fn trip_create_view(model: AppModel) {
   html.div([], [
     html.h3([], [element.text("Create a New Trip")]),
     html.form([], [
-      html.p([], [
-        html.label([], [element.text("From")]),
-        html.input([
-          event.on_input(fn(start_date) {
-            events.TripCreatePage(
-              events.TripCreatePageUserInputCreateTripRequest(
-                events.CreateTripForm(..model.trip_create, start_date:),
-              ),
-            )
-          }),
-          attribute.name("from"),
-          attribute.type_("date"),
-          attribute.required(True),
-          attribute.value(model.trip_create.start_date),
-        ]),
-        html.span([attribute.class("validity")], []),
-      ]),
-      html.p([], [
-        html.label([], [element.text("To")]),
-        html.input([
-          event.on_input(fn(end_date) {
-            events.TripCreatePage(
-              events.TripCreatePageUserInputCreateTripRequest(
-                events.CreateTripForm(..model.trip_create, end_date:),
-              ),
-            )
-          }),
-          attribute.min(model.trip_create.start_date),
-          attribute.name("to"),
-          attribute.type_("date"),
-          attribute.required(True),
-          attribute.value(model.trip_create.end_date),
-        ]),
-        html.span([attribute.class("validity")], []),
-      ]),
-      html.p([], [
-        html.label([], [element.text("Destination")]),
-        html.input([
-          event.on_input(fn(destination) {
-            events.TripCreatePage(
-              events.TripCreatePageUserInputCreateTripRequest(
-                events.CreateTripForm(..model.trip_create, destination:),
-              ),
-            )
-          }),
-          attribute.name("destination"),
-          attribute.placeholder("Where are you going?"),
-          attribute.type_("text"),
-          attribute.required(True),
-          attribute.value(model.trip_create.destination),
-        ]),
-        html.span([attribute.class("validity")], []),
-      ]),
+      form_components.form_input(
+        label_text: "From",
+        label_name: "from",
+        required: True,
+        field_type: "date",
+        placeholder: "",
+        value: model.trip_create.start_date,
+        on_input: fn(start_date) {
+          events.TripCreatePage(events.TripCreatePageUserInputCreateTripRequest(
+            events.CreateTripForm(..model.trip_create, start_date:),
+          ))
+        },
+      ),
+      form_components.form_input(
+        label_text: "To",
+        label_name: "to",
+        required: True,
+        field_type: "date",
+        placeholder: "",
+        value: model.trip_create.end_date,
+        on_input: fn(end_date) {
+          events.TripCreatePage(events.TripCreatePageUserInputCreateTripRequest(
+            events.CreateTripForm(..model.trip_create, end_date:),
+          ))
+        },
+      ),
+      form_components.form_input(
+        label_text: "Destination",
+        label_name: "destination",
+        required: True,
+        field_type: "text",
+        placeholder: "Where are you going?",
+        value: model.trip_create.destination,
+        on_input: fn(destination) {
+          events.TripCreatePage(events.TripCreatePageUserInputCreateTripRequest(
+            events.CreateTripForm(..model.trip_create, destination:),
+          ))
+        },
+      ),
     ]),
     html.div([], [element.text(model.trip_create_errors)]),
     html.button(

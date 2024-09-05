@@ -265,6 +265,7 @@ CREATE OR REPLACE FUNCTION place_activities_view ()
     RETURNS TABLE (
         trip_id uuid,
         trip_place_id uuid,
+        place_name text,
         place_activities json
     )
     AS $f$
@@ -272,7 +273,7 @@ BEGIN
     RETURN QUERY WITH activities AS (
         SELECT
             pa.trip_place_id,
-            json_agg(json_build_object('place_activity_id', pa.place_activity_id, 'name', pa.name, 'information_url', pa.information_url, 'start_time', pa.start_time, 'end_time', pa.end_time, 'entry_fee', pa.entry_fee)) AS activities
+            json_agg(json_build_object('place_activity_id', pa.place_activity_id, 'name', pa.name, 'information_url', pa.information_url, 'start_time', TO_CHAR(pa.start_time, 'HH24:MI'), 'end_time', TO_CHAR(pa.end_time, 'HH24:MI'), 'entry_fee', pa.entry_fee)) AS activities
         FROM
             place_activities pa
         GROUP BY
@@ -281,6 +282,7 @@ BEGIN
     SELECT
         tp.trip_id,
         tp.trip_place_id,
+        tp.name AS place_name,
         coalesce(a.activities, '[]'::json) AS place_activities
 FROM
     trip_places tp
@@ -324,6 +326,9 @@ SELECT
 
 SELECT
     create_place_activity (place_activity_id => 'c26a0603-16d2-4156-b985-acf398b16cd2', trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', name => 'Battlestar Galactica: HUMAN vs. CYLON', information_url => 'https://www.sentosa.com.sg/en/things-to-do/attractions/universal-studios-singapore/', start_time => '10:00', end_time => '12:00', entry_fee => '3');
+
+SELECT
+    create_place_activity (place_activity_id => '5035f7ca-82e1-41ed-ba23-68a3ff53d47f', trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', name => 'TRANSFORMERS The Ride: The Ultimate 3D Battle', information_url => 'https://www.sentosa.com.sg/en/things-to-do/attractions/universal-studios-singapore/', start_time => '12:00', end_time => '13:00', entry_fee => '12');
 
 -- migrate:down
 DROP TABLE place_activities;

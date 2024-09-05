@@ -489,7 +489,7 @@ pub fn get_place_activities(db, arg_1, arg_2) {
     |> decode.field(0, decode.string)
 
   "SELECT
-    json_build_object('trip_id', trip_id, 'trip_place_id', trip_place_id, 'place_activities', place_activities)
+    json_build_object('trip_id', trip_id, 'trip_place_id', trip_place_id, 'place_name', place_name, 'place_activities', place_activities)
 FROM
     place_activities_view ()
 WHERE

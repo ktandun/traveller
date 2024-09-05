@@ -333,7 +333,7 @@ pub fn trip_companion_decoder() {
   toy.decoded(TripCompanion(trip_companion_id:, name:, email:))
 }
 
-// 
+//
 
 pub type UpdateTripRequest {
   UpdateTripRequest(
@@ -372,4 +372,83 @@ pub fn update_trip_request_encoder(data: UpdateTripRequest) {
     #("end_date", json.string(data.end_date |> date_util_shared.to_yyyy_mm_dd)),
   ])
 }
+
 //
+
+pub type PlaceActivity {
+  PlaceActivity(
+    place_activity_id: String,
+    name: String,
+    information_url: String,
+    start_time: String,
+    end_time: String,
+    entry_fee: Float,
+  )
+}
+
+pub fn place_activity_decoder() {
+  use place_activity_id <- toy.field("place_activity_id", toy.string)
+  use name <- toy.field("name", toy.string)
+  use information_url <- toy.field("information_url", toy.string)
+  use start_time <- toy.field("start_time", toy.string)
+  use end_time <- toy.field("end_time", toy.string)
+  use entry_fee <- toy.field("entry_fee", toy.float)
+
+  toy.decoded(PlaceActivity(
+    place_activity_id:,
+    name:,
+    information_url:,
+    start_time:,
+    end_time:,
+    entry_fee:,
+  ))
+}
+
+pub fn place_activity_encoder(data: PlaceActivity) {
+  json.object([
+    #("place_activity_id", json.string(data.place_activity_id)),
+    #("name", json.string(data.name)),
+    #("information_url", json.string(data.information_url)),
+    #("start_time", json.string(data.start_time)),
+    #("end_time", json.string(data.end_time)),
+    #("entry_fee", json.float(data.entry_fee)),
+  ])
+}
+
+pub type PlaceActivities {
+  PlaceActivities(
+    trip_id: String,
+    trip_place_id: String,
+    place_name: String,
+    place_activities: List(PlaceActivity),
+  )
+}
+
+pub fn place_activities_decoder() {
+  use trip_id <- toy.field("trip_id", toy.string)
+  use trip_place_id <- toy.field("trip_place_id", toy.string)
+  use place_name <- toy.field("place_name", toy.string)
+  use place_activities <- toy.field(
+    "place_activities",
+    toy.list(place_activity_decoder()),
+  )
+
+  toy.decoded(PlaceActivities(
+    trip_id:,
+    trip_place_id:,
+    place_name:,
+    place_activities:,
+  ))
+}
+
+pub fn place_activities_encoder(data: PlaceActivities) {
+  json.object([
+    #("trip_id", json.string(data.trip_id)),
+    #("trip_place_id", json.string(data.trip_place_id)),
+    #("place_name", json.string(data.place_name)),
+    #(
+      "place_activities",
+      json.array(from: data.place_activities, of: place_activity_encoder),
+    ),
+  ])
+}

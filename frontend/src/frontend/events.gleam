@@ -3,7 +3,7 @@ import frontend/routes.{type Route}
 import lustre_http.{type HttpError}
 import shared/auth_models
 import shared/id.{type Id, type TripId, type TripPlaceId, type UserId}
-import shared/trip_models.{type UserTripCompanion}
+import shared/trip_models.{type PlaceActivities, type UserTripCompanion}
 
 pub type AppEvent {
   NoEvent
@@ -18,6 +18,7 @@ pub type AppEvent {
   TripCreatePage(TripCreatePageEvent)
   TripUpdatePage(TripUpdatePageEvent)
   TripPlaceCreatePage(TripPlaceCreatePageEvent)
+  TripPlaceActivitiesPage(TripPlaceActivitiesPageEvent)
 }
 
 pub type AppModel {
@@ -35,6 +36,7 @@ pub type AppModel {
     trip_update_errors: String,
     trip_place_create: TripPlaceCreateForm,
     trip_place_create_errors: String,
+    trip_place_activities: PlaceActivities,
   )
 }
 
@@ -90,6 +92,7 @@ pub fn default_app_model() {
     trip_update_errors: "",
     trip_place_create: default_trip_place_create_form(),
     trip_place_create_errors: "",
+    trip_place_activities: default_trip_place_activities(),
   )
 }
 
@@ -165,4 +168,20 @@ pub type TripCompanionsPageEvent {
   TripCompanionsPageUserClickedAddMoreCompanion
   TripCompanionsPageUserClickedSaveCompanions(trip_id: String)
   TripCompanionsPageApiReturnedResponse(trip_id: String, Result(Nil, HttpError))
+}
+
+pub fn default_trip_place_activities() {
+  trip_models.PlaceActivities(
+    trip_id: "",
+    trip_place_id: "",
+    place_name: "",
+    place_activities: [],
+  )
+}
+
+pub type TripPlaceActivitiesPageEvent {
+  TripPlaceActivitiesPageApiReturnedActivities(
+    Result(PlaceActivities, HttpError),
+  )
+  TripPlaceActivitiesPageUserInputForm(trip_models.PlaceActivity)
 }
