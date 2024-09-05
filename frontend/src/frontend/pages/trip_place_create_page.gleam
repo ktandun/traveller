@@ -71,7 +71,7 @@ pub fn trip_place_create_view(model: AppModel, trip_id: String) {
           }),
           attribute.name("google_maps_link"),
           attribute.placeholder("https://..."),
-          attribute.type_("text"),
+          attribute.type_("url"),
           attribute.required(True),
           attribute.value(model.trip_place_create.google_maps_link),
         ]),

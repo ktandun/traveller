@@ -110,7 +110,6 @@ pub fn update(model: AppModel, msg: AppEvent) -> #(AppModel, Effect(AppEvent)) {
 pub fn view(model: AppModel) -> Element(AppEvent) {
   html.div([], [
     breadcrumb.simple_breadcrumb(model),
-    html.hr([]),
     // Global toast view
     toast.simple_toast(
       model.toast.visible,

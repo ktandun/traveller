@@ -36,7 +36,6 @@ pub fn trips_dashboard_view(model: AppModel) {
           html.th([], [element.text("Destination")]),
           html.th([], [element.text("From")]),
           html.th([], [element.text("Until")]),
-          html.th([], [element.text("Planned Places")]),
         ]),
       ]),
       html.tbody(
@@ -59,7 +58,6 @@ pub fn trips_dashboard_view(model: AppModel) {
                   user_trip.end_date,
                 )),
               ]),
-              html.td([], [element.text(int.to_string(user_trip.places_count))]),
             ])
           }),
       ),
