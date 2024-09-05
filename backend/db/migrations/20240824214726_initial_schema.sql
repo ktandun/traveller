@@ -246,13 +246,6 @@ CREATE OR REPLACE FUNCTION create_place_activity (place_activity_id text, trip_p
     RETURNS text
     AS $f$
 BEGIN
-    --place_activity_id uuid PRIMARY KEY,
-    --trip_place_id uuid REFERENCES trip_places (trip_place_id) NOT NULL,
-    --name text NOT NULL,
-    --information_url text,
-    --start_time time(0) without time zone,
-    --end_time time(0) without time zone,
-    --entry_fee numeric(18, 8)
     INSERT INTO place_activities (place_activity_id, trip_place_id, name, information_url, start_time, end_time, entry_fee)
     SELECT
         create_place_activity.place_activity_id::uuid,
@@ -328,7 +321,6 @@ SELECT
 SELECT
     upsert_trip_companion (trip_companion_id => '8D9102DD-747C-4E2A-B867-00C3A701D30C', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Senchou', email => 'senchou@gmail.com');
 
---CREATE OR REPLACE FUNCTION create_place_activity (place_activity_id text, trip_place_id text, name text, information_url text, start_time text, end_time text, entry_fee text)
 SELECT
     create_place_activity (place_activity_id => 'C26A0603-16D2-4156-B985-ACF398B16CD2', trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', name => 'Battlestar Galactica: HUMAN vs. CYLON', information_url => 'https://www.sentosa.com.sg/en/things-to-do/attractions/universal-studios-singapore/', start_time => '10:00', end_time => '12:00', entry_fee => '3');
 

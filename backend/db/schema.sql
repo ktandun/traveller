@@ -59,13 +59,6 @@ CREATE FUNCTION public.create_place_activity(place_activity_id text, trip_place_
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    --place_activity_id uuid PRIMARY KEY,
-    --trip_place_id uuid REFERENCES trip_places (trip_place_id) NOT NULL,
-    --name text NOT NULL,
-    --information_url text,
-    --start_time time(0) without time zone,
-    --end_time time(0) without time zone,
-    --entry_fee numeric(18, 8)
     INSERT INTO place_activities (place_activity_id, trip_place_id, name, information_url, start_time, end_time, entry_fee)
     SELECT
         create_place_activity.place_activity_id::uuid,
