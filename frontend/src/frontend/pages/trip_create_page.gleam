@@ -18,11 +18,10 @@ pub fn trip_create_view(model: AppModel) {
   html.div([], [
     html.h3([], [element.text("Create a New Trip")]),
     html.form([], [
-      form_components.form_input(
+      form_components.date_input(
         label_text: "From",
         label_name: "from",
         required: True,
-        field_type: "date",
         placeholder: "",
         value: model.trip_create.start_date,
         on_input: fn(start_date) {
@@ -31,11 +30,10 @@ pub fn trip_create_view(model: AppModel) {
           ))
         },
       ),
-      form_components.form_input(
+      form_components.date_input(
         label_text: "To",
         label_name: "to",
         required: True,
-        field_type: "date",
         placeholder: "",
         value: model.trip_create.end_date,
         on_input: fn(end_date) {
@@ -44,11 +42,10 @@ pub fn trip_create_view(model: AppModel) {
           ))
         },
       ),
-      form_components.form_input(
+      form_components.text_input(
         label_text: "Destination",
         label_name: "destination",
         required: True,
-        field_type: "text",
         placeholder: "Where are you going?",
         value: model.trip_create.destination,
         on_input: fn(destination) {

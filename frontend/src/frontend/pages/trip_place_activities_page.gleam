@@ -13,8 +13,8 @@ import shared/trip_models
 
 pub fn trip_place_activities_view(
   model: AppModel,
-  trip_id: String,
-  trip_place_id: String,
+  _trip_id: String,
+  _trip_place_id: String,
 ) {
   html.div([], [
     html.h3([], [
@@ -29,68 +29,58 @@ pub fn trip_place_activities_view(
         html.details([attribute.open(True)], [
           html.summary([], [element.text(activity.name)]),
           html.div([], [
-            form_components.form_input(
+            form_components.url_input(
               label_text: "Information URL",
               label_name: "information-url",
               required: False,
-              field_type: "url",
               placeholder: "https://...",
               value: activity.information_url,
               on_input: fn(information_url) {
                 events.TripPlaceActivitiesPage(
                   events.TripPlaceActivitiesPageUserInputForm(
-                    trip_models.PlaceActivity(..activity, information_url:),
+                    events.PlaceActivityForm(..activity, information_url:),
                   ),
                 )
               },
             ),
-            form_components.form_input(
+            form_components.time_input(
               label_text: "Start Time",
               label_name: "start-time",
               required: False,
-              field_type: "time",
               placeholder: "",
               value: activity.start_time,
               on_input: fn(start_time) {
                 events.TripPlaceActivitiesPage(
                   events.TripPlaceActivitiesPageUserInputForm(
-                    trip_models.PlaceActivity(..activity, start_time:),
+                    events.PlaceActivityForm(..activity, start_time:),
                   ),
                 )
               },
             ),
-            form_components.form_input(
+            form_components.time_input(
               label_text: "End Time",
               label_name: "end-time",
               required: False,
-              field_type: "time",
               placeholder: "",
               value: activity.end_time,
               on_input: fn(end_time) {
                 events.TripPlaceActivitiesPage(
                   events.TripPlaceActivitiesPageUserInputForm(
-                    trip_models.PlaceActivity(..activity, end_time:),
+                    events.PlaceActivityForm(..activity, end_time:),
                   ),
                 )
               },
             ),
-            form_components.form_input(
+            form_components.money_input(
               label_text: "Entry Fee",
               label_name: "entry-fee",
               required: False,
-              field_type: "number",
               placeholder: "",
-              value: float.to_string(activity.entry_fee),
+              value: activity.entry_fee,
               on_input: fn(entry_fee) {
                 events.TripPlaceActivitiesPage(
                   events.TripPlaceActivitiesPageUserInputForm(
-                    trip_models.PlaceActivity(
-                      ..activity,
-                      entry_fee: case float.parse(entry_fee) {
-                        Ok(entry_fee) -> entry_fee
-                        Error(_) -> 0.0
-                      },
-                    ),
+                    events.PlaceActivityForm(..activity, entry_fee:),
                   ),
                 )
               },
@@ -107,15 +97,17 @@ pub fn handle_trip_place_activities_page_event(
   event: TripPlaceActivitiesPageEvent,
 ) {
   case event {
-    events.TripPlaceActivitiesPageUserInputForm(form) -> #(
+    events.TripPlaceActivitiesPageUserInputForm(activity_form) -> #(
       AppModel(
         ..model,
-        trip_place_activities: trip_models.PlaceActivities(
+        trip_place_activities: events.PlaceActivitiesForm(
           ..model.trip_place_activities,
           place_activities: model.trip_place_activities.place_activities
             |> list.map(fn(activity) {
-              case activity.place_activity_id == form.place_activity_id {
-                True -> form
+              case
+                activity.place_activity_id == activity_form.place_activity_id
+              {
+                True -> activity_form
                 False -> activity
               }
             }),
@@ -126,7 +118,25 @@ pub fn handle_trip_place_activities_page_event(
     events.TripPlaceActivitiesPageApiReturnedActivities(response) ->
       case response {
         Ok(response) -> #(
-          AppModel(..model, trip_place_activities: response),
+          AppModel(
+            ..model,
+            trip_place_activities: events.PlaceActivitiesForm(
+              place_name: response.place_name,
+              place_activities: list.map(
+                response.place_activities,
+                fn(activity) {
+                  events.PlaceActivityForm(
+                    start_time: activity.start_time,
+                    end_time: activity.end_time,
+                    place_activity_id: activity.place_activity_id,
+                    name: activity.name,
+                    information_url: activity.information_url,
+                    entry_fee: activity.entry_fee |> float.to_string,
+                  )
+                },
+              ),
+            ),
+          ),
           effect.none(),
         )
         Error(e) -> web.error_to_app_event(e, model)

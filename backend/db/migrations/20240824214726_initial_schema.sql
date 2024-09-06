@@ -310,7 +310,7 @@ SELECT
     create_trip (user_id => 'ab995595-008e-4ab5-94bb-7845f5d48626', trip_id => '6dc47c9e-f363-4c0b-afbb-d3324a4e8d59', destination => 'Canada', start_date => '2024-03-01', end_date => '2024-03-28');
 
 SELECT
-    upsert_trip_place (trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Unversal Studios', date => '2024-01-01', google_maps_link => 'https://maps.app.goo.gl/ztxEEUqyuoHvSUEu8');
+    upsert_trip_place (trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Universal Studios', date => '2024-01-01', google_maps_link => 'https://maps.app.goo.gl/ztxEEUqyuoHvSUEu8');
 
 SELECT
     upsert_trip_place (trip_place_id => '65916ea8-c637-4921-89a0-97d3661ce782', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Botanical Garden', date => '2024-01-02', google_maps_link => 'https://maps.app.goo.gl/GCjgJNFi8zYUHvzv7');

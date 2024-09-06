@@ -3,7 +3,7 @@ import frontend/routes.{type Route}
 import lustre_http.{type HttpError}
 import shared/auth_models
 import shared/id.{type Id, type TripId, type TripPlaceId, type UserId}
-import shared/trip_models.{type PlaceActivities, type UserTripCompanion}
+import shared/trip_models.{type UserTripCompanion}
 
 pub type AppEvent {
   NoEvent
@@ -36,7 +36,7 @@ pub type AppModel {
     trip_update_errors: String,
     trip_place_create: TripPlaceCreateForm,
     trip_place_create_errors: String,
-    trip_place_activities: PlaceActivities,
+    trip_place_activities: PlaceActivitiesForm,
   )
 }
 
@@ -92,7 +92,7 @@ pub fn default_app_model() {
     trip_update_errors: "",
     trip_place_create: default_trip_place_create_form(),
     trip_place_create_errors: "",
-    trip_place_activities: default_trip_place_activities(),
+    trip_place_activities: default_trip_place_activities_form(),
   )
 }
 
@@ -170,18 +170,31 @@ pub type TripCompanionsPageEvent {
   TripCompanionsPageApiReturnedResponse(trip_id: String, Result(Nil, HttpError))
 }
 
-pub fn default_trip_place_activities() {
-  trip_models.PlaceActivities(
-    trip_id: "",
-    trip_place_id: "",
-    place_name: "",
-    place_activities: [],
+pub type PlaceActivitiesForm {
+  PlaceActivitiesForm(
+    place_name: String,
+    place_activities: List(PlaceActivityForm),
   )
+}
+
+pub type PlaceActivityForm {
+  PlaceActivityForm(
+    start_time: String,
+    end_time: String,
+    place_activity_id: String,
+    name: String,
+    information_url: String,
+    entry_fee: String,
+  )
+}
+
+pub fn default_trip_place_activities_form() {
+  PlaceActivitiesForm(place_name: "", place_activities: [])
 }
 
 pub type TripPlaceActivitiesPageEvent {
   TripPlaceActivitiesPageApiReturnedActivities(
-    Result(PlaceActivities, HttpError),
+    Result(trip_models.PlaceActivities, HttpError),
   )
-  TripPlaceActivitiesPageUserInputForm(trip_models.PlaceActivity)
+  TripPlaceActivitiesPageUserInputForm(PlaceActivityForm)
 }
