@@ -1,5 +1,7 @@
 import birl
 import database/sql
+import decode
+import gleam/dynamic
 import gleam/float
 import gleam/io
 import gleam/list
@@ -322,20 +324,39 @@ pub fn create_place_activities(
   trip_place_id: Id(TripPlaceId),
   update_request: trip_models.PlaceActivities,
 ) -> Result(List(Nil), AppError) {
+  let sql =
+    "
+    SELECT create_place_activity (
+      place_activity_id => $1,
+      trip_place_id => $2,
+      name => $3,
+      information_url => $4,
+      start_time => $5,
+      end_time => $6,
+      entry_fee => $7)"
+
+  let return_type =
+    decode.into({
+      use create_place_activity <- decode.parameter
+      sql.CreatePlaceActivityRow(create_place_activity: create_place_activity)
+    })
+    |> decode.field(0, decode.string)
+
   update_request.place_activities
   |> list.map(fn(activity) {
-    sql.create_place_activity(
+    pgo.execute(
+      sql,
       ctx.db,
-      case string.is_empty(activity.place_activity_id) {
-        True -> ctx.uuid_provider() |> uuid.to_string
-        False -> activity.place_activity_id
-      },
-      trip_place_id |> id.id_value,
-      activity.name,
-      activity.information_url,
-      activity.start_time,
-      activity.end_time,
-      activity.entry_fee |> float.to_string,
+      [
+        pgo.text(activity.place_activity_id),
+        pgo.text(trip_place_id |> id.id_value),
+        pgo.text(activity.name),
+        pgo.nullable(pgo.text, activity.information_url),
+        pgo.nullable(pgo.text, activity.start_time),
+        pgo.nullable(pgo.text, activity.end_time),
+        pgo.nullable(pgo.float, activity.entry_fee),
+      ],
+      decode.from(return_type, _),
     )
     |> result.map(fn(_) { Nil })
     |> database.to_app_error()

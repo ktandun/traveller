@@ -1,4 +1,3 @@
-import gleam/io
 import gleam/erlang/os
 import gleam/int
 import gleam/option
@@ -7,7 +6,6 @@ import gleam/result
 import traveller/error.{type AppError}
 
 pub fn with_connection(f: fn(pgo.Connection) -> a) -> a {
-  os.get_all_env() |> io.debug
   let assert Ok(db_host) = os.get_env("DATABASE_HOST")
   let assert Ok(db_port) = os.get_env("DATABASE_PORT")
   let assert Ok(db_port) = db_port |> int.parse
@@ -32,7 +30,9 @@ pub fn with_connection(f: fn(pgo.Connection) -> a) -> a {
 }
 
 pub fn to_app_error(over: Result(a, pgo.QueryError)) {
-  result.map_error(over, fn(e) { error.DatabaseError(e) })
+  result.map_error(over, fn(e) {
+    error.DatabaseError(e)
+  })
 }
 
 pub fn require_single_row(

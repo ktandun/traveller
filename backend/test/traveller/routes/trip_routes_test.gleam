@@ -1,3 +1,4 @@
+import gleam/option
 import birl
 import gleam/io
 import gleam/list
@@ -148,6 +149,45 @@ pub fn get_place_activities_no_results_test() {
         <> "/activities",
       [],
     )
+    |> test_utils.set_auth_cookie
+    |> router.handle_request(ctx)
+
+  response.status
+  |> should.equal(200)
+}
+
+pub fn create_place_activity_test() {
+  use ctx <- test_utils.with_context()
+
+  let json =
+    trip_models.PlaceActivities(
+      trip_id: test_utils.testing_trip_id,
+      trip_place_id: test_utils.testing_trip_place_id,
+      place_name: "Hello",
+      place_activities: [
+        trip_models.PlaceActivity(
+          place_activity_id: test_utils.testing_place_activity_id,
+          name: "Test",
+          information_url: option.Some("https://www.google.com"),
+          start_time: option.Some("11:00"),
+          end_time: option.Some("15:00"),
+          entry_fee: option.Some(3.0)
+        ),
+      ],
+    )
+    |> trip_models.place_activities_encoder
+
+  let response =
+    testing.put_json(
+      "/api/trips/"
+        <> test_utils.testing_trip_id
+        <> "/places/"
+        <> test_utils.testing_trip_place_id
+        <> "/activities",
+      [],
+      json,
+    )
+    |> test_utils.set_json_header
     |> test_utils.set_auth_cookie
     |> router.handle_request(ctx)
 

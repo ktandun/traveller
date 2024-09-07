@@ -1,5 +1,6 @@
 import gleam/bool
 import gleam/list
+import gleam/pgo
 import gleam/result
 import gleam/string
 import shared/id.{type Id, type TripId, type TripPlaceId, type UserId}

@@ -69,37 +69,41 @@ pub fn trip_details_view(model: AppModel) {
         [element.text("Add Travel Companions")],
       ),
     ]),
-    html.table([], [
-      html.thead([], [
-        html.tr([], [
-          html.th([], [element.text("Place")]),
-          html.th([], [element.text("Date")]),
+    html.figure([], [
+      html.table([], [
+        html.thead([], [
+          html.tr([], [
+            html.th([], [element.text("Place")]),
+            html.th([], [element.text("Date")]),
+            html.th([], [element.text("Links")]),
+          ]),
         ]),
+        html.tbody(
+          [],
+          model.trip_details.user_trip_places
+            |> list.map(fn(place) {
+              html.tr([], [
+                html.td([], [element.text(place.name)]),
+                html.td([], [
+                  element.text(date_util_shared.to_human_readable(place.date)),
+                ]),
+                html.td([], [
+                  html.a(
+                    [
+                      attribute.href(
+                        "/trips/"
+                        <> model.trip_details.trip_id
+                        <> "/places/"
+                        <> place.trip_place_id,
+                      ),
+                    ],
+                    [element.text("Activities")],
+                  ),
+                ]),
+              ])
+            }),
+        ),
       ]),
-      html.tbody(
-        [],
-        model.trip_details.user_trip_places
-          |> list.map(fn(place) {
-            html.tr([], [
-              html.td([], [
-                html.a(
-                  [
-                    attribute.href(
-                      "/trips/"
-                      <> model.trip_details.trip_id
-                      <> "/places/"
-                      <> place.trip_place_id,
-                    ),
-                  ],
-                  [element.text(place.name)],
-                ),
-              ]),
-              html.td([], [
-                element.text(date_util_shared.to_human_readable(place.date)),
-              ]),
-            ])
-          }),
-      ),
     ]),
   ])
 }

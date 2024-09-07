@@ -45,10 +45,10 @@ $$;
 
 
 --
--- Name: create_place_activity(text, text, text, text, text, text, text); Type: FUNCTION; Schema: public; Owner: -
+-- Name: create_place_activity(text, text, text, text, text, text, numeric); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.create_place_activity(place_activity_id text, trip_place_id text, name text, information_url text, start_time text, end_time text, entry_fee text) RETURNS text
+CREATE FUNCTION public.create_place_activity(place_activity_id text, trip_place_id text, name text, information_url text, start_time text, end_time text, entry_fee numeric) RETURNS text
     LANGUAGE plpgsql
     AS $$
 BEGIN
@@ -60,7 +60,7 @@ BEGIN
         create_place_activity.information_url,
         create_place_activity.start_time::time,
         create_place_activity.end_time::time,
-        create_place_activity.entry_fee::numeric;
+        create_place_activity.entry_fee;
     --
     RETURN create_place_activity.place_activity_id;
 END

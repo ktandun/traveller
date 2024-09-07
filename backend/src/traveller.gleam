@@ -12,7 +12,7 @@ import youid/uuid
 pub fn main() {
   wisp.configure_logger()
 
-  let secret_key_base = wisp.random_string(64)
+  let secret_key_base = "ygWvbPGgX8iBS8zw13UQdmxTkM5Ri9igaPB8wDSg8XuHqb569bAcdQFcEn1Hitjb"
 
   use db <- database.with_connection()
 

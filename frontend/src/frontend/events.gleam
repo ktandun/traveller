@@ -1,5 +1,6 @@
 import env
 import frontend/routes.{type Route}
+import frontend/uuid_util
 import lustre_http.{type HttpError}
 import shared/auth_models
 import shared/id.{type Id, type TripId, type TripPlaceId, type UserId}
@@ -179,10 +180,10 @@ pub type PlaceActivitiesForm {
 
 pub type PlaceActivityForm {
   PlaceActivityForm(
-    start_time: String,
-    end_time: String,
     place_activity_id: String,
     name: String,
+    start_time: String,
+    end_time: String,
     information_url: String,
     entry_fee: String,
   )
@@ -190,10 +191,10 @@ pub type PlaceActivityForm {
 
 pub fn default_trip_place_activity_form() {
   PlaceActivityForm(
+    place_activity_id: uuid_util.gen_uuid(),
+    name: "",
     start_time: "",
     end_time: "",
-    place_activity_id: "",
-    name: "",
     information_url: "",
     entry_fee: "",
   )

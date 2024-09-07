@@ -354,20 +354,20 @@ pub type PlaceActivity {
   PlaceActivity(
     place_activity_id: String,
     name: String,
-    information_url: String,
-    start_time: String,
-    end_time: String,
-    entry_fee: Float,
+    information_url: Option(String),
+    start_time: Option(String),
+    end_time: Option(String),
+    entry_fee: Option(Float),
   )
 }
 
 pub fn place_activity_decoder() {
   use place_activity_id <- toy.field("place_activity_id", toy.string)
   use name <- toy.field("name", toy.string)
-  use information_url <- toy.field("information_url", toy.string)
-  use start_time <- toy.field("start_time", toy.string)
-  use end_time <- toy.field("end_time", toy.string)
-  use entry_fee <- toy.field("entry_fee", custom_decoders.number)
+  use information_url <- toy.field("information_url", toy.string |> toy.nullable)
+  use start_time <- toy.field("start_time", toy.string |> toy.nullable)
+  use end_time <- toy.field("end_time", toy.string |> toy.nullable)
+  use entry_fee <- toy.field("entry_fee", custom_decoders.number |> toy.nullable)
 
   toy.decoded(PlaceActivity(
     place_activity_id:,
@@ -383,10 +383,10 @@ pub fn place_activity_encoder(data: PlaceActivity) {
   json.object([
     #("place_activity_id", json.string(data.place_activity_id)),
     #("name", json.string(data.name)),
-    #("information_url", json.string(data.information_url)),
-    #("start_time", json.string(data.start_time)),
-    #("end_time", json.string(data.end_time)),
-    #("entry_fee", json.float(data.entry_fee)),
+    #("information_url", json.nullable(data.information_url, json.string)),
+    #("start_time", json.nullable(data.start_time, json.string)),
+    #("end_time", json.nullable(data.end_time, json.string)),
+    #("entry_fee", json.nullable(data.entry_fee, json.float)),
   ])
 }
 
