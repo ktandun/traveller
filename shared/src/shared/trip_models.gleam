@@ -6,8 +6,6 @@ import shared/custom_decoders
 import shared/date_util_shared
 import toy
 
-const default_day = birl.Day(1, 1, 1)
-
 //
 
 pub type UserTrip {
@@ -98,8 +96,8 @@ pub fn default_user_trip_places() {
   UserTripPlaces(
     trip_id: "",
     destination: "",
-    start_date: default_day,
-    end_date: default_day,
+    start_date: birl.Day(1,1,1),
+    end_date: birl.Day(1,1,1),
     user_trip_places: [],
     user_trip_companions: [],
   )
@@ -216,8 +214,8 @@ pub type CreateTripRequest {
 pub fn default_create_trip_request() {
   CreateTripRequest(
     destination: "",
-    start_date: default_day,
-    end_date: default_day,
+    start_date: birl.Day(1,1,1),
+    end_date: birl.Day(1,1,1),
   )
 }
 
@@ -256,7 +254,7 @@ pub type CreateTripPlaceRequest {
 pub fn default_create_trip_place_request() {
   CreateTripPlaceRequest(
     place: "",
-    date: default_day,
+    date: birl.Day(1,1,1),
     google_maps_link: option.None,
   )
 }
@@ -346,8 +344,8 @@ pub type UpdateTripRequest {
 pub fn default_update_trip_request() {
   UpdateTripRequest(
     destination: "",
-    start_date: default_day,
-    end_date: default_day,
+    start_date: birl.Day(1,1,1),
+    end_date: birl.Day(1,1,1),
   )
 }
 

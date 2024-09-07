@@ -1,3 +1,4 @@
+import gleam/io
 import gleam/erlang/os
 import gleam/int
 import gleam/option
@@ -6,6 +7,7 @@ import gleam/result
 import traveller/error.{type AppError}
 
 pub fn with_connection(f: fn(pgo.Connection) -> a) -> a {
+  os.get_all_env() |> io.debug
   let assert Ok(db_host) = os.get_env("DATABASE_HOST")
   let assert Ok(db_port) = os.get_env("DATABASE_PORT")
   let assert Ok(db_port) = db_port |> int.parse
@@ -13,18 +15,18 @@ pub fn with_connection(f: fn(pgo.Connection) -> a) -> a {
   let assert Ok(db_pass) = os.get_env("DATABASE_PASS")
   let assert Ok(db_db) = os.get_env("DATABASE_DB")
 
-  let db =
-    pgo.connect(
-      pgo.Config(
-        ..pgo.default_config(),
-        host: db_host,
-        port: db_port,
-        database: db_db,
-        user: db_user,
-        password: option.Some(db_pass),
-        pool_size: 2,
-      ),
+  let config =
+    pgo.Config(
+      ..pgo.default_config(),
+      host: db_host,
+      port: db_port,
+      database: db_db,
+      user: db_user,
+      password: option.Some(db_pass),
+      pool_size: 2,
     )
+
+  let db = pgo.connect(config)
 
   f(db)
 }
