@@ -3,6 +3,7 @@ import frontend/events.{
   type AppModel, type TripPlaceActivitiesPageEvent, AppModel,
 }
 import frontend/form_components
+import frontend/toast
 import frontend/web
 import gleam/float
 import gleam/list
@@ -58,7 +59,7 @@ pub fn trip_place_activities_view(
       list.map(model.trip_place_activities.place_activities, fn(activity) {
         html.details([attribute.open(True)], [
           html.summary([], [element.text(activity.name)]),
-          html.div([], [
+          html.div([attribute.class("inputs")], [
             form_components.text_input(
               label_text: "Name",
               label_name: "name",
@@ -191,7 +192,7 @@ pub fn handle_trip_place_activities_page_event(
     events.TripPlaceActivitiesPageApiReturnedSaveResponse(response) ->
       case response {
         Ok(_) -> #(
-          model,
+          model |> toast.set_success_toast(content: "Activities updated"),
           effect.batch([
             effect.from(fn(dispatch) { dispatch(events.ShowToast) }),
           ]),

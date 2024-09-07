@@ -327,7 +327,10 @@ pub fn create_place_activities(
   |> list.map(fn(activity) {
     sql.create_place_activity(
       ctx.db,
-      activity.place_activity_id,
+      case string.is_empty(activity.place_activity_id) {
+        True -> ctx.uuid_provider() |> uuid.to_string
+        False -> activity.place_activity_id
+      },
       trip_place_id |> id.id_value,
       activity.name,
       activity.information_url,

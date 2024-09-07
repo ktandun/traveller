@@ -124,20 +124,28 @@ CREATE FUNCTION public.place_activities_view() RETURNS TABLE(trip_id uuid, trip_
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    RETURN QUERY WITH activities AS (
+    RETURN QUERY WITH activities_ordered_by_end_time AS (
         SELECT
-            pa.trip_place_id,
-            json_agg(json_build_object('place_activity_id', pa.place_activity_id, 'name', pa.name, 'information_url', pa.information_url, 'start_time', TO_CHAR(pa.start_time, 'HH24:MI'), 'end_time', TO_CHAR(pa.end_time, 'HH24:MI'), 'entry_fee', pa.entry_fee)) AS activities
+            *
         FROM
-            place_activities pa
-        GROUP BY
-            pa.trip_place_id
-)
+            place_activities
+        ORDER BY
+            end_time
+),
+activities AS (
     SELECT
-        tp.trip_id,
-        tp.trip_place_id,
-        tp.name AS place_name,
-        coalesce(a.activities, '[]'::json) AS place_activities
+        pa.trip_place_id,
+        json_agg(json_build_object('place_activity_id', pa.place_activity_id, 'name', pa.name, 'information_url', pa.information_url, 'start_time', TO_CHAR(pa.start_time, 'HH24:MI'), 'end_time', TO_CHAR(pa.end_time, 'HH24:MI'), 'entry_fee', pa.entry_fee)) AS activities
+FROM
+    activities_ordered_by_end_time pa
+GROUP BY
+    pa.trip_place_id
+)
+SELECT
+    tp.trip_id,
+    tp.trip_place_id,
+    tp.name AS place_name,
+    coalesce(a.activities, '[]'::json) AS place_activities
 FROM
     trip_places tp
     LEFT JOIN activities a ON a.trip_place_id = tp.trip_place_id;
