@@ -9,4 +9,5 @@ pub type Route {
   TripCompanions(trip_id: String)
   TripCreate
   FourOFour
+  ErrorFiveHundred
 }

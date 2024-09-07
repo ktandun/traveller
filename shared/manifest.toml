@@ -9,7 +9,7 @@ packages = [
   { name = "gleeunit", version = "1.2.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleeunit", source = "hex", outer_checksum = "F7A7228925D3EE7D0813C922E062BFD6D7E9310F0BEE585D3A42F3307E3CFD13" },
   { name = "ranger", version = "1.2.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "ranger", source = "hex", outer_checksum = "1566C272B1D141B3BBA38B25CB761EF56E312E79EC0E2DFD4D3C19FB0CC1F98C" },
   { name = "thoas", version = "1.2.1", build_tools = ["rebar3"], requirements = [], otp_app = "thoas", source = "hex", outer_checksum = "E38697EDFFD6E91BD12CEA41B155115282630075C2A727E7A6B2947F5408B86A" },
-  { name = "toy", version = "0.5.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "toy", source = "hex", outer_checksum = "8BB59E071735D6B6FF4A9ED9B1B1BE017C46A883A3DFDB47FBCBEB8657E9705B" },
+  { name = "toy", version = "0.5.1", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "toy", source = "hex", outer_checksum = "0C96FD47D8187634B6B0B693BC6464FD3EB0FDA8DD0A8A5516FAD7D2A5A24B36" },
 ]
 
 [requirements]

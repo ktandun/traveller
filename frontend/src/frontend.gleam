@@ -1,3 +1,4 @@
+import frontend/pages/error_500
 import frontend/api
 import frontend/breadcrumb
 import frontend/events.{type AppEvent, type AppModel, AppModel}
@@ -53,6 +54,7 @@ fn on_url_change(uri: Uri) -> AppEvent {
 fn path_to_route(path_segments: List(String)) -> Route {
   case path_segments {
     [] -> routes.TripsDashboard
+    ["500"] -> routes.ErrorFiveHundred
     ["login"] -> routes.Login
     ["dashboard"] -> routes.TripsDashboard
     ["trips", "create"] -> routes.TripCreate
@@ -132,6 +134,7 @@ pub fn view(model: AppModel) -> Element(AppEvent) {
     loading_spinner.simple_loading_spinner(model),
     // Route specific views
     case model.route {
+      routes.ErrorFiveHundred -> error_500.error_five_hundred()
       routes.Login -> login_page.login_view(model)
       routes.Signup -> html.h1([], [element.text("Signup")])
       routes.TripsDashboard -> trips_dashboard_page.trips_dashboard_view(model)

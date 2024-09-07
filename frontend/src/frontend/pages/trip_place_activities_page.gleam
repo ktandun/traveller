@@ -1,3 +1,4 @@
+import frontend/api
 import frontend/events.{
   type AppModel, type TripPlaceActivitiesPageEvent, AppModel,
 }
@@ -5,16 +6,18 @@ import frontend/form_components
 import frontend/web
 import gleam/float
 import gleam/list
+import gleam/string
 import lustre/attribute
 import lustre/effect
 import lustre/element
 import lustre/element/html
+import lustre/event
 import shared/trip_models
 
 pub fn trip_place_activities_view(
   model: AppModel,
-  _trip_id: String,
-  _trip_place_id: String,
+  trip_id: String,
+  trip_place_id: String,
 ) {
   html.div([], [
     html.h3([], [
@@ -23,12 +26,53 @@ pub fn trip_place_activities_view(
         element.text(model.trip_place_activities.place_name),
       ]),
     ]),
+    html.div([attribute.class("buttons")], [
+      html.button(
+        [
+          event.on_click(events.TripPlaceActivitiesPage(
+            events.TripPlaceActivitiesUserClickedAddMore,
+          )),
+        ],
+        [
+          element.text(case
+            list.is_empty(model.trip_place_activities.place_activities)
+          {
+            True -> "Add First Activity"
+            False -> "Add More"
+          }),
+        ],
+      ),
+      html.button(
+        [
+          event.on_click(
+            events.TripPlaceActivitiesPage(
+              events.TripPlaceActivitiesUserClickedSave(trip_id, trip_place_id),
+            ),
+          ),
+        ],
+        [element.text("Save")],
+      ),
+    ]),
     html.div(
       [],
       list.map(model.trip_place_activities.place_activities, fn(activity) {
         html.details([attribute.open(True)], [
           html.summary([], [element.text(activity.name)]),
           html.div([], [
+            form_components.text_input(
+              label_text: "Name",
+              label_name: "name",
+              required: False,
+              placeholder: "Fun activity",
+              value: activity.name,
+              on_input: fn(name) {
+                events.TripPlaceActivitiesPage(
+                  events.TripPlaceActivitiesPageUserInputForm(
+                    events.PlaceActivityForm(..activity, name:),
+                  ),
+                )
+              },
+            ),
             form_components.url_input(
               label_text: "Information URL",
               label_name: "information-url",
@@ -80,7 +124,13 @@ pub fn trip_place_activities_view(
               on_input: fn(entry_fee) {
                 events.TripPlaceActivitiesPage(
                   events.TripPlaceActivitiesPageUserInputForm(
-                    events.PlaceActivityForm(..activity, entry_fee:),
+                    events.PlaceActivityForm(
+                      ..activity,
+                      entry_fee: case string.contains(entry_fee, ".") {
+                        True -> entry_fee
+                        False -> entry_fee <> ".0"
+                      },
+                    ),
                   ),
                 )
               },
@@ -97,6 +147,57 @@ pub fn handle_trip_place_activities_page_event(
   event: TripPlaceActivitiesPageEvent,
 ) {
   case event {
+    events.TripPlaceActivitiesUserClickedAddMore -> #(
+      AppModel(
+        ..model,
+        trip_place_activities: events.PlaceActivitiesForm(
+          ..model.trip_place_activities,
+          place_activities: [
+            events.default_trip_place_activity_form(),
+            ..model.trip_place_activities.place_activities
+          ],
+        ),
+      ),
+      effect.none(),
+    )
+    events.TripPlaceActivitiesUserClickedSave(trip_id, trip_place_id) -> #(
+      model,
+      api.send_place_activities_update_request(
+        trip_id,
+        trip_place_id,
+        trip_models.PlaceActivities(
+          trip_id:,
+          trip_place_id:,
+          place_name: model.trip_place_activities.place_name,
+          place_activities: list.map(
+            model.trip_place_activities.place_activities,
+            fn(activity) {
+              trip_models.PlaceActivity(
+                place_activity_id: activity.place_activity_id,
+                name: activity.name,
+                information_url: activity.information_url,
+                start_time: activity.start_time,
+                end_time: activity.end_time,
+                entry_fee: case float.parse(activity.entry_fee) {
+                  Ok(entry_fee) -> entry_fee
+                  Error(_) -> 0.0
+                },
+              )
+            },
+          ),
+        ),
+      ),
+    )
+    events.TripPlaceActivitiesPageApiReturnedSaveResponse(response) ->
+      case response {
+        Ok(_) -> #(
+          model,
+          effect.batch([
+            effect.from(fn(dispatch) { dispatch(events.ShowToast) }),
+          ]),
+        )
+        Error(e) -> web.error_to_app_event(e, model)
+      }
     events.TripPlaceActivitiesPageUserInputForm(activity_form) -> #(
       AppModel(
         ..model,

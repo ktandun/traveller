@@ -295,3 +295,23 @@ pub fn send_get_place_activities_request(trip_id: String, trip_place_id: String)
   |> build
   |> send
 }
+
+pub fn send_place_activities_update_request(
+  trip_id: String,
+  trip_place_id: String,
+  update_request: trip_models.PlaceActivities,
+) {
+  new_request()
+  |> with_url(
+    "/api/trips/" <> trip_id <> "/places/" <> trip_place_id <> "/activities",
+  )
+  |> with_method(Put)
+  |> with_json_body(update_request |> trip_models.place_activities_encoder)
+  |> with_ignore_response_to_event(fn(response) {
+    events.TripPlaceActivitiesPage(
+      events.TripPlaceActivitiesPageApiReturnedSaveResponse(response),
+    )
+  })
+  |> build
+  |> send
+}

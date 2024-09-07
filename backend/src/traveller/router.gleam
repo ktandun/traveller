@@ -75,6 +75,8 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
       case req.method {
         http.Get ->
           get_trip_place_activities(req, ctx, user_id, trip_id, trip_place_id)
+        http.Put ->
+          put_trip_place_activities(req, ctx, user_id, trip_id, trip_place_id)
         _ -> wisp.method_not_allowed([http.Delete])
       }
     }
@@ -290,4 +292,33 @@ fn get_trip_place_activities(
   |> trip_models.place_activities_encoder
   |> json.to_string_builder
   |> wisp.json_response(200)
+}
+
+fn put_trip_place_activities(
+  req: Request,
+  ctx: Context,
+  user_id: Id(UserId),
+  trip_id: String,
+  trip_place_id: String,
+) {
+  let trip_id = id.to_id(trip_id)
+  let trip_place_id = id.to_id(trip_place_id)
+
+  use request_body <- wisp.require_string_body(req)
+  use update_request <- web.require_valid_json(json_util.try_decode(
+    request_body,
+    trip_models.place_activities_decoder(),
+  ))
+
+  use _ <- web.require_ok(
+    trip_routes.handle_update_place_activities(
+      ctx,
+      user_id,
+      trip_id,
+      trip_place_id,
+      update_request,
+    ),
+  )
+
+  wisp.ok()
 }

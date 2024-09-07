@@ -188,6 +188,17 @@ pub type PlaceActivityForm {
   )
 }
 
+pub fn default_trip_place_activity_form() {
+  PlaceActivityForm(
+    start_time: "",
+    end_time: "",
+    place_activity_id: "",
+    name: "",
+    information_url: "",
+    entry_fee: "",
+  )
+}
+
 pub fn default_trip_place_activities_form() {
   PlaceActivitiesForm(place_name: "", place_activities: [])
 }
@@ -197,4 +208,7 @@ pub type TripPlaceActivitiesPageEvent {
     Result(trip_models.PlaceActivities, HttpError),
   )
   TripPlaceActivitiesPageUserInputForm(PlaceActivityForm)
+  TripPlaceActivitiesUserClickedAddMore
+  TripPlaceActivitiesUserClickedSave(trip_id: String, trip_place_id: String)
+  TripPlaceActivitiesPageApiReturnedSaveResponse(Result(Nil, HttpError))
 }

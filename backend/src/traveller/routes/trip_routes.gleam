@@ -66,6 +66,13 @@ pub fn handle_delete_trip_place(
   trip_id: Id(TripId),
   trip_place_id: Id(TripPlaceId),
 ) {
+  use _ <- result.try(trips_db.ensure_trip_place_id_exists(
+    ctx,
+    user_id,
+    trip_id,
+    trip_place_id,
+  ))
+
   trips_db.delete_user_trip_place(ctx, user_id, trip_id, trip_place_id)
 }
 
@@ -149,14 +156,19 @@ pub fn handle_update_trip(
   Ok(trip_id)
 }
 
-// Update trip details
+// Retrieve all user's trip place activities
 pub fn handle_get_place_activities(
   ctx: Context,
   user_id: Id(UserId),
   trip_id: Id(TripId),
   trip_place_id: Id(TripPlaceId),
 ) -> Result(PlaceActivities, AppError) {
-  use _ <- result.try(trips_db.ensure_trip_id_exists(ctx, user_id, trip_id))
+  use _ <- result.try(trips_db.ensure_trip_place_id_exists(
+    ctx,
+    user_id,
+    trip_id,
+    trip_place_id,
+  ))
 
   use place_activities <- result.try(trips_db.get_place_activities(
     ctx,
@@ -165,4 +177,36 @@ pub fn handle_get_place_activities(
   ))
 
   Ok(place_activities)
+}
+
+// Update user's trip place activities
+pub fn handle_update_place_activities(
+  ctx: Context,
+  user_id: Id(UserId),
+  trip_id: Id(TripId),
+  trip_place_id: Id(TripPlaceId),
+  update_request: trip_models.PlaceActivities,
+) -> Result(Nil, AppError) {
+  use _ <- result.try(trips_db.ensure_trip_place_id_exists(
+    ctx,
+    user_id,
+    trip_id,
+    trip_place_id,
+  ))
+
+  use _ <- result.try(trips_db.delete_place_activities(
+    ctx,
+    user_id,
+    trip_id,
+    trip_place_id,
+  ))
+
+  use _ <- result.try(trips_db.create_place_activities(
+    ctx,
+    trip_id,
+    trip_place_id,
+    update_request,
+  ))
+
+  Ok(Nil)
 }

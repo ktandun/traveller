@@ -1,5 +1,6 @@
 import birl
 import database/sql
+import gleam/float
 import gleam/io
 import gleam/list
 import gleam/option
@@ -172,6 +173,34 @@ pub fn ensure_trip_id_exists(
   }
 }
 
+pub fn ensure_trip_place_id_exists(
+  ctx: Context,
+  user_id: Id(UserId),
+  trip_id: Id(TripId),
+  trip_place_id: Id(TripPlaceId),
+) -> Result(Nil, AppError) {
+  let user_id = uuid_util.from_string(id.id_value(user_id))
+  let trip_id = uuid_util.from_string(id.id_value(trip_id))
+  let trip_place_id = uuid_util.from_string(id.id_value(trip_place_id))
+
+  use query_result <- result.try(
+    sql.find_trip_by_trip_place_id(ctx.db, user_id, trip_id, trip_place_id)
+    |> database.to_app_error(),
+  )
+
+  use row <- database.require_single_row(
+    query_result,
+    "find_trip_by_trip_place_id",
+  )
+
+  let sql.FindTripByTripPlaceIdRow(row) = row
+
+  case row {
+    1 -> Ok(Nil)
+    _ -> Error(error.TripDoesNotExist)
+  }
+}
+
 pub fn delete_user_trip_place(
   ctx: Context,
   user_id: Id(UserId),
@@ -286,4 +315,43 @@ pub fn get_place_activities(
   ))
 
   Ok(place_activities)
+}
+
+pub fn create_place_activities(
+  ctx: Context,
+  _trip_id: Id(TripId),
+  trip_place_id: Id(TripPlaceId),
+  update_request: trip_models.PlaceActivities,
+) -> Result(List(Nil), AppError) {
+  update_request.place_activities
+  |> list.map(fn(activity) {
+    sql.create_place_activity(
+      ctx.db,
+      activity.place_activity_id,
+      trip_place_id |> id.id_value,
+      activity.name,
+      activity.information_url,
+      activity.start_time,
+      activity.end_time,
+      activity.entry_fee |> float.to_string,
+    )
+    |> result.map(fn(_) { Nil })
+    |> database.to_app_error()
+  })
+  |> result.all
+}
+
+pub fn delete_place_activities(
+  ctx: Context,
+  user_id: Id(UserId),
+  trip_id: Id(TripId),
+  trip_place_id: Id(TripPlaceId),
+) -> Result(Nil, AppError) {
+  let user_id = uuid_util.from_string(id.id_value(user_id))
+  let trip_id = uuid_util.from_string(id.id_value(trip_id))
+  let trip_place_id = uuid_util.from_string(id.id_value(trip_place_id))
+
+  sql.delete_place_activities(ctx.db, user_id, trip_id, trip_place_id)
+  |> result.map(fn(_) { Nil })
+  |> database.to_app_error()
 }
