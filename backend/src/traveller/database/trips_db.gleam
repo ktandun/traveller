@@ -231,7 +231,6 @@ pub fn upsert_trip_place(
     trip_id,
     request.place,
     request.date |> date_util_shared.to_yyyy_mm_dd,
-    request.google_maps_link |> option.unwrap(""),
   )
   |> result.map(fn(_) { Nil })
   |> database.to_app_error()

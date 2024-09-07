@@ -7,7 +7,5 @@ SELECT
         -- name text
         $3,
         -- date text
-        $4,
-        -- google_maps_link text
-        $5);
+        $4);
 

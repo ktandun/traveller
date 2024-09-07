@@ -502,7 +502,7 @@ pub type UpsertTripPlaceRow {
 /// > 🐿️ This function was generated automatically using v1.6.1 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
-pub fn upsert_trip_place(db, arg_1, arg_2, arg_3, arg_4, arg_5) {
+pub fn upsert_trip_place(db, arg_1, arg_2, arg_3, arg_4) {
   let decoder =
     decode.into({
       use upsert_trip_place <- decode.parameter
@@ -519,20 +519,12 @@ pub fn upsert_trip_place(db, arg_1, arg_2, arg_3, arg_4, arg_5) {
         -- name text
         $3,
         -- date text
-        $4,
-        -- google_maps_link text
-        $5);
+        $4);
 
 "
   |> pgo.execute(
     db,
-    [
-      pgo.text(arg_1),
-      pgo.text(arg_2),
-      pgo.text(arg_3),
-      pgo.text(arg_4),
-      pgo.text(arg_5),
-    ],
+    [pgo.text(arg_1), pgo.text(arg_2), pgo.text(arg_3), pgo.text(arg_4)],
     decode.from(decoder, _),
   )
 }

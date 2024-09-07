@@ -146,11 +146,11 @@ pub type TripUpdatePageEvent {
 }
 
 pub type TripPlaceCreateForm {
-  TripPlaceCreateForm(place: String, date: String, google_maps_link: String)
+  TripPlaceCreateForm(place: String, date: String)
 }
 
 pub fn default_trip_place_create_form() {
-  TripPlaceCreateForm(place: "", date: "", google_maps_link: "")
+  TripPlaceCreateForm(place: "", date: "")
 }
 
 pub type TripPlaceCreatePageEvent {

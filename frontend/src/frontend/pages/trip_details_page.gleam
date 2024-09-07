@@ -74,7 +74,6 @@ pub fn trip_details_view(model: AppModel) {
         html.tr([], [
           html.th([], [element.text("Place")]),
           html.th([], [element.text("Date")]),
-          html.th([], [element.text("Maps Link")]),
         ]),
       ]),
       html.tbody(
@@ -97,15 +96,6 @@ pub fn trip_details_view(model: AppModel) {
               ]),
               html.td([], [
                 element.text(date_util_shared.to_human_readable(place.date)),
-              ]),
-              html.td([], [
-                case place.google_maps_link {
-                  option.Some(v) ->
-                    html.a([attribute.href(v), attribute.target("_blank")], [
-                      element.text("Link to map"),
-                    ])
-                  _ -> element.text("")
-                },
               ]),
             ])
           }),

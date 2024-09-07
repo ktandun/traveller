@@ -56,27 +56,6 @@ pub fn trip_place_create_view(model: AppModel, trip_id: String) {
         ]),
         html.span([attribute.class("validity")], []),
       ]),
-      html.p([], [
-        html.label([], [element.text("Google Maps Link")]),
-        html.input([
-          event.on_input(fn(google_maps_link) {
-            events.TripPlaceCreatePage(
-              events.TripPlaceCreatePageUserInputCreateTripPlaceRequest(
-                events.TripPlaceCreateForm(
-                  ..model.trip_place_create,
-                  google_maps_link: google_maps_link,
-                ),
-              ),
-            )
-          }),
-          attribute.name("google_maps_link"),
-          attribute.placeholder("https://..."),
-          attribute.type_("url"),
-          attribute.required(True),
-          attribute.value(model.trip_place_create.google_maps_link),
-        ]),
-        html.span([attribute.class("validity")], []),
-      ]),
     ]),
     html.div([], [element.text(model.trip_create_errors)]),
     html.button(
@@ -125,11 +104,7 @@ pub fn handle_trip_place_create_page_event(
           model,
           api.send_create_trip_place_request(
             trip_id,
-            trip_models.CreateTripPlaceRequest(
-              place: form.place,
-              date:,
-              google_maps_link: option.Some(form.google_maps_link),
-            ),
+            trip_models.CreateTripPlaceRequest(place: form.place, date:),
           ),
         )
         _ -> #(model, effect.none())

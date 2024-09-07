@@ -73,12 +73,7 @@ pub fn user_trips_encoder(data: UserTrips) {
 //
 
 pub type UserTripPlace {
-  UserTripPlace(
-    trip_place_id: String,
-    name: String,
-    date: birl.Day,
-    google_maps_link: Option(String),
-  )
+  UserTripPlace(trip_place_id: String, name: String, date: birl.Day)
 }
 
 pub type UserTripPlaces {
@@ -96,8 +91,8 @@ pub fn default_user_trip_places() {
   UserTripPlaces(
     trip_id: "",
     destination: "",
-    start_date: birl.Day(1,1,1),
-    end_date: birl.Day(1,1,1),
+    start_date: birl.Day(1, 1, 1),
+    end_date: birl.Day(1, 1, 1),
     user_trip_places: [],
     user_trip_companions: [],
   )
@@ -107,12 +102,8 @@ pub fn user_trip_place_decoder() {
   use trip_place_id <- toy.field("trip_place_id", toy.string)
   use name <- toy.field("name", toy.string)
   use date <- toy.field("date", custom_decoders.day_decoder("date"))
-  use google_maps_link <- toy.field(
-    "google_maps_link",
-    toy.string |> toy.nullable,
-  )
 
-  toy.decoded(UserTripPlace(trip_place_id:, name:, date:, google_maps_link:))
+  toy.decoded(UserTripPlace(trip_place_id:, name:, date:))
 }
 
 pub fn user_trip_place_encoder(data: UserTripPlace) {
@@ -120,7 +111,6 @@ pub fn user_trip_place_encoder(data: UserTripPlace) {
     #("trip_place_id", json.string(data.trip_place_id |> string.lowercase)),
     #("name", json.string(data.name)),
     #("date", json.string(data.date |> date_util_shared.to_yyyy_mm_dd)),
-    #("google_maps_link", json.nullable(data.google_maps_link, of: json.string)),
   ])
 }
 
@@ -214,8 +204,8 @@ pub type CreateTripRequest {
 pub fn default_create_trip_request() {
   CreateTripRequest(
     destination: "",
-    start_date: birl.Day(1,1,1),
-    end_date: birl.Day(1,1,1),
+    start_date: birl.Day(1, 1, 1),
+    end_date: birl.Day(1, 1, 1),
   )
 }
 
@@ -244,37 +234,24 @@ pub fn create_trip_request_encoder(data: CreateTripRequest) {
 //
 
 pub type CreateTripPlaceRequest {
-  CreateTripPlaceRequest(
-    place: String,
-    date: birl.Day,
-    google_maps_link: Option(String),
-  )
+  CreateTripPlaceRequest(place: String, date: birl.Day)
 }
 
 pub fn default_create_trip_place_request() {
-  CreateTripPlaceRequest(
-    place: "",
-    date: birl.Day(1,1,1),
-    google_maps_link: option.None,
-  )
+  CreateTripPlaceRequest(place: "", date: birl.Day(1, 1, 1))
 }
 
 pub fn create_trip_place_request_decoder() {
   use place <- toy.field("place", toy.string |> toy.string_nonempty)
   use date <- toy.field("date", custom_decoders.day_decoder("date"))
-  use google_maps_link <- toy.field(
-    "google_maps_link",
-    toy.string |> toy.string_nonempty |> toy.nullable,
-  )
 
-  toy.decoded(CreateTripPlaceRequest(place:, date:, google_maps_link:))
+  toy.decoded(CreateTripPlaceRequest(place:, date:))
 }
 
 pub fn create_trip_place_request_encoder(data: CreateTripPlaceRequest) {
   json.object([
     #("place", json.string(data.place)),
     #("date", json.string(data.date |> date_util_shared.to_yyyy_mm_dd)),
-    #("google_maps_link", json.nullable(data.google_maps_link, of: json.string)),
   ])
 }
 
@@ -344,8 +321,8 @@ pub type UpdateTripRequest {
 pub fn default_update_trip_request() {
   UpdateTripRequest(
     destination: "",
-    start_date: birl.Day(1,1,1),
-    end_date: birl.Day(1,1,1),
+    start_date: birl.Day(1, 1, 1),
+    end_date: birl.Day(1, 1, 1),
   )
 }
 

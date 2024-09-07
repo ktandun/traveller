@@ -24,8 +24,7 @@ CREATE TABLE trip_places (
     trip_place_id uuid PRIMARY KEY,
     trip_id uuid REFERENCES trips (trip_id) NOT NULL,
     name text NOT NULL,
-    date date NOT NULL,
-    google_maps_link text
+    date date NOT NULL
 );
 
 CREATE TABLE trip_companions (
@@ -104,7 +103,7 @@ END
 $f$
 LANGUAGE PLPGSQL;
 
-CREATE OR REPLACE FUNCTION upsert_trip_place (trip_place_id text, trip_id text, name text, date text, google_maps_link text)
+CREATE OR REPLACE FUNCTION upsert_trip_place (trip_place_id text, trip_id text, name text, date text)
     RETURNS text
     AS $f$
 BEGIN
@@ -115,20 +114,18 @@ BEGIN
             trip_places tp
         WHERE
             tp.trip_place_id = upsert_trip_place.trip_place_id::uuid) THEN
-    INSERT INTO trip_places (trip_place_id, trip_id, name, date, google_maps_link)
+    INSERT INTO trip_places (trip_place_id, trip_id, name, date)
     SELECT
         upsert_trip_place.trip_place_id::uuid,
         upsert_trip_place.trip_id::uuid,
         upsert_trip_place.name,
-        upsert_trip_place.date::date,
-        upsert_trip_place.google_maps_link;
+        upsert_trip_place.date::date;
 ELSE
     UPDATE
         trip_places tp
     SET
         name = upsert_trip_place.name,
-        date = upsert_trip_place.date::date,
-        google_maps_link = upsert_trip_place.google_maps_link
+        date = upsert_trip_place.date::date
     WHERE
         tp.trip_place_id = upsert_trip_place.trip_place_id::uuid;
 END IF;
@@ -162,7 +159,7 @@ BEGIN
 places AS (
     SELECT
         tp.trip_id,
-        json_agg(json_build_object('trip_place_id', tp.trip_place_id, 'name', tp.name, 'date', to_char(tp.date, 'YYYY-MM-DD'), 'google_maps_link', tp.google_maps_link)) AS places
+        json_agg(json_build_object('trip_place_id', tp.trip_place_id, 'name', tp.name, 'date', to_char(tp.date, 'YYYY-MM-DD'))) AS places
     FROM
         trip_places tp
     GROUP BY
@@ -318,13 +315,13 @@ SELECT
     create_trip (user_id => 'ab995595-008e-4ab5-94bb-7845f5d48626', trip_id => '6dc47c9e-f363-4c0b-afbb-d3324a4e8d59', destination => 'Canada', start_date => '2024-03-01', end_date => '2024-03-28');
 
 SELECT
-    upsert_trip_place (trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Universal Studios', date => '2024-01-01', google_maps_link => 'https://maps.app.goo.gl/ztxEEUqyuoHvSUEu8');
+    upsert_trip_place (trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Universal Studios', date => '2024-01-01');
 
 SELECT
-    upsert_trip_place (trip_place_id => '65916ea8-c637-4921-89a0-97d3661ce782', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Botanical Garden', date => '2024-01-02', google_maps_link => 'https://maps.app.goo.gl/GCjgJNFi8zYUHvzv7');
+    upsert_trip_place (trip_place_id => '65916ea8-c637-4921-89a0-97d3661ce782', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Botanical Garden', date => '2024-01-02');
 
 SELECT
-    upsert_trip_place (trip_place_id => 'a99f7893-632a-41fb-bd40-2f8fe8dd1d7e', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Food Stalls', date => '2024-01-03', google_maps_link => NULL);
+    upsert_trip_place (trip_place_id => 'a99f7893-632a-41fb-bd40-2f8fe8dd1d7e', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Food Stalls', date => '2024-01-03');
 
 SELECT
     upsert_trip_companion (trip_companion_id => '7fccacf1-1f38-49ad-b9de-b3a9788508e1', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Noel', email => 'noel@gmail.com');
