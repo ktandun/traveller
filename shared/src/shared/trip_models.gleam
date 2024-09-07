@@ -392,7 +392,7 @@ pub fn place_activity_decoder() {
   use information_url <- toy.field("information_url", toy.string)
   use start_time <- toy.field("start_time", toy.string)
   use end_time <- toy.field("end_time", toy.string)
-  use entry_fee <- toy.field("entry_fee", toy.float)
+  use entry_fee <- toy.field("entry_fee", custom_decoders.number)
 
   toy.decoded(PlaceActivity(
     place_activity_id:,
