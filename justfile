@@ -5,8 +5,8 @@ export DATABASE_USER := "kenzietandun"
 export DATABASE_PASS := "password"
 export DATABASE_DB := "kenzietandun"
 
-run: build nginx
-    npx concurrently "just frontend" "just backend"
+run: build
+    npx concurrently "just nginx" "just frontend" "just backend"
 
 clean:
     cd backend && gleam clean && rm -f manifest.toml
