@@ -73,7 +73,14 @@ pub fn user_trips_encoder(data: UserTrips) {
 //
 
 pub type UserTripPlace {
-  UserTripPlace(trip_place_id: String, name: String, date: birl.Day)
+  UserTripPlace(
+    trip_place_id: String,
+    name: String,
+    date: birl.Day,
+    has_accomodation: Bool,
+    accomodation_paid: Bool,
+    activities_count: Int,
+  )
 }
 
 pub type UserTripPlaces {
@@ -102,8 +109,18 @@ pub fn user_trip_place_decoder() {
   use trip_place_id <- toy.field("trip_place_id", toy.string)
   use name <- toy.field("name", toy.string)
   use date <- toy.field("date", custom_decoders.day_decoder("date"))
+  use has_accomodation <- toy.field("has_accomodation", toy.bool)
+  use accomodation_paid <- toy.field("accomodation_paid", toy.bool)
+  use activities_count <- toy.field("activities_count", toy.int)
 
-  toy.decoded(UserTripPlace(trip_place_id:, name:, date:))
+  toy.decoded(UserTripPlace(
+    trip_place_id:,
+    name:,
+    date:,
+    has_accomodation:,
+    accomodation_paid:,
+    activities_count:,
+  ))
 }
 
 pub fn user_trip_place_encoder(data: UserTripPlace) {
@@ -111,6 +128,9 @@ pub fn user_trip_place_encoder(data: UserTripPlace) {
     #("trip_place_id", json.string(data.trip_place_id |> string.lowercase)),
     #("name", json.string(data.name)),
     #("date", json.string(data.date |> date_util_shared.to_yyyy_mm_dd)),
+    #("has_accomodation", json.bool(data.has_accomodation)),
+    #("accomodation_paid", json.bool(data.accomodation_paid)),
+    #("activities_count", json.int(data.activities_count)),
   ])
 }
 
@@ -364,10 +384,16 @@ pub type PlaceActivity {
 pub fn place_activity_decoder() {
   use place_activity_id <- toy.field("place_activity_id", toy.string)
   use name <- toy.field("name", toy.string)
-  use information_url <- toy.field("information_url", toy.string |> toy.nullable)
+  use information_url <- toy.field(
+    "information_url",
+    toy.string |> toy.nullable,
+  )
   use start_time <- toy.field("start_time", toy.string |> toy.nullable)
   use end_time <- toy.field("end_time", toy.string |> toy.nullable)
-  use entry_fee <- toy.field("entry_fee", custom_decoders.number |> toy.nullable)
+  use entry_fee <- toy.field(
+    "entry_fee",
+    custom_decoders.number |> toy.nullable,
+  )
 
   toy.decoded(PlaceActivity(
     place_activity_id:,

@@ -1,4 +1,7 @@
 -- migrate:up
+--------------------------------------------------------
+----------------- TABLES -------------------------------
+--------------------------------------------------------
 CREATE TABLE users (
     user_id uuid PRIMARY KEY,
     created_utc timestamp DEFAULT timezone('utc', now()),
@@ -44,6 +47,18 @@ CREATE TABLE place_activities (
     entry_fee numeric(18, 2)
 );
 
+CREATE TABLE place_accomodations (
+    place_accomodation_id uuid PRIMARY KEY,
+    trip_place_id uuid REFERENCES trip_places (trip_place_id) NOT NULL,
+    name text NOT NULL,
+    information_url text,
+    accomodation_fee numeric(18, 2),
+    paid bool DEFAULT FALSE
+);
+
+--------------------------------------------------------
+----------------- FUNCTIONS ----------------------------
+--------------------------------------------------------
 CREATE OR REPLACE FUNCTION create_trip (user_id text, trip_id text, destination text, start_date text, end_date text)
     RETURNS text
     AS $f$
@@ -156,12 +171,24 @@ BEGIN
         GROUP BY
             tc.trip_id
 ),
+activities_count AS (
+    SELECT
+        tp.trip_place_id,
+        COUNT(pactiv.place_activity_id) AS count
+    FROM
+        trip_places tp
+        LEFT JOIN place_activities pactiv ON tp.trip_place_id = pactiv.trip_place_id
+    GROUP BY
+        tp.trip_place_id
+),
 places AS (
     SELECT
         tp.trip_id,
-        json_agg(json_build_object('trip_place_id', tp.trip_place_id, 'name', tp.name, 'date', to_char(tp.date, 'YYYY-MM-DD'))) AS places
-    FROM
-        trip_places tp
+        json_agg(json_build_object('trip_place_id', tp.trip_place_id, 'name', tp.name, 'date', to_char(tp.date, 'YYYY-MM-DD'), 'has_accomodation', paccom.place_accomodation_id IS NOT NULL, 'accomodation_paid', coalesce(paccom.paid, FALSE), 'activities_count', acount.count)) AS places
+FROM
+    trip_places tp
+    LEFT JOIN place_accomodations paccom ON tp.trip_place_id = paccom.trip_place_id
+        LEFT JOIN activities_count acount ON tp.trip_place_id = acount.trip_place_id
     GROUP BY
         tp.trip_id
 ),
@@ -296,6 +323,27 @@ END;
 $f$
 LANGUAGE PLPGSQL;
 
+CREATE OR REPLACE FUNCTION create_place_accomodation (place_accomodation_id text, trip_place_id text, name text, information_url text, accomodation_fee numeric, paid bool)
+    RETURNS text
+    AS $f$
+BEGIN
+    INSERT INTO place_accomodations (place_accomodation_id, trip_place_id, name, information_url, accomodation_fee, paid)
+    SELECT
+        create_place_accomodation.place_accomodation_id::uuid,
+        create_place_accomodation.trip_place_id::uuid,
+        create_place_accomodation.name,
+        create_place_accomodation.information_url,
+        create_place_accomodation.accomodation_fee,
+        create_place_accomodation.paid;
+    --
+    RETURN create_place_accomodation.place_accomodation_id;
+END
+$f$
+LANGUAGE PLPGSQL;
+
+------------------------------------------------------
+----------------- SEED -------------------------------
+------------------------------------------------------
 SELECT
     create_user (user_id => 'ab995595-008e-4ab5-94bb-7845f5d48626', email => 'test@example.com', PASSWORD => crypt('password', gen_salt('bf', 8)));
 
@@ -330,10 +378,16 @@ SELECT
     upsert_trip_companion (trip_companion_id => '8D9102DD-747C-4E2A-B867-00C3A701D30C', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Senchou', email => 'senchou@gmail.com');
 
 SELECT
-    create_place_activity (place_activity_id => 'c26a0603-16d2-4156-b985-acf398b16cd2', trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', name => 'Battlestar Galactica: HUMAN vs. CYLON', information_url => 'https://www.sentosa.com.sg/en/things-to-do/attractions/universal-studios-singapore/', start_time => '10:00', end_time => '12:00', entry_fee => '3');
+    create_place_activity (place_activity_id => 'c26a0603-16d2-4156-b985-acf398b16cd2', trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', name => 'Battlestar Galactica: HUMAN vs. CYLON', information_url => 'https://www.sentosa.com.sg/en/things-to-do/attractions/universal-studios-singapore/', start_time => '10:00', end_time => '12:00', entry_fee => 3);
 
 SELECT
-    create_place_activity (place_activity_id => '5035f7ca-82e1-41ed-ba23-68a3ff53d47f', trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', name => 'TRANSFORMERS The Ride: The Ultimate 3D Battle', information_url => 'https://www.sentosa.com.sg/en/things-to-do/attractions/universal-studios-singapore/', start_time => '12:00', end_time => '13:00', entry_fee => '12');
+    create_place_activity (place_activity_id => '5035f7ca-82e1-41ed-ba23-68a3ff53d47f', trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', name => 'TRANSFORMERS The Ride: The Ultimate 3D Battle', information_url => 'https://www.sentosa.com.sg/en/things-to-do/attractions/universal-studios-singapore/', start_time => '12:00', end_time => '13:00', entry_fee => 12);
+
+SELECT
+    create_place_accomodation (place_accomodation_id => '58cc6f2b-4291-4396-bf4f-5102f8fce4fe', trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', name => 'Marina Bay Sands', information_url => 'https://www.marinabaysands.com', accomodation_fee => 120, paid => TRUE);
+
+SELECT
+    create_place_accomodation (place_accomodation_id => '40ca5e63-c08d-4731-b4c3-2f3846725541', trip_place_id => '65916ea8-c637-4921-89a0-97d3661ce782', name => 'Hilton Orchard', information_url => 'https://www.hilton.com/en/hotels/sinorhi-hilton-singapore-orchard/', accomodation_fee => 100, paid => FALSE);
 
 -- migrate:down
 DROP TABLE place_activities;

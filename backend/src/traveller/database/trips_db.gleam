@@ -1,11 +1,7 @@
 import birl
 import database/sql
-import decode
 import gleam/dynamic
-import gleam/float
-import gleam/io
 import gleam/list
-import gleam/option
 import gleam/pgo
 import gleam/result
 import gleam/string
@@ -335,12 +331,7 @@ pub fn create_place_activities(
       end_time => $6,
       entry_fee => $7)"
 
-  let return_type =
-    decode.into({
-      use create_place_activity <- decode.parameter
-      sql.CreatePlaceActivityRow(create_place_activity: create_place_activity)
-    })
-    |> decode.field(0, decode.string)
+  let return_type = dynamic.dynamic
 
   update_request.place_activities
   |> list.map(fn(activity) {
@@ -356,7 +347,7 @@ pub fn create_place_activities(
         pgo.nullable(pgo.text, activity.end_time),
         pgo.nullable(pgo.float, activity.entry_fee),
       ],
-      decode.from(return_type, _),
+      return_type,
     )
     |> result.map(fn(_) { Nil })
     |> database.to_app_error()

@@ -1,7 +1,7 @@
-import gleam/option
 import birl
 import gleam/io
 import gleam/list
+import gleam/option
 import gleeunit/should
 import shared/id
 import shared/trip_models
@@ -171,7 +171,7 @@ pub fn create_place_activity_test() {
           information_url: option.Some("https://www.google.com"),
           start_time: option.Some("11:00"),
           end_time: option.Some("15:00"),
-          entry_fee: option.Some(3.0)
+          entry_fee: option.Some(3.0),
         ),
       ],
     )

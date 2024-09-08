@@ -310,15 +310,13 @@ fn put_trip_place_activities(
     trip_models.place_activities_decoder(),
   ))
 
-  use _ <- web.require_ok(
-    trip_routes.handle_update_place_activities(
-      ctx,
-      user_id,
-      trip_id,
-      trip_place_id,
-      update_request,
-    ),
-  )
+  use _ <- web.require_ok(trip_routes.handle_update_place_activities(
+    ctx,
+    user_id,
+    trip_id,
+    trip_place_id,
+    update_request,
+  ))
 
   wisp.ok()
 }

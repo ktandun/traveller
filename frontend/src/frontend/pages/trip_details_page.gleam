@@ -1,5 +1,6 @@
 import frontend/events.{type AppModel, type TripDetailsPageEvent, AppModel}
 import frontend/web
+import gleam/int
 import gleam/list
 import gleam/option
 import lustre/attribute
@@ -75,7 +76,8 @@ pub fn trip_details_view(model: AppModel) {
           html.tr([], [
             html.th([], [element.text("Place")]),
             html.th([], [element.text("Date")]),
-            html.th([], [element.text("Links")]),
+            html.th([], [element.text("Accomodation")]),
+            html.th([], [element.text("Activities")]),
           ]),
         ]),
         html.tbody(
@@ -97,7 +99,34 @@ pub fn trip_details_view(model: AppModel) {
                         <> place.trip_place_id,
                       ),
                     ],
-                    [element.text("Activities")],
+                    [
+                      element.text(case
+                        place.has_accomodation,
+                        place.accomodation_paid
+                      {
+                        True, True -> "Paid"
+                        True, False -> "Booked, not paid"
+                        _, _ -> "Not booked"
+                      }),
+                    ],
+                  ),
+                ]),
+                html.td([attribute.class("links")], [
+                  html.a(
+                    [
+                      attribute.href(
+                        "/trips/"
+                        <> model.trip_details.trip_id
+                        <> "/places/"
+                        <> place.trip_place_id,
+                      ),
+                    ],
+                    [
+                      element.text(case place.activities_count {
+                        0 -> "None planned"
+                        count -> int.to_string(count) <> " planned"
+                      }),
+                    ],
                   ),
                 ]),
               ])

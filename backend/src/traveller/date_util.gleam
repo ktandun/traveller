@@ -27,5 +27,14 @@ pub fn is_before(start from: birl.Day, end to: birl.Day) -> Bool {
   let start_date = birl.set_day(now, from)
   let end_date = birl.set_day(now, to)
 
-  birl.to_unix(start_date) <= birl.to_unix(end_date)
+  birl.to_unix(start_date) < birl.to_unix(end_date)
+}
+
+pub fn is_before_or_equal(start from: birl.Day, end to: birl.Day) -> Bool {
+  let now = birl.now() |> birl.set_time_of_day(birl.TimeOfDay(0, 0, 0, 0))
+
+  let start_date = birl.set_day(now, from)
+  let end_date = birl.set_day(now, to)
+
+  birl.to_unix(start_date) < birl.to_unix(end_date)
 }

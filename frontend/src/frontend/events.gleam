@@ -1,7 +1,9 @@
 import env
 import frontend/routes.{type Route}
 import frontend/uuid_util
+import gleam/option.{type Option}
 import lustre_http.{type HttpError}
+import lustre_websocket as ws
 import shared/auth_models
 import shared/id.{type Id, type TripId, type TripPlaceId, type UserId}
 import shared/trip_models.{type UserTripCompanion}
@@ -11,6 +13,8 @@ pub type AppEvent {
   OnRouteChange(Route)
   ShowToast
   HideToast
+  // Websocket
+  WebsocketEvent(ws.WebSocketEvent)
   // page specific events
   LoginPage(LoginPageEvent)
   TripsDashboardPage(TripsDashboardPageEvent)
@@ -24,6 +28,7 @@ pub type AppEvent {
 
 pub type AppModel {
   AppModel(
+    ws: Option(ws.WebSocket),
     route: Route,
     toast: Toast,
     show_loading: Bool,
@@ -80,6 +85,7 @@ pub type ToastStatus {
 
 pub fn default_app_model() {
   AppModel(
+    ws: option.None,
     route: routes.Login,
     toast: Toast(visible: False, header: "", content: "", status: Success),
     show_loading: False,

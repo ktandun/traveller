@@ -45,6 +45,28 @@ $$;
 
 
 --
+-- Name: create_place_accomodation(text, text, text, text, numeric, boolean); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.create_place_accomodation(place_accomodation_id text, trip_place_id text, name text, information_url text, accomodation_fee numeric, paid boolean) RETURNS text
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    INSERT INTO place_accomodations (place_accomodation_id, trip_place_id, name, information_url, accomodation_fee, paid)
+    SELECT
+        create_place_accomodation.place_accomodation_id::uuid,
+        create_place_accomodation.trip_place_id::uuid,
+        create_place_accomodation.name,
+        create_place_accomodation.information_url,
+        create_place_accomodation.accomodation_fee,
+        create_place_accomodation.paid;
+    --
+    RETURN create_place_accomodation.place_accomodation_id;
+END
+$$;
+
+
+--
 -- Name: create_place_activity(text, text, text, text, text, text, numeric); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -170,12 +192,24 @@ BEGIN
         GROUP BY
             tc.trip_id
 ),
+activities_count AS (
+    SELECT
+        tp.trip_place_id,
+        COUNT(pactiv.place_activity_id) AS count
+    FROM
+        trip_places tp
+        LEFT JOIN place_activities pactiv ON tp.trip_place_id = pactiv.trip_place_id
+    GROUP BY
+        tp.trip_place_id
+),
 places AS (
     SELECT
         tp.trip_id,
-        json_agg(json_build_object('trip_place_id', tp.trip_place_id, 'name', tp.name, 'date', to_char(tp.date, 'YYYY-MM-DD'))) AS places
-    FROM
-        trip_places tp
+        json_agg(json_build_object('trip_place_id', tp.trip_place_id, 'name', tp.name, 'date', to_char(tp.date, 'YYYY-MM-DD'), 'has_accomodation', paccom.place_accomodation_id IS NOT NULL, 'accomodation_paid', coalesce(paccom.paid, FALSE), 'activities_count', acount.count)) AS places
+FROM
+    trip_places tp
+    LEFT JOIN place_accomodations paccom ON tp.trip_place_id = paccom.trip_place_id
+        LEFT JOIN activities_count acount ON tp.trip_place_id = acount.trip_place_id
     GROUP BY
         tp.trip_id
 ),
@@ -307,6 +341,20 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+-- Name: place_accomodations; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.place_accomodations (
+    place_accomodation_id uuid NOT NULL,
+    trip_place_id uuid NOT NULL,
+    name text NOT NULL,
+    information_url text,
+    accomodation_fee numeric(18,2),
+    paid boolean DEFAULT false
+);
+
+
+--
 -- Name: place_activities; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -389,6 +437,14 @@ CREATE TABLE public.users (
 
 
 --
+-- Name: place_accomodations place_accomodations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.place_accomodations
+    ADD CONSTRAINT place_accomodations_pkey PRIMARY KEY (place_accomodation_id);
+
+
+--
 -- Name: place_activities place_activities_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -450,6 +506,14 @@ ALTER TABLE ONLY public.users
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (user_id);
+
+
+--
+-- Name: place_accomodations place_accomodations_trip_place_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.place_accomodations
+    ADD CONSTRAINT place_accomodations_trip_place_id_fkey FOREIGN KEY (trip_place_id) REFERENCES public.trip_places(trip_place_id);
 
 
 --

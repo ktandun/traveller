@@ -68,7 +68,10 @@ pub fn trip_place_activities_view(
       False ->
         list.map(model.trip_place_activities.place_activities, fn(activity) {
           html.details([attribute.open(True)], [
-            html.summary([], [element.text(activity.name)]),
+            html.summary([attribute.class("summary-title")], [
+              html.span([], [element.text(activity.name)]),
+              html.span([], [element.text(activity.start_time)]),
+            ]),
             html.div([attribute.class("inputs")], [
               form_components.text_input(
                 label_text: "Name",

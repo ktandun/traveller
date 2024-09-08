@@ -4,7 +4,6 @@ import frontend/form_components
 import frontend/toast
 import frontend/web
 import gleam/option
-import lustre/attribute
 import lustre/effect
 import lustre/element
 import lustre/element/html
@@ -22,8 +21,9 @@ pub fn trip_create_view(model: AppModel) {
         label_text: "From",
         label_name: "from",
         required: True,
-        placeholder: "",
         value: model.trip_create.start_date,
+        min: option.None,
+        max: option.None,
         on_input: fn(start_date) {
           events.TripCreatePage(events.TripCreatePageUserInputCreateTripRequest(
             events.CreateTripForm(..model.trip_create, start_date:),
@@ -34,8 +34,9 @@ pub fn trip_create_view(model: AppModel) {
         label_text: "To",
         label_name: "to",
         required: True,
-        placeholder: "",
         value: model.trip_create.end_date,
+        min: option.Some(model.trip_create.start_date),
+        max: option.None,
         on_input: fn(end_date) {
           events.TripCreatePage(events.TripCreatePageUserInputCreateTripRequest(
             events.CreateTripForm(..model.trip_create, end_date:),

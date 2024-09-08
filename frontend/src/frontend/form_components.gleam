@@ -1,4 +1,5 @@
 import frontend/events.{type AppEvent}
+import gleam/option
 import lustre/attribute.{type Attribute}
 import lustre/element
 import lustre/element/html
@@ -22,14 +23,22 @@ pub fn date_input(
   required required: Bool,
   on_input input_handler: fn(String) -> events.AppEvent,
   value value: String,
-  placeholder placeholder: String,
+  min min_value: option.Option(String),
+  max max_value: option.Option(String),
 ) {
   form_input(label_text: label, label_name: name, attributes: [
     event.on_input(input_handler),
     attribute.type_("date"),
     attribute.required(required),
     attribute.value(value),
-    attribute.placeholder(placeholder),
+    case min_value {
+      option.Some(min_value) -> attribute.min(min_value)
+      _ -> attribute.none()
+    },
+    case max_value {
+      option.Some(max_value) -> attribute.max(max_value)
+      _ -> attribute.none()
+    },
   ])
 }
 
