@@ -5,6 +5,7 @@ import gleam/option
 import gleeunit/should
 import shared/id
 import shared/trip_models
+import shared/trip_models_codecs
 import test_utils
 import traveller/json_util
 import traveller/router
@@ -175,7 +176,7 @@ pub fn create_place_activity_test() {
         ),
       ],
     )
-    |> trip_models.place_activities_encoder
+    |> trip_models_codecs.place_activities_encoder
 
   let response =
     testing.put_json(

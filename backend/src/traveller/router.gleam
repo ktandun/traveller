@@ -4,6 +4,7 @@ import shared/auth_models
 import shared/constants
 import shared/id.{type Id, type UserId}
 import shared/trip_models
+import shared/trip_models_codecs
 import traveller/json_util
 import traveller/routes/auth_routes
 import traveller/routes/trip_routes
@@ -289,7 +290,7 @@ fn get_trip_place_activities(
   )
 
   place_activities
-  |> trip_models.place_activities_encoder
+  |> trip_models_codecs.place_activities_encoder
   |> json.to_string_builder
   |> wisp.json_response(200)
 }
@@ -307,7 +308,7 @@ fn put_trip_place_activities(
   use request_body <- wisp.require_string_body(req)
   use update_request <- web.require_valid_json(json_util.try_decode(
     request_body,
-    trip_models.place_activities_decoder(),
+    trip_models_codecs.place_activities_decoder(),
   ))
 
   use _ <- web.require_ok(trip_routes.handle_update_place_activities(

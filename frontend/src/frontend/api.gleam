@@ -13,6 +13,7 @@ import lustre_http.{type HttpError}
 import shared/auth_models
 import shared/id
 import shared/trip_models
+import shared/trip_models_codecs
 import toy
 
 pub type IncompleteRequest
@@ -284,7 +285,7 @@ pub fn send_get_place_activities_request(trip_id: String, trip_place_id: String)
   |> with_method(Get)
   |> with_response_decoder(fn(response) {
     response
-    |> toy.decode(trip_models.place_activities_decoder())
+    |> toy.decode(trip_models_codecs.place_activities_decoder())
     |> decode_util.map_toy_error_to_decode_errors()
   })
   |> with_to_event(fn(result) {
@@ -306,7 +307,9 @@ pub fn send_place_activities_update_request(
     "/api/trips/" <> trip_id <> "/places/" <> trip_place_id <> "/activities",
   )
   |> with_method(Put)
-  |> with_json_body(update_request |> trip_models.place_activities_encoder)
+  |> with_json_body(
+    update_request |> trip_models_codecs.place_activities_encoder,
+  )
   |> with_ignore_response_to_event(fn(response) {
     events.TripPlaceActivitiesPage(
       events.TripPlaceActivitiesPageApiReturnedSaveResponse(response),

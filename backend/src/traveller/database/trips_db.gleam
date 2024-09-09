@@ -11,6 +11,7 @@ import shared/trip_models.{
   type CreateTripPlaceRequest, type CreateTripRequest, type PlaceActivities,
   type TripCompanion, type UpdateTripRequest,
 }
+import shared/trip_models_codecs
 import toy
 import traveller/database
 import traveller/date_util
@@ -308,7 +309,7 @@ pub fn get_place_activities(
 
   use place_activities <- result.try(json_util.try_decode(
     row,
-    trip_models.place_activities_decoder(),
+    trip_models_codecs.place_activities_decoder(),
   ))
 
   Ok(place_activities)
