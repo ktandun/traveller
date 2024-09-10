@@ -28,6 +28,8 @@ pub fn require_ok(
 }
 
 pub fn error_to_app_event(error: HttpError, model: AppModel) {
+  let model = model |> events.set_hide_loading()
+
   case error {
     lustre_http.OtherError(400, _content) -> #(
       model

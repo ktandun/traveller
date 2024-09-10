@@ -439,7 +439,10 @@ pub fn update_place_accomodation(
     ctx.db,
     [
       pgo.text(trip_place_id),
-      pgo.text(update_request.place_accomodation_id),
+      pgo.text(case string.is_empty(update_request.place_accomodation_id) {
+        True -> ctx.uuid_provider() |> uuid.to_string
+        False -> update_request.place_accomodation_id
+      }),
       pgo.text(update_request.accomodation_name),
       pgo.nullable(pgo.text, update_request.information_url),
       pgo.nullable(pgo.float, update_request.accomodation_fee),

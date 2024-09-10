@@ -49,7 +49,7 @@ CREATE TABLE place_activities (
 
 CREATE TABLE place_accomodations (
     place_accomodation_id uuid PRIMARY KEY,
-    trip_place_id uuid REFERENCES trip_places (trip_place_id) NOT NULL,
+    trip_place_id uuid REFERENCES trip_places (trip_place_id) NOT NULL UNIQUE,
     name text NOT NULL,
     information_url text,
     accomodation_fee numeric(18, 2),

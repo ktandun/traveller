@@ -3,6 +3,7 @@ import frontend/events.{
   type AppModel, type TripPlaceAccomodationPageEvent, AppModel,
 }
 import frontend/form_components as fc
+import frontend/toast
 import frontend/uuid_util
 import frontend/web
 import gleam/float
@@ -61,7 +62,6 @@ pub fn trip_place_accomodations_view(
         |> fc.with_form_type(fc.MoneyInput)
         |> fc.with_label("Accomodation Fee")
         |> fc.with_name("accomodation-fee")
-        |> fc.with_required
         |> fc.with_value(accomodation.accomodation_fee)
         |> fc.with_on_input(fn(accomodation_fee) {
           events.TripPlaceAccomodationPage(
@@ -88,6 +88,7 @@ pub fn trip_place_accomodations_view(
     html.div([attribute.class("buttons")], [
       html.button(
         [
+          attribute.disabled(model.show_loading),
           event.on_click(
             events.TripPlaceAccomodationPage(
               events.TripPlaceAccomodationPageUserClickedSave(
@@ -97,7 +98,12 @@ pub fn trip_place_accomodations_view(
             ),
           ),
         ],
-        [element.text("Save Accomodation")],
+        [
+          element.text(case model.show_loading {
+            True -> "Saving..."
+            False -> "Save Accomodation"
+          }),
+        ],
       ),
     ]),
   ])
@@ -113,7 +119,7 @@ pub fn handle_trip_place_accomodations_page_event(
       effect.none(),
     )
     events.TripPlaceAccomodationPageUserClickedSave(trip_id, trip_place_id) -> #(
-      model,
+      model |> events.set_show_loading(),
       api.send_place_accomodation_update_request(
         trip_id,
         trip_place_id,
@@ -137,21 +143,24 @@ pub fn handle_trip_place_accomodations_page_event(
         ),
       ),
     )
-    events.TripPlaceAccomodationPageApiReturnedSaveResponse(response) -> #(
-      model,
-      effect.none(),
-    )
+    events.TripPlaceAccomodationPageApiReturnedSaveResponse(response) ->
+      case response {
+        Ok(_) -> #(
+          model
+            |> events.set_hide_loading()
+            |> toast.set_success_toast(content: "Accomodation Updated"),
+          effect.batch([
+            effect.from(fn(dispatch) { dispatch(events.ShowToast) }),
+          ]),
+        )
+        Error(e) -> web.error_to_app_event(e, model)
+      }
     events.TripPlaceAccomodationPageApiReturnedAccomodation(response) ->
       case response {
         Ok(response) -> #(
           model
             |> events.set_trip_place_accomodation(events.PlaceAccomodationForm(
-              place_accomodation_id: case
-                string.is_empty(response.place_accomodation_id)
-              {
-                True -> uuid_util.gen_uuid()
-                False -> response.place_accomodation_id
-              },
+              place_accomodation_id: response.place_accomodation_id,
               place_name: response.place_name,
               accomodation_name: response.accomodation_name,
               information_url: option.unwrap(response.information_url, ""),

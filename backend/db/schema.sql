@@ -504,6 +504,14 @@ ALTER TABLE ONLY public.place_accomodations
 
 
 --
+-- Name: place_accomodations place_accomodations_trip_place_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.place_accomodations
+    ADD CONSTRAINT place_accomodations_trip_place_id_key UNIQUE (trip_place_id);
+
+
+--
 -- Name: place_activities place_activities_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 

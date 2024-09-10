@@ -43,6 +43,14 @@ pub type AppModel {
   )
 }
 
+pub fn set_show_loading(model: AppModel) {
+  AppModel(..model, show_loading: True)
+}
+
+pub fn set_hide_loading(model: AppModel) {
+  AppModel(..model, show_loading: False)
+}
+
 pub fn set_trip_place_accomodation(model: AppModel, trip_place_accomodation) {
   AppModel(..model, trip_place_accomodation:)
 }

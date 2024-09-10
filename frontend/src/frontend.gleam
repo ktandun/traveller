@@ -147,7 +147,7 @@ pub fn view(model: AppModel) -> Element(AppEvent) {
       model.toast.status,
     ),
     // Global loading spinner
-    loading_spinner.simple_loading_spinner(model),
+    //loading_spinner.simple_loading_spinner(model),
     // Route specific views
     case model.route {
       routes.ErrorFiveHundred -> error_500.error_five_hundred()

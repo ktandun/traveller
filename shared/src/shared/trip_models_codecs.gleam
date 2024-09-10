@@ -74,7 +74,10 @@ pub fn place_activities_encoder(data: trip_models.PlaceActivities) {
 pub fn place_accomodation_decoder() {
   use place_accomodation_id <- toy.field("place_accomodation_id", toy.string)
   use place_name <- toy.field("place_name", toy.string)
-  use accomodation_name <- toy.field("accomodation_name", toy.string)
+  use accomodation_name <- toy.field(
+    "accomodation_name",
+    toy.string |> toy.string_nonempty,
+  )
   use information_url <- toy.field(
     "information_url",
     toy.string |> toy.nullable,
