@@ -1,12 +1,13 @@
 import gleam/bool
 import gleam/list
-import gleam/pgo
+import gleam/option.{type Option}
 import gleam/result
 import gleam/string
 import shared/id.{type Id, type TripId, type TripPlaceId, type UserId}
 import shared/trip_models.{
-  type CreateTripPlaceRequest, type CreateTripRequest, type PlaceActivities,
-  type UpdateTripCompanionsRequest, type UpdateTripRequest, type UserTrips,
+  type CreateTripPlaceRequest, type CreateTripRequest, type PlaceAccomodation,
+  type PlaceActivities, type UpdateTripCompanionsRequest, type UpdateTripRequest,
+  type UserTrips,
 }
 import traveller/database/trips_db
 import traveller/date_util
@@ -210,4 +211,42 @@ pub fn handle_update_place_activities(
   ))
 
   Ok(Nil)
+}
+
+// Retrieve all user's trip place activities
+pub fn handle_get_place_accomodation(
+  ctx: Context,
+  user_id: Id(UserId),
+  trip_id: Id(TripId),
+  trip_place_id: Id(TripPlaceId),
+) -> Result(PlaceAccomodation, AppError) {
+  use _ <- result.try(trips_db.ensure_trip_place_id_exists(
+    ctx,
+    user_id,
+    trip_id,
+    trip_place_id,
+  ))
+
+  trips_db.get_place_accomodation(ctx, trip_place_id)
+  |> result.map(fn(accomodation) {
+    option.unwrap(accomodation, trip_models.default_place_accomodation())
+  })
+}
+
+// Retrieve all user's trip place activities
+pub fn handle_update_place_accomodation(
+  ctx: Context,
+  user_id: Id(UserId),
+  trip_id: Id(TripId),
+  trip_place_id: Id(TripPlaceId),
+  update_request: trip_models.PlaceAccomodation,
+) -> Result(Nil, AppError) {
+  use _ <- result.try(trips_db.ensure_trip_place_id_exists(
+    ctx,
+    user_id,
+    trip_id,
+    trip_place_id,
+  ))
+
+  trips_db.update_place_accomodation(ctx, trip_place_id, update_request)
 }

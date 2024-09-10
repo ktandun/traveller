@@ -1,7 +1,9 @@
-import shared/trip_models
 import gleam/json
 import shared/custom_decoders
+import shared/trip_models
 import toy
+
+//
 
 pub fn place_activity_decoder() {
   use place_activity_id <- toy.field("place_activity_id", toy.string)
@@ -64,5 +66,42 @@ pub fn place_activities_encoder(data: trip_models.PlaceActivities) {
       "place_activities",
       json.array(from: data.place_activities, of: place_activity_encoder),
     ),
+  ])
+}
+
+//
+
+pub fn place_accomodation_decoder() {
+  use place_accomodation_id <- toy.field("place_accomodation_id", toy.string)
+  use place_name <- toy.field("place_name", toy.string)
+  use accomodation_name <- toy.field("accomodation_name", toy.string)
+  use information_url <- toy.field(
+    "information_url",
+    toy.string |> toy.nullable,
+  )
+  use accomodation_fee <- toy.field(
+    "accomodation_fee",
+    custom_decoders.number |> toy.nullable,
+  )
+  use paid <- toy.field("paid", toy.bool)
+
+  toy.decoded(trip_models.PlaceAccomodation(
+    place_accomodation_id:,
+    place_name:,
+    accomodation_name:,
+    information_url:,
+    accomodation_fee:,
+    paid:,
+  ))
+}
+
+pub fn place_accomodation_encoder(data: trip_models.PlaceAccomodation) {
+  json.object([
+    #("place_accomodation_id", json.string(data.place_accomodation_id)),
+    #("place_name", json.string(data.place_name)),
+    #("accomodation_name", json.string(data.accomodation_name)),
+    #("information_url", json.nullable(data.information_url, json.string)),
+    #("accomodation_fee", json.nullable(data.accomodation_fee, json.float)),
+    #("paid", json.bool(data.paid)),
   ])
 }

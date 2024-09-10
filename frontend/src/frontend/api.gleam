@@ -4,7 +4,6 @@ import frontend/events.{type AppEvent}
 import gleam/dynamic.{type Decoder}
 import gleam/http
 import gleam/http/request
-import gleam/io
 import gleam/json.{type Json}
 import gleam/option.{type Option}
 import gleam/result
@@ -313,6 +312,51 @@ pub fn send_place_activities_update_request(
   |> with_ignore_response_to_event(fn(response) {
     events.TripPlaceActivitiesPage(
       events.TripPlaceActivitiesPageApiReturnedSaveResponse(response),
+    )
+  })
+  |> build
+  |> send
+}
+
+pub fn send_get_place_accomodation_request(
+  trip_id: String,
+  trip_place_id: String,
+) {
+  new_request()
+  |> with_url(
+    "/api/trips/" <> trip_id <> "/places/" <> trip_place_id <> "/accomodations",
+  )
+  |> with_method(Get)
+  |> with_response_decoder(fn(response) {
+    response
+    |> toy.decode(trip_models_codecs.place_accomodation_decoder())
+    |> decode_util.map_toy_error_to_decode_errors()
+  })
+  |> with_to_event(fn(result) {
+    events.TripPlaceAccomodationPage(
+      events.TripPlaceAccomodationPageApiReturnedAccomodation(result),
+    )
+  })
+  |> build
+  |> send
+}
+
+pub fn send_place_accomodation_update_request(
+  trip_id: String,
+  trip_place_id: String,
+  update_request: trip_models.PlaceAccomodation,
+) {
+  new_request()
+  |> with_url(
+    "/api/trips/" <> trip_id <> "/places/" <> trip_place_id <> "/accomodations",
+  )
+  |> with_method(Put)
+  |> with_json_body(trip_models_codecs.place_accomodation_encoder(
+    update_request,
+  ))
+  |> with_ignore_response_to_event(fn(decode_result) {
+    events.TripPlaceAccomodationPage(
+      events.TripPlaceAccomodationPageApiReturnedSaveResponse(decode_result),
     )
   })
   |> build

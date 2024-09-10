@@ -52,8 +52,8 @@ pub fn trip_details_view(model: AppModel) {
         ],
         [
           element.text(case model.trip_details.user_trip_places {
-            [] -> "Add First Place"
-            _ -> "Add More Places"
+            [] -> "Add First City"
+            _ -> "Add More Cities"
           }),
         ],
       ),
@@ -96,7 +96,8 @@ pub fn trip_details_view(model: AppModel) {
                         "/trips/"
                         <> model.trip_details.trip_id
                         <> "/places/"
-                        <> place.trip_place_id,
+                        <> place.trip_place_id
+                        <> "/accomodations/",
                       ),
                     ],
                     [
@@ -111,14 +112,15 @@ pub fn trip_details_view(model: AppModel) {
                     ],
                   ),
                 ]),
-                html.td([attribute.class("links")], [
+                html.td([], [
                   html.a(
                     [
                       attribute.href(
                         "/trips/"
                         <> model.trip_details.trip_id
                         <> "/places/"
-                        <> place.trip_place_id,
+                        <> place.trip_place_id
+                        <> "/activities/",
                       ),
                     ],
                     [

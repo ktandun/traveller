@@ -389,3 +389,27 @@ pub type PlaceActivities {
     place_activities: List(PlaceActivity),
   )
 }
+
+//
+
+pub type PlaceAccomodation {
+  PlaceAccomodation(
+    place_accomodation_id: String,
+    place_name: String,
+    accomodation_name: String,
+    information_url: Option(String),
+    accomodation_fee: Option(Float),
+    paid: Bool,
+  )
+}
+
+pub fn default_place_accomodation() {
+  PlaceAccomodation(
+    place_accomodation_id: "",
+    place_name: "",
+    accomodation_name: "",
+    information_url: option.None,
+    accomodation_fee: option.None,
+    paid: False,
+  )
+}

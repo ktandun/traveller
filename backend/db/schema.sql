@@ -10,6 +10,13 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+-- *not* creating schema, since initdb creates it
+
+
+--
 -- Name: pgcrypto; Type: EXTENSION; Schema: -; Owner: -
 --
 
@@ -40,28 +47,6 @@ BEGIN
             u.email = check_user_login.email
             AND u.password = CRYPT(check_user_login.PASSWORD, u.password)
         LIMIT 1);
-END
-$$;
-
-
---
--- Name: create_place_accomodation(text, text, text, text, numeric, boolean); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.create_place_accomodation(place_accomodation_id text, trip_place_id text, name text, information_url text, accomodation_fee numeric, paid boolean) RETURNS text
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-    INSERT INTO place_accomodations (place_accomodation_id, trip_place_id, name, information_url, accomodation_fee, paid)
-    SELECT
-        create_place_accomodation.place_accomodation_id::uuid,
-        create_place_accomodation.trip_place_id::uuid,
-        create_place_accomodation.name,
-        create_place_accomodation.information_url,
-        create_place_accomodation.accomodation_fee,
-        create_place_accomodation.paid;
-    --
-    RETURN create_place_accomodation.place_accomodation_id;
 END
 $$;
 
@@ -176,6 +161,30 @@ $$;
 
 
 --
+-- Name: trip_place_accomodations_view(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.trip_place_accomodations_view() RETURNS TABLE(place_accomodation_id uuid, trip_place_id uuid, place_name text, accomodation_name text, information_url text, accomodation_fee numeric, paid boolean)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        paccom.place_accomodation_id,
+        paccom.trip_place_id,
+        tplac.name AS place_name,
+        paccom.name AS accomodation_name,
+        paccom.information_url,
+        paccom.accomodation_fee,
+        paccom.paid
+    FROM
+        place_accomodations paccom
+        INNER JOIN trip_places tplac ON paccom.trip_place_id = tplac.trip_place_id;
+END
+$$;
+
+
+--
 -- Name: trips_view(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -202,12 +211,20 @@ activities_count AS (
     GROUP BY
         tp.trip_place_id
 ),
+trip_places_ordered_by_date AS (
+    SELECT
+        *
+    FROM
+        trip_places tp
+    ORDER BY
+        tp.date
+),
 places AS (
     SELECT
         tp.trip_id,
         json_agg(json_build_object('trip_place_id', tp.trip_place_id, 'name', tp.name, 'date', to_char(tp.date, 'YYYY-MM-DD'), 'has_accomodation', paccom.place_accomodation_id IS NOT NULL, 'accomodation_paid', coalesce(paccom.paid, FALSE), 'activities_count', acount.count)) AS places
 FROM
-    trip_places tp
+    trip_places_ordered_by_date tp
     LEFT JOIN place_accomodations paccom ON tp.trip_place_id = paccom.trip_place_id
         LEFT JOIN activities_count acount ON tp.trip_place_id = acount.trip_place_id
     GROUP BY
@@ -260,6 +277,48 @@ BEGIN
         trips.trip_id = update_trip.trip_id::uuid;
     --
     RETURN update_trip.trip_id;
+END
+$$;
+
+
+--
+-- Name: upsert_place_accomodation(text, text, text, text, numeric, boolean); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.upsert_place_accomodation(trip_place_id text, place_accomodation_id text, accomodation_name text, information_url text, accomodation_fee numeric, paid boolean) RETURNS text
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT
+            1
+        FROM
+            place_accomodations paccom
+        WHERE
+            paccom.place_accomodation_id = upsert_place_accomodation.place_accomodation_id::uuid
+            AND paccom.trip_place_id = upsert_place_accomodation.trip_place_id::uuid) THEN
+    INSERT INTO place_accomodations (place_accomodation_id, trip_place_id, name, information_url, accomodation_fee, paid)
+    SELECT
+        upsert_place_accomodation.place_accomodation_id::uuid,
+        upsert_place_accomodation.trip_place_id::uuid,
+        upsert_place_accomodation.accomodation_name,
+        upsert_place_accomodation.information_url,
+        upsert_place_accomodation.accomodation_fee,
+        upsert_place_accomodation.paid;
+ELSE
+    UPDATE
+        place_accomodations paccom
+    SET
+        name = upsert_place_accomodation.accomodation_name,
+        information_url = upsert_place_accomodation.information_url,
+        accomodation_fee = upsert_place_accomodation.accomodation_fee,
+        paid = upsert_place_accomodation.paid
+    WHERE
+        paccom.place_accomodation_id = upsert_place_accomodation.place_accomodation_id::uuid
+        AND paccom.trip_place_id = upsert_place_accomodation.trip_place_id::uuid;
+END IF;
+    --
+    RETURN upsert_place_accomodation.place_accomodation_id;
 END
 $$;
 

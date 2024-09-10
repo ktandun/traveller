@@ -1,7 +1,9 @@
 import birl
 import database/sql
 import gleam/dynamic
+import gleam/io
 import gleam/list
+import gleam/option.{type Option}
 import gleam/pgo
 import gleam/result
 import gleam/string
@@ -367,6 +369,84 @@ pub fn delete_place_activities(
   let trip_place_id = uuid_util.from_string(id.id_value(trip_place_id))
 
   sql.delete_place_activities(ctx.db, user_id, trip_id, trip_place_id)
+  |> result.map(fn(_) { Nil })
+  |> database.to_app_error()
+}
+
+pub fn get_place_accomodation(
+  ctx: Context,
+  trip_place_id: Id(TripPlaceId),
+) -> Result(Option(trip_models.PlaceAccomodation), AppError) {
+  let trip_place_id = id.id_value(trip_place_id)
+
+  let sql =
+    "
+    SELECT
+      json_build_object(
+        'place_accomodation_id', place_accomodation_id,
+        'place_name', place_name,
+        'accomodation_name', accomodation_name,
+        'information_url', information_url,
+        'accomodation_fee', accomodation_fee,
+        'paid', paid
+      )
+    FROM 
+        trip_place_accomodations_view ()
+    WHERE 
+        trip_place_id = $1"
+
+  let return_type = dynamic.element(0, dynamic.string)
+
+  use pgo.Returned(_, rows) <- result.try(
+    pgo.execute(sql, ctx.db, [pgo.text(trip_place_id)], return_type)
+    |> database.to_app_error(),
+  )
+
+  case rows {
+    [] -> Ok(option.None)
+    _ -> {
+      let assert [row, ..] = rows
+
+      json_util.try_decode(row, trip_models_codecs.place_accomodation_decoder())
+      |> result.map(fn(r) { option.Some(r) })
+    }
+  }
+}
+
+pub fn update_place_accomodation(
+  ctx: Context,
+  trip_place_id: Id(TripPlaceId),
+  update_request: trip_models.PlaceAccomodation,
+) -> Result(Nil, AppError) {
+  let trip_place_id = id.id_value(trip_place_id)
+
+  let sql =
+    "
+    SELECT
+      upsert_place_accomodation(
+        trip_place_id => $1,
+        place_accomodation_id => $2,
+        accomodation_name => $3,
+        information_url => $4,
+        accomodation_fee => $5,
+        paid => $6
+      );"
+
+  let return_type = dynamic.dynamic
+
+  pgo.execute(
+    sql,
+    ctx.db,
+    [
+      pgo.text(trip_place_id),
+      pgo.text(update_request.place_accomodation_id),
+      pgo.text(update_request.accomodation_name),
+      pgo.nullable(pgo.text, update_request.information_url),
+      pgo.nullable(pgo.float, update_request.accomodation_fee),
+      pgo.bool(update_request.paid),
+    ],
+    return_type,
+  )
   |> result.map(fn(_) { Nil })
   |> database.to_app_error()
 }

@@ -20,6 +20,7 @@ pub type AppEvent {
   TripUpdatePage(TripUpdatePageEvent)
   TripPlaceCreatePage(TripPlaceCreatePageEvent)
   TripPlaceActivitiesPage(TripPlaceActivitiesPageEvent)
+  TripPlaceAccomodationPage(TripPlaceAccomodationPageEvent)
 }
 
 pub type AppModel {
@@ -38,7 +39,12 @@ pub type AppModel {
     trip_place_create: TripPlaceCreateForm,
     trip_place_create_errors: String,
     trip_place_activities: PlaceActivitiesForm,
+    trip_place_accomodation: PlaceAccomodationForm,
   )
+}
+
+pub fn set_trip_place_accomodation(model: AppModel, trip_place_accomodation) {
+  AppModel(..model, trip_place_accomodation:)
 }
 
 pub fn set_default_login_request(model: AppModel) {
@@ -94,6 +100,7 @@ pub fn default_app_model() {
     trip_place_create: default_trip_place_create_form(),
     trip_place_create_errors: "",
     trip_place_activities: default_trip_place_activities_form(),
+    trip_place_accomodation: default_place_accomodation_form(),
   )
 }
 
@@ -212,4 +219,38 @@ pub type TripPlaceActivitiesPageEvent {
   TripPlaceActivitiesUserClickedAddMore
   TripPlaceActivitiesUserClickedSave(trip_id: String, trip_place_id: String)
   TripPlaceActivitiesPageApiReturnedSaveResponse(Result(Nil, HttpError))
+}
+
+pub type PlaceAccomodationForm {
+  PlaceAccomodationForm(
+    place_accomodation_id: String,
+    place_name: String,
+    accomodation_name: String,
+    information_url: String,
+    accomodation_fee: String,
+    paid: Bool,
+  )
+}
+
+pub fn default_place_accomodation_form() {
+  PlaceAccomodationForm(
+    place_accomodation_id: "",
+    place_name: "",
+    accomodation_name: "",
+    information_url: "",
+    accomodation_fee: "",
+    paid: False,
+  )
+}
+
+pub type TripPlaceAccomodationPageEvent {
+  TripPlaceAccomodationPageApiReturnedAccomodation(
+    Result(trip_models.PlaceAccomodation, HttpError),
+  )
+  TripPlaceAccomodationPageUserInputForm(PlaceAccomodationForm)
+  TripPlaceAccomodationPageUserClickedSave(
+    trip_id: String,
+    trip_place_id: String,
+  )
+  TripPlaceAccomodationPageApiReturnedSaveResponse(Result(Nil, HttpError))
 }

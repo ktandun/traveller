@@ -181,12 +181,20 @@ activities_count AS (
     GROUP BY
         tp.trip_place_id
 ),
+trip_places_ordered_by_date AS (
+    SELECT
+        *
+    FROM
+        trip_places tp
+    ORDER BY
+        tp.date
+),
 places AS (
     SELECT
         tp.trip_id,
         json_agg(json_build_object('trip_place_id', tp.trip_place_id, 'name', tp.name, 'date', to_char(tp.date, 'YYYY-MM-DD'), 'has_accomodation', paccom.place_accomodation_id IS NOT NULL, 'accomodation_paid', coalesce(paccom.paid, FALSE), 'activities_count', acount.count)) AS places
 FROM
-    trip_places tp
+    trip_places_ordered_by_date tp
     LEFT JOIN place_accomodations paccom ON tp.trip_place_id = paccom.trip_place_id
         LEFT JOIN activities_count acount ON tp.trip_place_id = acount.trip_place_id
     GROUP BY
@@ -323,20 +331,68 @@ END;
 $f$
 LANGUAGE PLPGSQL;
 
-CREATE OR REPLACE FUNCTION create_place_accomodation (place_accomodation_id text, trip_place_id text, name text, information_url text, accomodation_fee numeric, paid bool)
+CREATE OR REPLACE FUNCTION trip_place_accomodations_view ()
+    RETURNS TABLE (
+        place_accomodation_id uuid,
+        trip_place_id uuid,
+        place_name text,
+        accomodation_name text,
+        information_url text,
+        accomodation_fee numeric,
+        paid bool
+    )
+    AS $f$
+BEGIN
+    RETURN QUERY
+    SELECT
+        paccom.place_accomodation_id,
+        paccom.trip_place_id,
+        tplac.name AS place_name,
+        paccom.name AS accomodation_name,
+        paccom.information_url,
+        paccom.accomodation_fee,
+        paccom.paid
+    FROM
+        place_accomodations paccom
+        INNER JOIN trip_places tplac ON paccom.trip_place_id = tplac.trip_place_id;
+END
+$f$
+LANGUAGE PLPGSQL;
+
+CREATE OR REPLACE FUNCTION upsert_place_accomodation (trip_place_id text, place_accomodation_id text, accomodation_name text, information_url text, accomodation_fee numeric, paid bool)
     RETURNS text
     AS $f$
 BEGIN
+    IF NOT EXISTS (
+        SELECT
+            1
+        FROM
+            place_accomodations paccom
+        WHERE
+            paccom.place_accomodation_id = upsert_place_accomodation.place_accomodation_id::uuid
+            AND paccom.trip_place_id = upsert_place_accomodation.trip_place_id::uuid) THEN
     INSERT INTO place_accomodations (place_accomodation_id, trip_place_id, name, information_url, accomodation_fee, paid)
     SELECT
-        create_place_accomodation.place_accomodation_id::uuid,
-        create_place_accomodation.trip_place_id::uuid,
-        create_place_accomodation.name,
-        create_place_accomodation.information_url,
-        create_place_accomodation.accomodation_fee,
-        create_place_accomodation.paid;
+        upsert_place_accomodation.place_accomodation_id::uuid,
+        upsert_place_accomodation.trip_place_id::uuid,
+        upsert_place_accomodation.accomodation_name,
+        upsert_place_accomodation.information_url,
+        upsert_place_accomodation.accomodation_fee,
+        upsert_place_accomodation.paid;
+ELSE
+    UPDATE
+        place_accomodations paccom
+    SET
+        name = upsert_place_accomodation.accomodation_name,
+        information_url = upsert_place_accomodation.information_url,
+        accomodation_fee = upsert_place_accomodation.accomodation_fee,
+        paid = upsert_place_accomodation.paid
+    WHERE
+        paccom.place_accomodation_id = upsert_place_accomodation.place_accomodation_id::uuid
+        AND paccom.trip_place_id = upsert_place_accomodation.trip_place_id::uuid;
+END IF;
     --
-    RETURN create_place_accomodation.place_accomodation_id;
+    RETURN upsert_place_accomodation.place_accomodation_id;
 END
 $f$
 LANGUAGE PLPGSQL;
@@ -384,10 +440,10 @@ SELECT
     create_place_activity (place_activity_id => '5035f7ca-82e1-41ed-ba23-68a3ff53d47f', trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', name => 'TRANSFORMERS The Ride: The Ultimate 3D Battle', information_url => 'https://www.sentosa.com.sg/en/things-to-do/attractions/universal-studios-singapore/', start_time => '12:00', end_time => '13:00', entry_fee => 12);
 
 SELECT
-    create_place_accomodation (place_accomodation_id => '58cc6f2b-4291-4396-bf4f-5102f8fce4fe', trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', name => 'Marina Bay Sands', information_url => 'https://www.marinabaysands.com', accomodation_fee => 120, paid => TRUE);
+    upsert_place_accomodation (trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', place_accomodation_id => '58cc6f2b-4291-4396-bf4f-5102f8fce4fe', accomodation_name => 'Marina Bay Sands', information_url => 'https://www.marinabaysands.com', accomodation_fee => 120, paid => TRUE);
 
 SELECT
-    create_place_accomodation (place_accomodation_id => '40ca5e63-c08d-4731-b4c3-2f3846725541', trip_place_id => '65916ea8-c637-4921-89a0-97d3661ce782', name => 'Hilton Orchard', information_url => 'https://www.hilton.com/en/hotels/sinorhi-hilton-singapore-orchard/', accomodation_fee => 100, paid => FALSE);
+    upsert_place_accomodation (trip_place_id => '65916ea8-c637-4921-89a0-97d3661ce782', place_accomodation_id => '40ca5e63-c08d-4731-b4c3-2f3846725541', accomodation_name => 'Hilton Orchard', information_url => 'https://www.hilton.com/en/hotels/sinorhi-hilton-singapore-orchard/', accomodation_fee => 100, paid => FALSE);
 
 -- migrate:down
 DROP TABLE place_activities;

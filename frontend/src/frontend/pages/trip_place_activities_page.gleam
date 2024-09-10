@@ -2,7 +2,7 @@ import frontend/api
 import frontend/events.{
   type AppModel, type TripPlaceActivitiesPageEvent, AppModel,
 }
-import frontend/form_components
+import frontend/form_components as fc
 import frontend/string_util
 import frontend/toast
 import frontend/web
@@ -73,82 +73,76 @@ pub fn trip_place_activities_view(
               html.span([], [element.text(activity.start_time)]),
             ]),
             html.div([attribute.class("inputs")], [
-              form_components.text_input(
-                label_text: "Name",
-                label_name: "name",
-                required: True,
-                placeholder: "Fun activity",
-                value: activity.name,
-                on_input: fn(name) {
+              fc.new()
+                |> fc.with_label("Name")
+                |> fc.with_name("name")
+                |> fc.with_required
+                |> fc.with_placeholder("Fun activity")
+                |> fc.with_value(activity.name)
+                |> fc.with_on_input(fn(name) {
                   events.TripPlaceActivitiesPage(
                     events.TripPlaceActivitiesPageUserInputForm(
                       events.PlaceActivityForm(..activity, name:),
                     ),
                   )
-                },
-              ),
-              form_components.url_input(
-                label_text: "Information URL",
-                label_name: "information-url",
-                required: False,
-                placeholder: "https://...",
-                value: activity.information_url,
-                on_input: fn(information_url) {
+                })
+                |> fc.build,
+              fc.new()
+                |> fc.with_label("Information URL")
+                |> fc.with_name("information-url")
+                |> fc.with_required
+                |> fc.with_placeholder("https://...")
+                |> fc.with_value(activity.information_url)
+                |> fc.with_on_input(fn(information_url) {
                   events.TripPlaceActivitiesPage(
                     events.TripPlaceActivitiesPageUserInputForm(
                       events.PlaceActivityForm(..activity, information_url:),
                     ),
                   )
-                },
-              ),
-              form_components.time_input(
-                label_text: "Start Time",
-                label_name: "start-time",
-                required: False,
-                placeholder: "",
-                value: activity.start_time,
-                on_input: fn(start_time) {
+                })
+                |> fc.build,
+              fc.new()
+                |> fc.with_form_type(fc.TimeInput)
+                |> fc.with_label("Start Time")
+                |> fc.with_name("start-time")
+                |> fc.with_required
+                |> fc.with_value(activity.start_time)
+                |> fc.with_on_input(fn(start_time) {
                   events.TripPlaceActivitiesPage(
                     events.TripPlaceActivitiesPageUserInputForm(
                       events.PlaceActivityForm(..activity, start_time:),
                     ),
                   )
-                },
-              ),
-              form_components.time_input(
-                label_text: "End Time",
-                label_name: "end-time",
-                required: False,
-                placeholder: "",
-                value: activity.end_time,
-                on_input: fn(end_time) {
+                })
+                |> fc.build,
+              fc.new()
+                |> fc.with_form_type(fc.TimeInput)
+                |> fc.with_label("End Time")
+                |> fc.with_name("end-time")
+                |> fc.with_required
+                |> fc.with_value(activity.end_time)
+                |> fc.with_on_input(fn(end_time) {
                   events.TripPlaceActivitiesPage(
                     events.TripPlaceActivitiesPageUserInputForm(
                       events.PlaceActivityForm(..activity, end_time:),
                     ),
                   )
-                },
-              ),
-              form_components.money_input(
-                label_text: "Entry Fee",
-                label_name: "entry-fee",
-                required: False,
-                placeholder: "",
-                value: activity.entry_fee,
-                on_input: fn(entry_fee) {
+                })
+                |> fc.build,
+              fc.new()
+                |> fc.with_form_type(fc.MoneyInput)
+                |> fc.with_label("Entry Fee")
+                |> fc.with_name("entry-fee")
+                |> fc.with_required
+                |> fc.with_value(activity.entry_fee)
+                |> fc.with_on_input(fn(entry_fee) {
                   events.TripPlaceActivitiesPage(
                     events.TripPlaceActivitiesPageUserInputForm(
-                      events.PlaceActivityForm(
-                        ..activity,
-                        entry_fee: case string.contains(entry_fee, ".") {
-                          True -> entry_fee
-                          False -> entry_fee <> ".0"
-                        },
-                      ),
+                      events.PlaceActivityForm(..activity, entry_fee:),
                     ),
                   )
-                },
-              ),
+                })
+                |> fc.build,
             ]),
           ])
         })

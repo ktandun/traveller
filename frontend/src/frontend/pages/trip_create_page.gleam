@@ -1,8 +1,9 @@
 import frontend/api
 import frontend/events.{type AppModel, type TripCreatePageEvent, AppModel}
-import frontend/form_components
+import frontend/form_components as fc
 import frontend/toast
 import frontend/web
+import gleam/io
 import gleam/option
 import lustre/effect
 import lustre/element
@@ -17,46 +18,44 @@ pub fn trip_create_view(model: AppModel) {
   html.div([], [
     html.h3([], [element.text("Create a New Trip")]),
     html.form([], [
-      form_components.date_input(
-        label_text: "From",
-        label_name: "from",
-        required: True,
-        value: model.trip_create.start_date,
-        min: option.None,
-        max: option.None,
-        on_input: fn(start_date) {
-          events.TripCreatePage(events.TripCreatePageUserInputCreateTripRequest(
-            events.CreateTripForm(..model.trip_create, start_date:),
-          ))
-        },
-      ),
-      form_components.date_input(
-        label_text: "To",
-        label_name: "to",
-        required: True,
-        value: model.trip_create.end_date,
-        min: option.Some(model.trip_create.start_date),
-        max: option.None,
-        on_input: fn(end_date) {
-          events.TripCreatePage(events.TripCreatePageUserInputCreateTripRequest(
-            events.CreateTripForm(..model.trip_create, end_date:),
-          ))
-        },
-      ),
-      form_components.text_input(
-        label_text: "Destination",
-        label_name: "destination",
-        required: True,
-        placeholder: "Where are you going?",
-        value: model.trip_create.destination,
-        on_input: fn(destination) {
+      fc.new()
+        |> fc.with_form_type(fc.SingleSelect)
+        |> fc.with_countries_options(model.trip_create.destination)
+        |> fc.with_label("Destination")
+        |> fc.with_name("destination")
+        |> fc.with_required
+        |> fc.with_on_input(fn(destination) {
           events.TripCreatePage(events.TripCreatePageUserInputCreateTripRequest(
             events.CreateTripForm(..model.trip_create, destination:),
           ))
-        },
-      ),
+        })
+        |> fc.build,
+      fc.new()
+        |> fc.with_form_type(fc.DateInput)
+        |> fc.with_label("From")
+        |> fc.with_name("from")
+        |> fc.with_required
+        |> fc.with_value(model.trip_create.start_date)
+        |> fc.with_on_input(fn(start_date) {
+          events.TripCreatePage(events.TripCreatePageUserInputCreateTripRequest(
+            events.CreateTripForm(..model.trip_create, start_date:),
+          ))
+        })
+        |> fc.build,
+      fc.new()
+        |> fc.with_form_type(fc.DateInput)
+        |> fc.with_label("To")
+        |> fc.with_name("to")
+        |> fc.with_required
+        |> fc.with_value(model.trip_create.end_date)
+        |> fc.with_min(model.trip_create.start_date)
+        |> fc.with_on_input(fn(end_date) {
+          events.TripCreatePage(events.TripCreatePageUserInputCreateTripRequest(
+            events.CreateTripForm(..model.trip_create, end_date:),
+          ))
+        })
+        |> fc.build,
     ]),
-    html.div([], [element.text(model.trip_create_errors)]),
     html.button(
       [
         event.on_click(events.TripCreatePage(

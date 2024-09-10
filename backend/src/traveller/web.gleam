@@ -2,6 +2,7 @@ import database/sql
 import gleam/dynamic
 import gleam/http/response
 import gleam/int
+import gleam/io
 import gleam/json.{type DecodeError, type Json}
 import gleam/pgo.{
   ConnectionUnavailable, ConstraintViolated, PostgresqlError,
@@ -200,7 +201,9 @@ pub fn error_to_response(error: AppError) -> Response {
           response
         }
         UnexpectedResultType(e) -> {
-          error_to_response(JsonDecodeError(e))
+          io.debug(e)
+          wisp.log_error("UnexpectedResultType")
+          response
         }
         ConnectionUnavailable -> {
           wisp.log_error("ConnectionUnavailable")
@@ -210,6 +213,7 @@ pub fn error_to_response(error: AppError) -> Response {
     }
 
     error.JsonDecodeError(errors) -> {
+      io.debug(errors)
       let decode_errors_json =
         json.array(errors, of: fn(error) {
           let decode_error = {

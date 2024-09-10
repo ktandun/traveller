@@ -1,12 +1,13 @@
-import frontend/pages/error_500
 import frontend/api
 import frontend/breadcrumb
 import frontend/events.{type AppEvent, type AppModel, AppModel}
 import frontend/loading_spinner
+import frontend/pages/error_500
 import frontend/pages/login_page
 import frontend/pages/trip_companions_page
 import frontend/pages/trip_create_page
 import frontend/pages/trip_details_page
+import frontend/pages/trip_place_accomodations_page
 import frontend/pages/trip_place_activities_page
 import frontend/pages/trip_place_create_page
 import frontend/pages/trip_update_page
@@ -62,8 +63,10 @@ fn path_to_route(path_segments: List(String)) -> Route {
     ["trips", trip_id, "update"] -> routes.TripUpdate(trip_id)
     ["trips", trip_id, "add-companions"] -> routes.TripCompanions(trip_id)
     ["trips", trip_id, "places", "create"] -> routes.TripPlaceCreate(trip_id)
-    ["trips", trip_id, "places", trip_place_id] ->
+    ["trips", trip_id, "places", trip_place_id, "activities"] ->
       routes.TripPlaceActivities(trip_id, trip_place_id)
+    ["trips", trip_id, "places", trip_place_id, "accomodations"] ->
+      routes.TripPlaceAccomodations(trip_id, trip_place_id)
     _ -> routes.FourOFour
   }
 }
@@ -84,11 +87,19 @@ pub fn update(model: AppModel, msg: AppEvent) -> #(AppModel, Effect(AppEvent)) {
       routes.TripDetails(trip_id) -> api.send_get_trip_details_request(trip_id)
       routes.TripPlaceActivities(trip_id, trip_place_id) ->
         effect.batch([
-          api.send_get_place_activities_request(trip_id, trip_place_id),
           case string.is_empty(model.trip_details.destination) {
             True -> api.send_get_trip_details_request(trip_id)
             False -> effect.none()
           },
+          api.send_get_place_activities_request(trip_id, trip_place_id),
+        ])
+      routes.TripPlaceAccomodations(trip_id, trip_place_id) ->
+        effect.batch([
+          case string.is_empty(model.trip_details.destination) {
+            True -> api.send_get_trip_details_request(trip_id)
+            False -> effect.none()
+          },
+          api.send_get_place_accomodation_request(trip_id, trip_place_id),
         ])
       _ -> effect.none()
     })
@@ -112,6 +123,11 @@ pub fn update(model: AppModel, msg: AppEvent) -> #(AppModel, Effect(AppEvent)) {
       trip_companions_page.handle_trip_companions_page_event(model, event)
     events.TripPlaceActivitiesPage(event) ->
       trip_place_activities_page.handle_trip_place_activities_page_event(
+        model,
+        event,
+      )
+    events.TripPlaceAccomodationPage(event) ->
+      trip_place_accomodations_page.handle_trip_place_accomodations_page_event(
         model,
         event,
       )
@@ -141,6 +157,12 @@ pub fn view(model: AppModel) -> Element(AppEvent) {
       routes.TripDetails(_trip_id) -> trip_details_page.trip_details_view(model)
       routes.TripPlaceActivities(trip_id, trip_place_id) ->
         trip_place_activities_page.trip_place_activities_view(
+          model,
+          trip_id,
+          trip_place_id,
+        )
+      routes.TripPlaceAccomodations(trip_id, trip_place_id) ->
+        trip_place_accomodations_page.trip_place_accomodations_view(
           model,
           trip_id,
           trip_place_id,
