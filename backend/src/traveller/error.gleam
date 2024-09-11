@@ -18,6 +18,7 @@ pub type AppError {
   InvalidDateSpecified
   InvalidDestinationSpecified
   InvalidUUIDString(String)
+  InvalidFieldContent(String)
 }
 
 pub fn json_codec_decode_error(e) {

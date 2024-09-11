@@ -272,6 +272,8 @@ pub type GetUserTripPlacesRow {
     destination: String,
     start_date: #(Int, Int, Int),
     end_date: #(Int, Int, Int),
+    total_activities_fee: Float,
+    total_accomodations_fee: Float,
     places: String,
     companions: String,
   )
@@ -290,6 +292,8 @@ pub fn get_user_trip_places(db, arg_1, arg_2) {
       use destination <- decode.parameter
       use start_date <- decode.parameter
       use end_date <- decode.parameter
+      use total_activities_fee <- decode.parameter
+      use total_accomodations_fee <- decode.parameter
       use places <- decode.parameter
       use companions <- decode.parameter
       GetUserTripPlacesRow(
@@ -297,6 +301,8 @@ pub fn get_user_trip_places(db, arg_1, arg_2) {
         destination: destination,
         start_date: start_date,
         end_date: end_date,
+        total_activities_fee: total_activities_fee,
+        total_accomodations_fee: total_accomodations_fee,
         places: places,
         companions: companions,
       )
@@ -305,14 +311,18 @@ pub fn get_user_trip_places(db, arg_1, arg_2) {
     |> decode.field(1, decode.string)
     |> decode.field(2, date_decoder())
     |> decode.field(3, date_decoder())
-    |> decode.field(4, decode.string)
-    |> decode.field(5, decode.string)
+    |> decode.field(4, decode.float)
+    |> decode.field(5, decode.float)
+    |> decode.field(6, decode.string)
+    |> decode.field(7, decode.string)
 
   "SELECT
     trip_id,
     destination,
     start_date,
     end_date,
+    total_activities_fee,
+    total_accomodations_fee,
     places,
     companions
 FROM

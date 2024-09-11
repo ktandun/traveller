@@ -157,6 +157,8 @@ CREATE OR REPLACE FUNCTION trips_view ()
         destination text,
         start_date date,
         end_date date,
+        total_activities_fee numeric,
+        total_accomodations_fee numeric,
         places json,
         companions json
     )
@@ -192,13 +194,26 @@ trip_places_ordered_by_date AS (
 places AS (
     SELECT
         tp.trip_id,
-        json_agg(json_build_object('trip_place_id', tp.trip_place_id, 'name', tp.name, 'date', to_char(tp.date, 'YYYY-MM-DD'), 'has_accomodation', paccom.place_accomodation_id IS NOT NULL, 'accomodation_paid', coalesce(paccom.paid, FALSE), 'activities_count', acount.count)) AS places
+        json_agg(json_build_object('trip_place_id', tp.trip_place_id, 'name', tp.name, 'date', to_char(tp.date, 'YYYY-MM-DD'), 'has_accomodation', paccom.place_accomodation_id IS NOT NULL, 'accomodation_paid', coalesce(paccom.paid, FALSE), 'activities_count', act_count.count)) AS places
 FROM
     trip_places_ordered_by_date tp
     LEFT JOIN place_accomodations paccom ON tp.trip_place_id = paccom.trip_place_id
-        LEFT JOIN activities_count acount ON tp.trip_place_id = acount.trip_place_id
+        LEFT JOIN activities_count act_count ON tp.trip_place_id = act_count.trip_place_id
     GROUP BY
         tp.trip_id
+),
+fees_aggregate AS (
+    SELECT
+        utrip.trip_id,
+        SUM(coalesce(pactiv.entry_fee, 0)) AS total_activities_fee,
+    SUM(coalesce(paccom.accomodation_fee, 0)) AS total_accomodations_fee
+FROM
+    user_trips utrip
+    LEFT JOIN trip_places tplac ON utrip.trip_id = tplac.trip_id
+        LEFT JOIN place_activities pactiv ON tplac.trip_place_id = pactiv.trip_place_id
+        LEFT JOIN place_accomodations paccom ON tplac.trip_place_id = paccom.trip_place_id
+    GROUP BY
+        utrip.trip_id
 ),
 trips AS (
     SELECT
@@ -219,12 +234,15 @@ SELECT
     tp.destination,
     tp.start_date,
     tp.end_date,
+    fee_agg.total_activities_fee,
+    fee_agg.total_accomodations_fee,
     coalesce(p.places, '[]'::json) AS places,
     coalesce(c.companions, '[]'::json) AS companions
 FROM
     trips tp
     LEFT JOIN companions c ON tp.trip_id = c.trip_id
-    LEFT JOIN places p ON tp.trip_id = p.trip_id;
+    LEFT JOIN places p ON tp.trip_id = p.trip_id
+    LEFT JOIN fees_aggregate fee_agg ON fee_agg.trip_id = tp.trip_id;
 END;
 $f$
 LANGUAGE PLPGSQL;
@@ -407,7 +425,7 @@ SELECT
     create_user (user_id => 'abc5bc96-e6e4-48ed-aa47-aa08082f0382', email => 'user@example.com', PASSWORD => crypt('password', gen_salt('bf', 8)));
 
 SELECT
-    create_trip (user_id => 'ab995595-008e-4ab5-94bb-7845f5d48626', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', destination => 'Singapore', start_date => '2024-01-01', end_date => '2024-01-31');
+    create_trip (user_id => 'ab995595-008e-4ab5-94bb-7845f5d48626', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', destination => 'Singapore', start_date => CURRENT_DATE::text, end_date => (CURRENT_DATE + interval '1 month')::text);
 
 SELECT
     create_trip (user_id => 'ab995595-008e-4ab5-94bb-7845f5d48626', trip_id => '38933aaa-d41f-4a99-b8a7-f1dfd7e95c86', destination => 'Bali', start_date => '2024-08-01', end_date => '2024-09-01');
@@ -419,13 +437,13 @@ SELECT
     create_trip (user_id => 'ab995595-008e-4ab5-94bb-7845f5d48626', trip_id => '6dc47c9e-f363-4c0b-afbb-d3324a4e8d59', destination => 'Canada', start_date => '2024-03-01', end_date => '2024-03-28');
 
 SELECT
-    upsert_trip_place (trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Universal Studios', date => '2024-01-01');
+    upsert_trip_place (trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Universal Studios', date => CURRENT_DATE::text);
 
 SELECT
-    upsert_trip_place (trip_place_id => '65916ea8-c637-4921-89a0-97d3661ce782', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Botanical Garden', date => '2024-01-02');
+    upsert_trip_place (trip_place_id => '65916ea8-c637-4921-89a0-97d3661ce782', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Botanical Garden', date => (CURRENT_DATE + make_interval(days => 1))::text);
 
 SELECT
-    upsert_trip_place (trip_place_id => 'a99f7893-632a-41fb-bd40-2f8fe8dd1d7e', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Food Stalls', date => '2024-01-03');
+    upsert_trip_place (trip_place_id => 'a99f7893-632a-41fb-bd40-2f8fe8dd1d7e', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Food Stalls', date => (CURRENT_DATE + make_interval(days => 2))::text);
 
 SELECT
     upsert_trip_companion (trip_companion_id => '7fccacf1-1f38-49ad-b9de-b3a9788508e1', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Noel', email => 'noel@gmail.com');

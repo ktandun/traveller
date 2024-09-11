@@ -1,5 +1,6 @@
 import gleam/http
 import gleam/json
+import gleam/result
 import shared/auth_models
 import shared/constants
 import shared/id.{type Id, type UserId}
@@ -8,6 +9,7 @@ import shared/trip_models_codecs
 import traveller/json_util
 import traveller/routes/auth_routes
 import traveller/routes/trip_routes
+import traveller/validations
 import traveller/web.{type Context}
 import wisp.{type Request, type Response}
 
@@ -383,6 +385,11 @@ fn put_trip_place_accomodations(
   use update_request <- web.require_valid_json(json_util.try_decode(
     request_body,
     trip_models_codecs.place_accomodation_decoder(),
+  ))
+
+  use _ <- web.require_ok(validations.string_not_empty(
+    update_request.accomodation_name,
+    "accomodation_name",
   ))
 
   use _ <- web.require_ok(trip_routes.handle_update_place_accomodation(

@@ -118,6 +118,13 @@ fn json_with_status(json: Json, status: Int) -> Response {
 pub fn error_to_response(error: AppError) -> Response {
   case error {
     error.DecodeError(e) -> error.json_codec_decode_error(e)
+    error.InvalidFieldContent(field) ->
+      [
+        #("title", json.string("INVALID_FIELD_CONTENT")),
+        #("detail", json.string(field)),
+      ]
+      |> json.object()
+      |> json_with_status(400)
     error.BodyNotJsonError ->
       [#("title", json.string("BODY_NOT_JSON"))]
       |> json.object()

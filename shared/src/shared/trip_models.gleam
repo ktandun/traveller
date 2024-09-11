@@ -89,6 +89,8 @@ pub type UserTripPlaces {
     destination: String,
     start_date: birl.Day,
     end_date: birl.Day,
+    total_activities_fee: Float,
+    total_accomodations_fee: Float,
     user_trip_places: List(UserTripPlace),
     user_trip_companions: List(UserTripCompanion),
   )
@@ -100,6 +102,8 @@ pub fn default_user_trip_places() {
     destination: "",
     start_date: birl.Day(1, 1, 1),
     end_date: birl.Day(1, 1, 1),
+    total_activities_fee: 0.0,
+    total_accomodations_fee: 0.0,
     user_trip_places: [],
     user_trip_companions: [],
   )
@@ -142,6 +146,8 @@ pub fn user_trip_places_decoder() {
     custom_decoders.day_decoder("start_date"),
   )
   use end_date <- toy.field("end_date", custom_decoders.day_decoder("end_date"))
+  use total_activities_fee <- toy.field("total_activities_fee", toy.float)
+  use total_accomodations_fee <- toy.field("total_accomodations_fee", toy.float)
   use user_trip_places <- toy.field(
     "user_trip_places",
     toy.list(user_trip_place_decoder()),
@@ -156,6 +162,8 @@ pub fn user_trip_places_decoder() {
     destination:,
     start_date:,
     end_date:,
+    total_activities_fee:,
+    total_accomodations_fee:,
     user_trip_places:,
     user_trip_companions:,
   ))
@@ -170,6 +178,8 @@ pub fn user_trip_places_encoder(data: UserTripPlaces) {
       json.string(data.start_date |> date_util_shared.to_yyyy_mm_dd),
     ),
     #("end_date", json.string(data.end_date |> date_util_shared.to_yyyy_mm_dd)),
+    #("total_activities_fee", json.float(data.total_activities_fee)),
+    #("total_accomodations_fee", json.float(data.total_accomodations_fee)),
     #(
       "user_trip_places",
       json.array(from: data.user_trip_places, of: user_trip_place_encoder),

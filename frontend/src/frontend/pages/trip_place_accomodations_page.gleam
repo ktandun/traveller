@@ -7,6 +7,7 @@ import frontend/toast
 import frontend/uuid_util
 import frontend/web
 import gleam/float
+import gleam/io
 import gleam/option
 import gleam/string
 import lustre/attribute
@@ -34,6 +35,7 @@ pub fn trip_place_accomodations_view(
       fc.new()
         |> fc.with_label("Accomodation Name")
         |> fc.with_name("accomodation-name")
+        |> fc.with_pattern(".*\\S.*")
         |> fc.with_required
         |> fc.with_placeholder("XY Hotel")
         |> fc.with_value(accomodation.accomodation_name)

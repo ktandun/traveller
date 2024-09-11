@@ -3,6 +3,8 @@ SELECT
     destination,
     start_date,
     end_date,
+    total_activities_fee,
+    total_accomodations_fee,
     places,
     companions
 FROM

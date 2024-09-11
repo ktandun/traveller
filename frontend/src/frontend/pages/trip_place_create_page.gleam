@@ -17,7 +17,7 @@ pub fn trip_place_create_view(model: AppModel, trip_id: String) {
     html.h3([], [element.text("Add a Place")]),
     html.form([], [
       html.p([], [
-        html.label([], [element.text("Place")]),
+        html.label([], [element.text("City / Area")]),
         html.input([
           event.on_input(fn(place) {
             events.TripPlaceCreatePage(

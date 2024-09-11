@@ -127,6 +127,8 @@ pub fn get_user_trip_places(
     destination,
     start_date,
     end_date,
+    total_activities_fee,
+    total_accomodations_fee,
     places,
     companions,
   ) = row
@@ -146,6 +148,8 @@ pub fn get_user_trip_places(
     destination:,
     start_date: start_date |> date_util.from_date_tuple,
     end_date: end_date |> date_util.from_date_tuple,
+    total_activities_fee:,
+    total_accomodations_fee:,
     user_trip_places:,
     user_trip_companions:,
   ))

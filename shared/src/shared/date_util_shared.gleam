@@ -40,7 +40,7 @@ pub fn to_human_readable(date: birl.Day) -> String {
     "7" -> "Jul"
     "8" -> "Aug"
     "9" -> "Sep"
-    "10" -> "Okt"
+    "10" -> "Oct"
     "11" -> "Nov"
     "12" -> "Dec"
     _ -> " "

@@ -26,6 +26,7 @@ pub opaque type HtmlForm {
     select_options: List(SelectOption),
     label: Option(String),
     name: Option(String),
+    pattern: Option(String),
     hint: Option(String),
     required: Bool,
     on_input: fn(String) -> events.AppEvent,
@@ -45,6 +46,7 @@ pub fn new() {
     select_options: [],
     label: option.None,
     name: option.None,
+    pattern: option.None,
     hint: option.None,
     required: False,
     on_input: fn(_) { events.NoEvent },
@@ -72,6 +74,10 @@ pub fn with_label(form, label) {
 
 pub fn with_name(form, name) {
   HtmlForm(..form, name: option.Some(name))
+}
+
+pub fn with_pattern(form, pattern) {
+  HtmlForm(..form, pattern: option.Some(pattern))
 }
 
 pub fn with_hint(form, hint) {
@@ -118,6 +124,10 @@ pub fn build(form: HtmlForm) {
   let input_attributes = [
     case form.name {
       option.Some(name) -> attribute.name(name)
+      _ -> attribute.none()
+    },
+    case form.pattern {
+      option.Some(pattern) -> attribute.pattern(pattern)
       _ -> attribute.none()
     },
     case form.placeholder {

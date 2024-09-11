@@ -188,7 +188,7 @@ $$;
 -- Name: trips_view(); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.trips_view() RETURNS TABLE(user_id uuid, trip_id uuid, destination text, start_date date, end_date date, places json, companions json)
+CREATE FUNCTION public.trips_view() RETURNS TABLE(user_id uuid, trip_id uuid, destination text, start_date date, end_date date, total_activities_fee numeric, total_accomodations_fee numeric, places json, companions json)
     LANGUAGE plpgsql
     AS $$
 BEGIN
@@ -222,13 +222,26 @@ trip_places_ordered_by_date AS (
 places AS (
     SELECT
         tp.trip_id,
-        json_agg(json_build_object('trip_place_id', tp.trip_place_id, 'name', tp.name, 'date', to_char(tp.date, 'YYYY-MM-DD'), 'has_accomodation', paccom.place_accomodation_id IS NOT NULL, 'accomodation_paid', coalesce(paccom.paid, FALSE), 'activities_count', acount.count)) AS places
+        json_agg(json_build_object('trip_place_id', tp.trip_place_id, 'name', tp.name, 'date', to_char(tp.date, 'YYYY-MM-DD'), 'has_accomodation', paccom.place_accomodation_id IS NOT NULL, 'accomodation_paid', coalesce(paccom.paid, FALSE), 'activities_count', act_count.count)) AS places
 FROM
     trip_places_ordered_by_date tp
     LEFT JOIN place_accomodations paccom ON tp.trip_place_id = paccom.trip_place_id
-        LEFT JOIN activities_count acount ON tp.trip_place_id = acount.trip_place_id
+        LEFT JOIN activities_count act_count ON tp.trip_place_id = act_count.trip_place_id
     GROUP BY
         tp.trip_id
+),
+fees_aggregate AS (
+    SELECT
+        utrip.trip_id,
+        SUM(coalesce(pactiv.entry_fee, 0)) AS total_activities_fee,
+    SUM(coalesce(paccom.accomodation_fee, 0)) AS total_accomodations_fee
+FROM
+    user_trips utrip
+    LEFT JOIN trip_places tplac ON utrip.trip_id = tplac.trip_id
+        LEFT JOIN place_activities pactiv ON tplac.trip_place_id = pactiv.trip_place_id
+        LEFT JOIN place_accomodations paccom ON tplac.trip_place_id = paccom.trip_place_id
+    GROUP BY
+        utrip.trip_id
 ),
 trips AS (
     SELECT
@@ -249,12 +262,15 @@ SELECT
     tp.destination,
     tp.start_date,
     tp.end_date,
+    fee_agg.total_activities_fee,
+    fee_agg.total_accomodations_fee,
     coalesce(p.places, '[]'::json) AS places,
     coalesce(c.companions, '[]'::json) AS companions
 FROM
     trips tp
     LEFT JOIN companions c ON tp.trip_id = c.trip_id
-    LEFT JOIN places p ON tp.trip_id = p.trip_id;
+    LEFT JOIN places p ON tp.trip_id = p.trip_id
+    LEFT JOIN fees_aggregate fee_agg ON fee_agg.trip_id = tp.trip_id;
 END;
 $$;
 

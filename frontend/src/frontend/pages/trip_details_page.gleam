@@ -1,5 +1,7 @@
 import frontend/events.{type AppModel, type TripDetailsPageEvent, AppModel}
+import frontend/form_components as fc
 import frontend/web
+import gleam/float
 import gleam/int
 import gleam/list
 import gleam/option
@@ -27,6 +29,18 @@ pub fn trip_details_view(model: AppModel) {
             date_util_shared.to_human_readable(model.trip_details.start_date)
             <> " to "
             <> date_util_shared.to_human_readable(model.trip_details.end_date),
+          ),
+        ]),
+        html.dt([], [element.text("Activity Fee")]),
+        html.dd([], [
+          element.text(
+            model.trip_details.total_activities_fee |> float.to_string,
+          ),
+        ]),
+        html.dt([], [element.text("Accomodations Fee")]),
+        html.dd([], [
+          element.text(
+            model.trip_details.total_accomodations_fee |> float.to_string,
           ),
         ]),
       ]),
@@ -74,7 +88,7 @@ pub fn trip_details_view(model: AppModel) {
       html.table([], [
         html.thead([], [
           html.tr([], [
-            html.th([], [element.text("Place")]),
+            html.th([], [element.text("City / Area")]),
             html.th([], [element.text("Date")]),
             html.th([], [element.text("Accomodation")]),
             html.th([], [element.text("Activities")]),
