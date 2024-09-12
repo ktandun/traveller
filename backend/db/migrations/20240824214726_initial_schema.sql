@@ -464,9 +464,23 @@ SELECT
     upsert_place_accomodation (trip_place_id => '65916ea8-c637-4921-89a0-97d3661ce782', place_accomodation_id => '40ca5e63-c08d-4731-b4c3-2f3846725541', accomodation_name => 'Hilton Orchard', information_url => 'https://www.hilton.com/en/hotels/sinorhi-hilton-singapore-orchard/', accomodation_fee => 100, paid => FALSE);
 
 -- migrate:down
+
+DROP FUNCTION trips_view ();
+DROP FUNCTION check_user_login (email text, PASSWORD TEXT);
+DROP FUNCTION create_user (user_id text, email text, PASSWORD TEXT);
+DROP FUNCTION update_trip (trip_id text, destination text, start_date text, end_date text);
+DROP FUNCTION create_place_activity (place_activity_id text, trip_place_id text, name text, information_url text, start_time text, end_time text, entry_fee numeric);
+DROP FUNCTION place_activities_view ();
+DROP FUNCTION trip_place_accomodations_view ();
+DROP FUNCTION upsert_place_accomodation (trip_place_id text, place_accomodation_id text, accomodation_name text, information_url text, accomodation_fee numeric, paid bool);
+
+DROP TABLE place_accomodations;
+
 DROP TABLE place_activities;
 
 DROP TABLE trip_places;
+
+DROP TABLE trip_companions;
 
 DROP TABLE user_trips;
 

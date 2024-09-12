@@ -1,7 +1,6 @@
 import birl
 import database/sql
 import gleam/dynamic
-import gleam/io
 import gleam/list
 import gleam/option.{type Option}
 import gleam/pgo
@@ -14,7 +13,6 @@ import shared/trip_models.{
   type TripCompanion, type UpdateTripRequest,
 }
 import shared/trip_models_codecs
-import toy
 import traveller/database
 import traveller/date_util
 import traveller/error.{type AppError}
@@ -27,32 +25,39 @@ pub fn get_user_trips(
   ctx: Context,
   user_id: Id(UserId),
 ) -> Result(trip_models.UserTrips, AppError) {
-  let user_id = uuid_util.from_string(id.id_value(user_id))
+  let user_id = id.id_value(user_id)
 
-  use pgo.Returned(_, rows) <- result.map(
-    sql.get_user_trips(ctx.db, user_id)
+  let sql =
+    "
+    SELECT
+      json_build_object('user_trips',
+        json_agg(
+          json_build_object(
+            'trip_id', trip_id,
+            'destination', destination,
+            'start_date', start_date,
+            'end_date', end_date
+          )
+        ) 
+      ) AS result
+    FROM
+        trips_view ()
+    WHERE
+        user_id = $1::uuid
+    GROUP BY 
+        user_id
+    "
+
+  let return_type = dynamic.element(0, dynamic.string)
+
+  use query_result <- result.try(
+    pgo.execute(sql, ctx.db, [pgo.text(user_id)], return_type)
     |> database.to_app_error(),
   )
 
-  trip_models.UserTrips(
-    user_trips: rows
-    |> list.map(fn(row) {
-      let sql.GetUserTripsRow(
-        trip_id,
-        destination,
-        start_date,
-        end_date,
-        places_count,
-      ) = row
-      trip_models.UserTrip(
-        trip_id: trip_id,
-        destination:,
-        start_date: date_util.from_date_tuple(start_date),
-        end_date: date_util.from_date_tuple(end_date),
-        places_count:,
-      )
-    }),
-  )
+  use row <- database.require_single_row(query_result, "get_user_trips")
+
+  json_util.try_decode(row, trip_models.user_trips_decoder())
 }
 
 pub fn get_user_trip_dates_by_trip_id(
@@ -112,47 +117,44 @@ pub fn get_user_trip_places(
   user_id: Id(UserId),
   trip_id: Id(TripId),
 ) -> Result(trip_models.UserTripPlaces, AppError) {
-  let user_id = user_id |> id.id_value |> uuid_util.from_string
-  let trip_id = trip_id |> id.id_value |> uuid_util.from_string
+  let user_id = user_id |> id.id_value
+  let trip_id = trip_id |> id.id_value
+
+  let sql =
+    "
+    SELECT
+      json_build_object(
+        'trip_id', trip_id,
+        'destination', destination,
+        'start_date', start_date,
+        'end_date', end_date,
+        'total_activities_fee', total_activities_fee,
+        'total_accomodations_fee', total_accomodations_fee,
+        'user_trip_places', places,
+        'user_trip_companions', companions
+      ) AS result
+    FROM
+        trips_view ()
+    WHERE
+        user_id = $1::uuid
+        AND trip_id = $2::uuid;
+    "
+
+  let return_type = dynamic.element(0, dynamic.string)
 
   use query_result <- result.try(
-    sql.get_user_trip_places(ctx.db, user_id, trip_id)
+    pgo.execute(
+      sql,
+      ctx.db,
+      [pgo.text(user_id), pgo.text(trip_id)],
+      return_type,
+    )
     |> database.to_app_error(),
   )
 
   use row <- database.require_single_row(query_result, "get_user_trip_places")
 
-  let sql.GetUserTripPlacesRow(
-    trip_id,
-    destination,
-    start_date,
-    end_date,
-    total_activities_fee,
-    total_accomodations_fee,
-    places,
-    companions,
-  ) = row
-
-  use user_trip_places <- result.try(json_util.try_decode(
-    places,
-    toy.list(trip_models.user_trip_place_decoder()),
-  ))
-
-  use user_trip_companions <- result.try(json_util.try_decode(
-    companions,
-    toy.list(trip_models.user_trip_companion_decoder()),
-  ))
-
-  Ok(trip_models.UserTripPlaces(
-    trip_id: trip_id |> uuid.to_string,
-    destination:,
-    start_date: start_date |> date_util.from_date_tuple,
-    end_date: end_date |> date_util.from_date_tuple,
-    total_activities_fee:,
-    total_accomodations_fee:,
-    user_trip_places:,
-    user_trip_companions:,
-  ))
+  json_util.try_decode(row, trip_models.user_trip_places_decoder())
 }
 
 pub fn ensure_trip_id_exists(

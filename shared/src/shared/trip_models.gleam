@@ -14,7 +14,6 @@ pub type UserTrip {
     destination: String,
     start_date: birl.Day,
     end_date: birl.Day,
-    places_count: Int,
   )
 }
 
@@ -26,15 +25,8 @@ pub fn user_trip_decoder() {
     custom_decoders.day_decoder("start_date"),
   )
   use end_date <- toy.field("end_date", custom_decoders.day_decoder("end_date"))
-  use places_count <- toy.field("places_count", toy.int)
 
-  toy.decoded(UserTrip(
-    trip_id:,
-    destination:,
-    start_date:,
-    end_date:,
-    places_count:,
-  ))
+  toy.decoded(UserTrip(trip_id:, destination:, start_date:, end_date:))
 }
 
 pub fn user_trip_encoder(data: UserTrip) {
@@ -46,7 +38,6 @@ pub fn user_trip_encoder(data: UserTrip) {
       json.string(data.start_date |> date_util_shared.to_yyyy_mm_dd),
     ),
     #("end_date", json.string(data.end_date |> date_util_shared.to_yyyy_mm_dd)),
-    #("places_count", json.int(data.places_count)),
   ])
 }
 
@@ -146,8 +137,14 @@ pub fn user_trip_places_decoder() {
     custom_decoders.day_decoder("start_date"),
   )
   use end_date <- toy.field("end_date", custom_decoders.day_decoder("end_date"))
-  use total_activities_fee <- toy.field("total_activities_fee", toy.float)
-  use total_accomodations_fee <- toy.field("total_accomodations_fee", toy.float)
+  use total_activities_fee <- toy.field(
+    "total_activities_fee",
+    custom_decoders.number,
+  )
+  use total_accomodations_fee <- toy.field(
+    "total_accomodations_fee",
+    custom_decoders.number,
+  )
   use user_trip_places <- toy.field(
     "user_trip_places",
     toy.list(user_trip_place_decoder()),
