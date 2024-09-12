@@ -10,13 +10,6 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: public; Type: SCHEMA; Schema: -; Owner: -
---
-
--- *not* creating schema, since initdb creates it
-
-
---
 -- Name: pgcrypto; Type: EXTENSION; Schema: -; Owner: -
 --
 
@@ -185,6 +178,35 @@ $$;
 
 
 --
+-- Name: trip_place_culinaries_view(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.trip_place_culinaries_view() RETURNS TABLE(trip_id uuid, trip_place_id uuid, place_name text, place_culinaries json)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    RETURN QUERY WITH culinaries AS (
+    SELECT
+        pculi.trip_place_id,
+        json_agg(json_build_object('place_culinary_id', pculi.place_culinary_id, 'name', pculi.name, 'information_url', pculi.information_url, 'open_time', TO_CHAR(pculi.open_time, 'HH24:MI'), 'close_time', TO_CHAR(pculi.close_time, 'HH24:MI'))) AS culinaries
+FROM
+    place_culinaries pculi
+GROUP BY
+    pculi.trip_place_id
+)
+SELECT
+    tp.trip_id,
+    tp.trip_place_id,
+    tp.name AS place_name,
+    coalesce(c.culinaries, '[]'::json) AS place_culinaries
+FROM
+    trip_places tp
+    LEFT JOIN culinaries c ON c.trip_place_id = tp.trip_place_id;
+END;
+$$;
+
+
+--
 -- Name: trips_view(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -200,6 +222,16 @@ BEGIN
             trip_companions tc
         GROUP BY
             tc.trip_id
+),
+culinaries_count AS (
+    SELECT
+        tp.trip_place_id,
+        COUNT(pculi.place_culinary_id) AS count
+    FROM
+        trip_places tp
+        LEFT JOIN place_culinaries pculi ON tp.trip_place_id = pculi.trip_place_id
+    GROUP BY
+        tp.trip_place_id
 ),
 activities_count AS (
     SELECT
@@ -222,11 +254,12 @@ trip_places_ordered_by_date AS (
 places AS (
     SELECT
         tp.trip_id,
-        json_agg(json_build_object('trip_place_id', tp.trip_place_id, 'name', tp.name, 'date', to_char(tp.date, 'YYYY-MM-DD'), 'has_accomodation', paccom.place_accomodation_id IS NOT NULL, 'accomodation_paid', coalesce(paccom.paid, FALSE), 'activities_count', act_count.count)) AS places
+        json_agg(json_build_object('trip_place_id', tp.trip_place_id, 'name', tp.name, 'date', to_char(tp.date, 'YYYY-MM-DD'), 'has_accomodation', paccom.place_accomodation_id IS NOT NULL, 'accomodation_paid', coalesce(paccom.paid, FALSE), 'activities_count', act_count.count, 'culinaries_count', cul_count.count)) AS places
 FROM
     trip_places_ordered_by_date tp
     LEFT JOIN place_accomodations paccom ON tp.trip_place_id = paccom.trip_place_id
         LEFT JOIN activities_count act_count ON tp.trip_place_id = act_count.trip_place_id
+        LEFT JOIN culinaries_count cul_count ON tp.trip_place_id = cul_count.trip_place_id
     GROUP BY
         tp.trip_id
 ),
@@ -340,6 +373,47 @@ $$;
 
 
 --
+-- Name: upsert_place_culinary(text, text, text, text, text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.upsert_place_culinary(place_culinary_id text, trip_place_id text, name text, information_url text, open_time text, close_time text) RETURNS text
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT
+            1
+        FROM
+            place_culinaries pculi
+        WHERE
+            pculi.place_culinary_id = upsert_place_culinary.place_culinary_id::uuid) THEN
+    INSERT INTO place_culinaries (place_culinary_id, trip_place_id, name, information_url, open_time, close_time)
+    SELECT
+        upsert_place_culinary.place_culinary_id::uuid,
+        upsert_place_culinary.trip_place_id::uuid,
+        upsert_place_culinary.name,
+        upsert_place_culinary.information_url,
+        upsert_place_culinary.open_time::time,
+        upsert_place_culinary.close_time::time;
+ELSE
+    UPDATE
+        place_culinaries pculi
+    SET
+        name = upsert_place_culinary.name,
+        information_url = upsert_place_culinary.information_url,
+        open_time = upsert_place_culinary.open_time::time,
+        close_time = upsert_place_culinary.close_time::time
+    WHERE
+        pculi.trip_place_id = upsert_place_culinary.trip_place_id::uuid
+        AND pculi.place_culinary_id = upsert_place_culinary.place_culinary_id::uuid;
+END IF;
+    --
+    RETURN upsert_place_culinary.place_culinary_id;
+END
+$$;
+
+
+--
 -- Name: upsert_trip_companion(text, text, text, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -445,6 +519,20 @@ CREATE TABLE public.place_activities (
 
 
 --
+-- Name: place_culinaries; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.place_culinaries (
+    place_culinary_id uuid NOT NULL,
+    trip_place_id uuid NOT NULL,
+    name text NOT NULL,
+    information_url text,
+    open_time time(0) without time zone,
+    close_time time(0) without time zone
+);
+
+
+--
 -- Name: schema_migrations; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -536,6 +624,14 @@ ALTER TABLE ONLY public.place_activities
 
 
 --
+-- Name: place_culinaries place_culinaries_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.place_culinaries
+    ADD CONSTRAINT place_culinaries_pkey PRIMARY KEY (place_culinary_id);
+
+
+--
 -- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -605,6 +701,14 @@ ALTER TABLE ONLY public.place_accomodations
 
 ALTER TABLE ONLY public.place_activities
     ADD CONSTRAINT place_activities_trip_place_id_fkey FOREIGN KEY (trip_place_id) REFERENCES public.trip_places(trip_place_id);
+
+
+--
+-- Name: place_culinaries place_culinaries_trip_place_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.place_culinaries
+    ADD CONSTRAINT place_culinaries_trip_place_id_fkey FOREIGN KEY (trip_place_id) REFERENCES public.trip_places(trip_place_id);
 
 
 --

@@ -1,6 +1,7 @@
 import env
 import frontend/routes.{type Route}
 import frontend/uuid_util
+import gleam/option.{type Option}
 import lustre_http.{type HttpError}
 import shared/auth_models
 import shared/id.{type Id, type TripId, type TripPlaceId, type UserId}
@@ -21,6 +22,7 @@ pub type AppEvent {
   TripPlaceCreatePage(TripPlaceCreatePageEvent)
   TripPlaceActivitiesPage(TripPlaceActivitiesPageEvent)
   TripPlaceAccomodationPage(TripPlaceAccomodationPageEvent)
+  TripPlaceCulinariesPage(TripPlaceCulinariesPageEvent)
 }
 
 pub type AppModel {
@@ -40,6 +42,7 @@ pub type AppModel {
     trip_place_create_errors: String,
     trip_place_activities: PlaceActivitiesForm,
     trip_place_accomodation: PlaceAccomodationForm,
+    trip_place_culinaries: PlaceCulinariesForm,
   )
 }
 
@@ -83,6 +86,10 @@ pub fn set_default_trip_update(model: AppModel) {
   )
 }
 
+pub fn set_trip_place_culinaries(model: AppModel, trip_place_culinaries) {
+  AppModel(..model, trip_place_culinaries:)
+}
+
 pub type Toast {
   Toast(visible: Bool, header: String, content: String, status: ToastStatus)
 }
@@ -109,6 +116,7 @@ pub fn default_app_model() {
     trip_place_create_errors: "",
     trip_place_activities: default_trip_place_activities_form(),
     trip_place_accomodation: default_place_accomodation_form(),
+    trip_place_culinaries: default_place_culinaries_form(),
   )
 }
 
@@ -261,4 +269,52 @@ pub type TripPlaceAccomodationPageEvent {
     trip_place_id: String,
   )
   TripPlaceAccomodationPageApiReturnedSaveResponse(Result(Nil, HttpError))
+}
+
+pub fn default_place_culinaries_form() {
+  PlaceCulinariesForm(
+    trip_id: "",
+    trip_place_id: "",
+    place_name: "",
+    place_culinaries: [],
+  )
+}
+
+pub fn default_place_culinary_form() {
+  PlaceCulinaryForm(
+    place_culinary_id: "",
+    name: "",
+    information_url: "",
+    open_time: "",
+    close_time: "",
+  )
+}
+
+pub type PlaceCulinariesForm {
+  PlaceCulinariesForm(
+    trip_id: String,
+    trip_place_id: String,
+    place_name: String,
+    place_culinaries: List(PlaceCulinaryForm),
+  )
+}
+
+pub type PlaceCulinaryForm {
+  PlaceCulinaryForm(
+    place_culinary_id: String,
+    name: String,
+    information_url: String,
+    open_time: String,
+    close_time: String,
+  )
+}
+
+pub type TripPlaceCulinariesPageEvent {
+  TripPlaceCulinariesPageApiReturnedCulinaries(
+    Result(trip_models.PlaceCulinaries, HttpError),
+  )
+  TripPlaceCulinariesPageUserInputForm(PlaceCulinaryForm)
+  TripPlaceCulinariesPageUserClickedAddMore
+  TripPlaceCulinariesPageUserClickedSave(trip_id: String, trip_place_id: String)
+  TripPlaceCulinariesPageApiReturnedSaveResponse(Result(Nil, HttpError))
 }

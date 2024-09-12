@@ -213,7 +213,7 @@ pub fn handle_update_place_activities(
   Ok(Nil)
 }
 
-// Retrieve all user's trip place activities
+// Retrieve all user's trip place accomodations
 pub fn handle_get_place_accomodation(
   ctx: Context,
   user_id: Id(UserId),
@@ -233,7 +233,6 @@ pub fn handle_get_place_accomodation(
   })
 }
 
-// Retrieve all user's trip place activities
 pub fn handle_update_place_accomodation(
   ctx: Context,
   user_id: Id(UserId),
@@ -249,4 +248,37 @@ pub fn handle_update_place_accomodation(
   ))
 
   trips_db.update_place_accomodation(ctx, trip_place_id, update_request)
+}
+
+pub fn handle_get_trip_place_culinaries(
+  ctx: Context,
+  user_id: Id(UserId),
+  trip_id: Id(TripId),
+  trip_place_id: Id(TripPlaceId),
+) -> Result(trip_models.PlaceCulinaries, AppError) {
+  use _ <- result.try(trips_db.ensure_trip_place_id_exists(
+    ctx,
+    user_id,
+    trip_id,
+    trip_place_id,
+  ))
+
+  trips_db.get_place_culinaries(ctx, trip_place_id)
+}
+
+pub fn handle_update_place_culinaries(
+  ctx: Context,
+  user_id: Id(UserId),
+  trip_id: Id(TripId),
+  trip_place_id: Id(TripPlaceId),
+  update_request: trip_models.PlaceCulinaries,
+) -> Result(Nil, AppError) {
+  use _ <- result.try(trips_db.ensure_trip_place_id_exists(
+    ctx,
+    user_id,
+    trip_id,
+    trip_place_id,
+  ))
+
+  trips_db.update_place_culinaries(ctx, trip_place_id, update_request)
 }

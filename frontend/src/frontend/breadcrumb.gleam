@@ -13,6 +13,7 @@ pub fn simple_breadcrumb(model: AppModel) {
       | routes.TripPlaceCreate(trip_id)
       | routes.TripPlaceActivities(trip_id, _)
       | routes.TripPlaceAccomodations(trip_id, _)
+      | routes.TripPlaceCulinaries(trip_id, _)
       | routes.TripCompanions(trip_id) ->
         html.span([], [
           element.text(" > "),

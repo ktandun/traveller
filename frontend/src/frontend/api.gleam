@@ -362,3 +362,45 @@ pub fn send_place_accomodation_update_request(
   |> build
   |> send
 }
+
+pub fn send_get_place_culinaries_request(trip_id: String, trip_place_id: String) {
+  new_request()
+  |> with_url(
+    "/api/trips/" <> trip_id <> "/places/" <> trip_place_id <> "/culinaries",
+  )
+  |> with_method(Get)
+  |> with_response_decoder(fn(response) {
+    response
+    |> toy.decode(trip_models_codecs.trip_place_culinaries_decoder())
+    |> decode_util.map_toy_error_to_decode_errors()
+  })
+  |> with_to_event(fn(result) {
+    events.TripPlaceCulinariesPage(
+      events.TripPlaceCulinariesPageApiReturnedCulinaries(result),
+    )
+  })
+  |> build
+  |> send
+}
+
+pub fn send_place_culinaries_update_request(
+  trip_id: String,
+  trip_place_id: String,
+  update_request: trip_models.PlaceCulinaries,
+) {
+  new_request()
+  |> with_url(
+    "/api/trips/" <> trip_id <> "/places/" <> trip_place_id <> "/culinaries",
+  )
+  |> with_method(Put)
+  |> with_json_body(
+    update_request |> trip_models_codecs.trip_place_culinaries_encoder,
+  )
+  |> with_ignore_response_to_event(fn(response) {
+    events.TripPlaceCulinariesPage(
+      events.TripPlaceCulinariesPageApiReturnedSaveResponse(response),
+    )
+  })
+  |> build
+  |> send
+}

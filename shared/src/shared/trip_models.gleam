@@ -71,6 +71,7 @@ pub type UserTripPlace {
     has_accomodation: Bool,
     accomodation_paid: Bool,
     activities_count: Int,
+    culinaries_count: Int,
   )
 }
 
@@ -107,6 +108,7 @@ pub fn user_trip_place_decoder() {
   use has_accomodation <- toy.field("has_accomodation", toy.bool)
   use accomodation_paid <- toy.field("accomodation_paid", toy.bool)
   use activities_count <- toy.field("activities_count", toy.int)
+  use culinaries_count <- toy.field("culinaries_count", toy.int)
 
   toy.decoded(UserTripPlace(
     trip_place_id:,
@@ -115,6 +117,7 @@ pub fn user_trip_place_decoder() {
     has_accomodation:,
     accomodation_paid:,
     activities_count:,
+    culinaries_count:,
   ))
 }
 
@@ -126,6 +129,7 @@ pub fn user_trip_place_encoder(data: UserTripPlace) {
     #("has_accomodation", json.bool(data.has_accomodation)),
     #("accomodation_paid", json.bool(data.accomodation_paid)),
     #("activities_count", json.int(data.activities_count)),
+    #("culinaries_count", json.int(data.culinaries_count)),
   ])
 }
 
@@ -418,5 +422,26 @@ pub fn default_place_accomodation() {
     information_url: option.None,
     accomodation_fee: option.None,
     paid: False,
+  )
+}
+
+//
+
+pub type PlaceCulinaries {
+  PlaceCulinaries(
+    trip_id: String,
+    trip_place_id: String,
+    place_name: String,
+    place_culinaries: List(PlaceCulinary),
+  )
+}
+
+pub type PlaceCulinary {
+  PlaceCulinary(
+    place_culinary_id: String,
+    name: String,
+    information_url: Option(String),
+    open_time: Option(String),
+    close_time: Option(String),
   )
 }

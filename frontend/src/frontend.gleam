@@ -10,6 +10,7 @@ import frontend/pages/trip_details_page
 import frontend/pages/trip_place_accomodations_page
 import frontend/pages/trip_place_activities_page
 import frontend/pages/trip_place_create_page
+import frontend/pages/trip_place_culinaries_page
 import frontend/pages/trip_update_page
 import frontend/pages/trips_dashboard_page
 import frontend/routes.{type Route}
@@ -67,6 +68,8 @@ fn path_to_route(path_segments: List(String)) -> Route {
       routes.TripPlaceActivities(trip_id, trip_place_id)
     ["trips", trip_id, "places", trip_place_id, "accomodations"] ->
       routes.TripPlaceAccomodations(trip_id, trip_place_id)
+    ["trips", trip_id, "places", trip_place_id, "culinaries"] ->
+      routes.TripPlaceCulinaries(trip_id, trip_place_id)
     _ -> routes.FourOFour
   }
 }
@@ -101,6 +104,14 @@ pub fn update(model: AppModel, msg: AppEvent) -> #(AppModel, Effect(AppEvent)) {
           },
           api.send_get_place_accomodation_request(trip_id, trip_place_id),
         ])
+      routes.TripPlaceCulinaries(trip_id, trip_place_id) ->
+        effect.batch([
+          case string.is_empty(model.trip_details.destination) {
+            True -> api.send_get_trip_details_request(trip_id)
+            False -> effect.none()
+          },
+          api.send_get_place_culinaries_request(trip_id, trip_place_id),
+        ])
       _ -> effect.none()
     })
 
@@ -128,6 +139,11 @@ pub fn update(model: AppModel, msg: AppEvent) -> #(AppModel, Effect(AppEvent)) {
       )
     events.TripPlaceAccomodationPage(event) ->
       trip_place_accomodations_page.handle_trip_place_accomodations_page_event(
+        model,
+        event,
+      )
+    events.TripPlaceCulinariesPage(event) ->
+      trip_place_culinaries_page.handle_trip_place_culinaries_page_event(
         model,
         event,
       )
@@ -163,6 +179,12 @@ pub fn view(model: AppModel) -> Element(AppEvent) {
         )
       routes.TripPlaceAccomodations(trip_id, trip_place_id) ->
         trip_place_accomodations_page.trip_place_accomodations_view(
+          model,
+          trip_id,
+          trip_place_id,
+        )
+      routes.TripPlaceCulinaries(trip_id, trip_place_id) ->
+        trip_place_culinaries_page.trip_place_culinaries_view(
           model,
           trip_id,
           trip_place_id,

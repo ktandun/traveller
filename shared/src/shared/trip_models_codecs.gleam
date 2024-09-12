@@ -105,3 +105,63 @@ pub fn place_accomodation_encoder(data: trip_models.PlaceAccomodation) {
     #("paid", json.bool(data.paid)),
   ])
 }
+
+//
+
+pub fn trip_place_culinaries_encoder(data: trip_models.PlaceCulinaries) {
+  json.object([
+    #("trip_id", json.string(data.trip_id)),
+    #("trip_place_id", json.string(data.trip_place_id)),
+    #("place_name", json.string(data.place_name)),
+    #(
+      "place_culinaries",
+      json.array(data.place_culinaries, of: trip_place_culinary_encoder),
+    ),
+  ])
+}
+
+pub fn trip_place_culinary_encoder(data: trip_models.PlaceCulinary) {
+  json.object([
+    #("place_culinary_id", json.string(data.place_culinary_id)),
+    #("name", json.string(data.name)),
+    #("open_time", json.nullable(data.open_time, json.string)),
+    #("close_time", json.nullable(data.close_time, json.string)),
+    #("information_url", json.nullable(data.information_url, json.string)),
+  ])
+}
+
+pub fn trip_place_culinaries_decoder() {
+  use trip_id <- toy.field("trip_id", toy.string)
+  use trip_place_id <- toy.field("trip_place_id", toy.string)
+  use place_name <- toy.field("place_name", toy.string)
+  use place_culinaries <- toy.field(
+    "place_culinaries",
+    toy.list(trip_place_culinary_decoder()),
+  )
+
+  toy.decoded(trip_models.PlaceCulinaries(
+    trip_id:,
+    trip_place_id:,
+    place_name:,
+    place_culinaries:,
+  ))
+}
+
+pub fn trip_place_culinary_decoder() {
+  use place_culinary_id <- toy.field("place_culinary_id", toy.string)
+  use name <- toy.field("name", toy.string)
+  use information_url <- toy.field(
+    "information_url",
+    toy.string |> toy.nullable,
+  )
+  use open_time <- toy.field("open_time", toy.string |> toy.nullable)
+  use close_time <- toy.field("close_time", toy.string |> toy.nullable)
+
+  toy.decoded(trip_models.PlaceCulinary(
+    place_culinary_id:,
+    name:,
+    information_url:,
+    open_time:,
+    close_time:,
+  ))
+}

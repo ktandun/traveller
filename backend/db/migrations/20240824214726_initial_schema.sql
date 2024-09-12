@@ -47,6 +47,15 @@ CREATE TABLE place_activities (
     entry_fee numeric(18, 2)
 );
 
+CREATE TABLE place_culinaries (
+    place_culinary_id uuid PRIMARY KEY,
+    trip_place_id uuid REFERENCES trip_places (trip_place_id) NOT NULL,
+    name text NOT NULL,
+    information_url text,
+    open_time time(0) without time zone,
+    close_time time(0) without time zone
+);
+
 CREATE TABLE place_accomodations (
     place_accomodation_id uuid PRIMARY KEY,
     trip_place_id uuid REFERENCES trip_places (trip_place_id) NOT NULL UNIQUE,
@@ -82,6 +91,43 @@ BEGIN
     WHERE tc.trip_id = delete_trip_companions.trip_id::uuid;
     --
     RETURN 'OK';
+END
+$f$
+LANGUAGE PLPGSQL;
+
+CREATE OR REPLACE FUNCTION upsert_place_culinary (place_culinary_id text, trip_place_id text, name text, information_url text, open_time text, close_time text)
+    RETURNS text
+    AS $f$
+BEGIN
+    IF NOT EXISTS (
+        SELECT
+            1
+        FROM
+            place_culinaries pculi
+        WHERE
+            pculi.place_culinary_id = upsert_place_culinary.place_culinary_id::uuid) THEN
+    INSERT INTO place_culinaries (place_culinary_id, trip_place_id, name, information_url, open_time, close_time)
+    SELECT
+        upsert_place_culinary.place_culinary_id::uuid,
+        upsert_place_culinary.trip_place_id::uuid,
+        upsert_place_culinary.name,
+        upsert_place_culinary.information_url,
+        upsert_place_culinary.open_time::time,
+        upsert_place_culinary.close_time::time;
+ELSE
+    UPDATE
+        place_culinaries pculi
+    SET
+        name = upsert_place_culinary.name,
+        information_url = upsert_place_culinary.information_url,
+        open_time = upsert_place_culinary.open_time::time,
+        close_time = upsert_place_culinary.close_time::time
+    WHERE
+        pculi.trip_place_id = upsert_place_culinary.trip_place_id::uuid
+        AND pculi.place_culinary_id = upsert_place_culinary.place_culinary_id::uuid;
+END IF;
+    --
+    RETURN upsert_place_culinary.place_culinary_id;
 END
 $f$
 LANGUAGE PLPGSQL;
@@ -173,6 +219,16 @@ BEGIN
         GROUP BY
             tc.trip_id
 ),
+culinaries_count AS (
+    SELECT
+        tp.trip_place_id,
+        COUNT(pculi.place_culinary_id) AS count
+    FROM
+        trip_places tp
+        LEFT JOIN place_culinaries pculi ON tp.trip_place_id = pculi.trip_place_id
+    GROUP BY
+        tp.trip_place_id
+),
 activities_count AS (
     SELECT
         tp.trip_place_id,
@@ -194,11 +250,12 @@ trip_places_ordered_by_date AS (
 places AS (
     SELECT
         tp.trip_id,
-        json_agg(json_build_object('trip_place_id', tp.trip_place_id, 'name', tp.name, 'date', to_char(tp.date, 'YYYY-MM-DD'), 'has_accomodation', paccom.place_accomodation_id IS NOT NULL, 'accomodation_paid', coalesce(paccom.paid, FALSE), 'activities_count', act_count.count)) AS places
+        json_agg(json_build_object('trip_place_id', tp.trip_place_id, 'name', tp.name, 'date', to_char(tp.date, 'YYYY-MM-DD'), 'has_accomodation', paccom.place_accomodation_id IS NOT NULL, 'accomodation_paid', coalesce(paccom.paid, FALSE), 'activities_count', act_count.count, 'culinaries_count', cul_count.count)) AS places
 FROM
     trip_places_ordered_by_date tp
     LEFT JOIN place_accomodations paccom ON tp.trip_place_id = paccom.trip_place_id
         LEFT JOIN activities_count act_count ON tp.trip_place_id = act_count.trip_place_id
+        LEFT JOIN culinaries_count cul_count ON tp.trip_place_id = cul_count.trip_place_id
     GROUP BY
         tp.trip_id
 ),
@@ -415,6 +472,36 @@ END
 $f$
 LANGUAGE PLPGSQL;
 
+CREATE OR REPLACE FUNCTION trip_place_culinaries_view ()
+    RETURNS TABLE (
+        trip_id uuid,
+        trip_place_id uuid,
+        place_name text,
+        place_culinaries json
+    )
+    AS $f$
+BEGIN
+    RETURN QUERY WITH culinaries AS (
+    SELECT
+        pculi.trip_place_id,
+        json_agg(json_build_object('place_culinary_id', pculi.place_culinary_id, 'name', pculi.name, 'information_url', pculi.information_url, 'open_time', TO_CHAR(pculi.open_time, 'HH24:MI'), 'close_time', TO_CHAR(pculi.close_time, 'HH24:MI'))) AS culinaries
+FROM
+    place_culinaries pculi
+GROUP BY
+    pculi.trip_place_id
+)
+SELECT
+    tp.trip_id,
+    tp.trip_place_id,
+    tp.name AS place_name,
+    coalesce(c.culinaries, '[]'::json) AS place_culinaries
+FROM
+    trip_places tp
+    LEFT JOIN culinaries c ON c.trip_place_id = tp.trip_place_id;
+END;
+$f$
+LANGUAGE PLPGSQL;
+
 ------------------------------------------------------
 ----------------- SEED -------------------------------
 ------------------------------------------------------
@@ -463,16 +550,32 @@ SELECT
 SELECT
     upsert_place_accomodation (trip_place_id => '65916ea8-c637-4921-89a0-97d3661ce782', place_accomodation_id => '40ca5e63-c08d-4731-b4c3-2f3846725541', accomodation_name => 'Hilton Orchard', information_url => 'https://www.hilton.com/en/hotels/sinorhi-hilton-singapore-orchard/', accomodation_fee => 100, paid => FALSE);
 
--- migrate:down
+SELECT
+    upsert_place_culinary (trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', place_culinary_id => 'd8e8ab96-6ed7-4210-903c-79c21534686f', name => 'SKAI', information_url => 'https://www.tripadvisor.co.nz/Restaurant_Review-g294265-d15123886-Reviews-SKAI-Singapore.html', open_time => '10:00', close_time => '23:00');
 
+SELECT
+    upsert_place_culinary (trip_place_id => '65916ea8-c637-4921-89a0-97d3661ce782', place_culinary_id => 'ebc82287-6f34-4689-bc8d-6d92143448da', name => 'Waterfall Ristorante', information_url => 'https://www.tripadvisor.co.nz/Restaurant_Review-g294265-d3952172-Reviews-Waterfall_Ristorante_Italiano-Singapore.html', open_time => '12:00', close_time => '14:30');
+
+-- migrate:down
 DROP FUNCTION trips_view ();
+
+DROP FUNCTION trip_place_culinaries_view ();
+
 DROP FUNCTION check_user_login (email text, PASSWORD TEXT);
+
 DROP FUNCTION create_user (user_id text, email text, PASSWORD TEXT);
+
 DROP FUNCTION update_trip (trip_id text, destination text, start_date text, end_date text);
+
 DROP FUNCTION create_place_activity (place_activity_id text, trip_place_id text, name text, information_url text, start_time text, end_time text, entry_fee numeric);
+
 DROP FUNCTION place_activities_view ();
+
 DROP FUNCTION trip_place_accomodations_view ();
+
 DROP FUNCTION upsert_place_accomodation (trip_place_id text, place_accomodation_id text, accomodation_name text, information_url text, accomodation_fee numeric, paid bool);
+
+DROP TABLE place_culinaries;
 
 DROP TABLE place_accomodations;
 

@@ -80,7 +80,7 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
           get_trip_place_activities(req, ctx, user_id, trip_id, trip_place_id)
         http.Put ->
           put_trip_place_activities(req, ctx, user_id, trip_id, trip_place_id)
-        _ -> wisp.method_not_allowed([http.Delete])
+        _ -> wisp.method_not_allowed([http.Get, http.Put])
       }
     }
     ["api", "trips", trip_id, "places", trip_place_id, "accomodations"] -> {
@@ -103,7 +103,19 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
             trip_id,
             trip_place_id,
           )
-        _ -> wisp.method_not_allowed([http.Delete])
+        _ -> wisp.method_not_allowed([http.Get, http.Put])
+      }
+    }
+
+    ["api", "trips", trip_id, "places", trip_place_id, "culinaries"] -> {
+      use user_id <- web.require_authenticated(req, ctx)
+
+      case req.method {
+        http.Get ->
+          get_trip_place_culinaries(req, ctx, user_id, trip_id, trip_place_id)
+        http.Put ->
+          put_trip_place_culinaries(req, ctx, user_id, trip_id, trip_place_id)
+        _ -> wisp.method_not_allowed([http.Get, http.Put])
       }
     }
 
@@ -393,6 +405,57 @@ fn put_trip_place_accomodations(
   ))
 
   use _ <- web.require_ok(trip_routes.handle_update_place_accomodation(
+    ctx,
+    user_id,
+    trip_id,
+    trip_place_id,
+    update_request,
+  ))
+
+  wisp.ok()
+}
+
+fn get_trip_place_culinaries(
+  _req: Request,
+  ctx: Context,
+  user_id: Id(UserId),
+  trip_id: String,
+  trip_place_id: String,
+) {
+  let trip_id = id.to_id(trip_id)
+  let trip_place_id = id.to_id(trip_place_id)
+
+  use place_accomodation <- web.require_ok(
+    trip_routes.handle_get_trip_place_culinaries(
+      ctx,
+      user_id,
+      trip_id,
+      trip_place_id,
+    ),
+  )
+
+  place_accomodation
+  |> trip_models_codecs.trip_place_culinaries_encoder
+  |> json.to_string_builder
+  |> wisp.json_response(200)
+}
+
+fn put_trip_place_culinaries(
+  req: Request,
+  ctx: Context,
+  user_id: Id(UserId),
+  trip_id: String,
+  trip_place_id: String,
+) {
+  let trip_id = id.to_id(trip_id)
+  let trip_place_id = id.to_id(trip_place_id)
+  use request_body <- wisp.require_string_body(req)
+  use update_request <- web.require_valid_json(json_util.try_decode(
+    request_body,
+    trip_models_codecs.trip_place_culinaries_decoder(),
+  ))
+
+  use _ <- web.require_ok(trip_routes.handle_update_place_culinaries(
     ctx,
     user_id,
     trip_id,

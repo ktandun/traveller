@@ -459,3 +459,83 @@ pub fn update_place_accomodation(
   |> result.map(fn(_) { Nil })
   |> database.to_app_error()
 }
+
+pub fn get_place_culinaries(
+  ctx: Context,
+  trip_place_id: Id(TripPlaceId),
+) -> Result(trip_models.PlaceCulinaries, AppError) {
+  let trip_place_id = id.id_value(trip_place_id)
+
+  let sql =
+    "
+    SELECT
+      json_build_object(
+        'trip_id', trip_id,
+        'trip_place_id', trip_place_id,
+        'place_name', place_name,
+        'place_culinaries', place_culinaries
+      ) AS obj
+    FROM 
+      trip_place_culinaries_view ()
+    WHERE 
+      trip_place_id = $1
+    "
+
+  let return_type = dynamic.element(0, dynamic.string)
+
+  use query_result <- result.try(
+    pgo.execute(sql, ctx.db, [pgo.text(trip_place_id)], return_type)
+    |> database.to_app_error(),
+  )
+
+  use row <- database.require_single_row(query_result, "get_place_culinaries")
+
+  json_util.try_decode(row, trip_models_codecs.trip_place_culinaries_decoder())
+}
+
+pub fn update_place_culinaries(
+  ctx: Context,
+  trip_place_id: Id(TripPlaceId),
+  update_request: trip_models.PlaceCulinaries,
+) -> Result(Nil, AppError) {
+  let trip_place_id = id.id_value(trip_place_id)
+
+  let sql =
+    "
+    SELECT
+      upsert_place_culinary (
+        trip_place_id => $1, 
+        place_culinary_id => $2, 
+        name => $3, 
+        information_url => $4, 
+        open_time => $5, 
+        close_time => $6)
+    "
+
+  let return_type = dynamic.dynamic
+
+  update_request.place_culinaries
+  |> list.map(fn(culinary) {
+    let place_culinary_id = case string.is_empty(culinary.place_culinary_id) {
+      True -> ctx.uuid_provider() |> uuid.to_string
+      False -> culinary.place_culinary_id
+    }
+
+    pgo.execute(
+      sql,
+      ctx.db,
+      [
+        pgo.text(trip_place_id),
+        pgo.text(place_culinary_id),
+        pgo.text(culinary.name),
+        pgo.nullable(pgo.text, culinary.information_url),
+        pgo.nullable(pgo.text, culinary.open_time),
+        pgo.nullable(pgo.text, culinary.close_time),
+      ],
+      return_type,
+    )
+    |> database.to_app_error()
+  })
+  |> result.all
+  |> result.map(fn(_) { Nil })
+}

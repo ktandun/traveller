@@ -32,7 +32,7 @@ buildprod:
     kill -9 $(pgrep autossh) || autossh -f -N -M 0 -R localhost:8079:localhost:8079 ci
 
 db:
-    cd backend && dbmate down && dbmate up
+    cd backend && dbmate drop && dbmate up
     cd database && PGUSER=kenzietandun PGDATABASE=kenzietandun gleam run -m squirrel
 
 test: db

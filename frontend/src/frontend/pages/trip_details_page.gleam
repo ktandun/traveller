@@ -1,5 +1,4 @@
 import frontend/events.{type AppModel, type TripDetailsPageEvent, AppModel}
-import frontend/form_components as fc
 import frontend/web
 import gleam/float
 import gleam/int
@@ -92,6 +91,7 @@ pub fn trip_details_view(model: AppModel) {
             html.th([], [element.text("Date")]),
             html.th([], [element.text("Accomodation")]),
             html.th([], [element.text("Activities")]),
+            html.th([], [element.text("Culinaries")]),
           ]),
         ]),
         html.tbody(
@@ -134,11 +134,30 @@ pub fn trip_details_view(model: AppModel) {
                         <> model.trip_details.trip_id
                         <> "/places/"
                         <> place.trip_place_id
-                        <> "/activities/",
+                        <> "/activities",
                       ),
                     ],
                     [
                       element.text(case place.activities_count {
+                        0 -> "None planned"
+                        count -> int.to_string(count) <> " planned"
+                      }),
+                    ],
+                  ),
+                ]),
+                html.td([], [
+                  html.a(
+                    [
+                      attribute.href(
+                        "/trips/"
+                        <> model.trip_details.trip_id
+                        <> "/places/"
+                        <> place.trip_place_id
+                        <> "/culinaries",
+                      ),
+                    ],
+                    [
+                      element.text(case place.culinaries_count {
                         0 -> "None planned"
                         count -> int.to_string(count) <> " planned"
                       }),

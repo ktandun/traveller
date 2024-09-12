@@ -6,6 +6,7 @@ pub type Route {
   TripPlaceCreate(trip_id: String)
   TripPlaceActivities(trip_id: String, trip_place_id: String)
   TripPlaceAccomodations(trip_id: String, trip_place_id: String)
+  TripPlaceCulinaries(trip_id: String, trip_place_id: String)
   TripUpdate(trip_id: String)
   TripCompanions(trip_id: String)
   TripCreate
