@@ -282,7 +282,7 @@ pub fn default_place_culinaries_form() {
 
 pub fn default_place_culinary_form() {
   PlaceCulinaryForm(
-    place_culinary_id: "",
+    place_culinary_id: uuid_util.gen_uuid(),
     name: "",
     information_url: "",
     open_time: "",

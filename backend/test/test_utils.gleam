@@ -11,6 +11,8 @@ pub const testing_trip_id = "87fccf2c-dbeb-4e6f-b116-5f46463c2ee7"
 
 pub const testing_trip_place_id = "619ee043-d377-4ef7-8134-dc16c3c4af99"
 
+pub const testing_trip_place_id_without_accomodation = "a99f7893-632a-41fb-bd40-2f8fe8dd1d7e"
+
 pub const testing_place_activity_id = "c26a0603-16d2-4156-b985-acf398b16cd2"
 
 pub fn gen_uuid() {

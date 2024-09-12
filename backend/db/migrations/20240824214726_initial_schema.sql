@@ -548,9 +548,6 @@ SELECT
     upsert_place_accomodation (trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', place_accomodation_id => '58cc6f2b-4291-4396-bf4f-5102f8fce4fe', accomodation_name => 'Marina Bay Sands', information_url => 'https://www.marinabaysands.com', accomodation_fee => 120, paid => TRUE);
 
 SELECT
-    upsert_place_accomodation (trip_place_id => '65916ea8-c637-4921-89a0-97d3661ce782', place_accomodation_id => '40ca5e63-c08d-4731-b4c3-2f3846725541', accomodation_name => 'Hilton Orchard', information_url => 'https://www.hilton.com/en/hotels/sinorhi-hilton-singapore-orchard/', accomodation_fee => 100, paid => FALSE);
-
-SELECT
     upsert_place_culinary (trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', place_culinary_id => 'd8e8ab96-6ed7-4210-903c-79c21534686f', name => 'SKAI', information_url => 'https://www.tripadvisor.co.nz/Restaurant_Review-g294265-d15123886-Reviews-SKAI-Singapore.html', open_time => '10:00', close_time => '23:00');
 
 SELECT

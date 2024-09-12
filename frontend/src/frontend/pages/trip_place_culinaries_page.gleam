@@ -107,7 +107,7 @@ pub fn trip_place_culinaries_view(
                 |> fc.build,
               fc.new()
                 |> fc.with_form_type(fc.TimeInput)
-                |> fc.with_label("Start Time")
+                |> fc.with_label("Open Time")
                 |> fc.with_value(culinary.open_time)
                 |> fc.with_on_input(fn(open_time) {
                   events.TripPlaceCulinariesPage(

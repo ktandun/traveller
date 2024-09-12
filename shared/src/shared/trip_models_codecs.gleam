@@ -149,7 +149,7 @@ pub fn trip_place_culinaries_decoder() {
 
 pub fn trip_place_culinary_decoder() {
   use place_culinary_id <- toy.field("place_culinary_id", toy.string)
-  use name <- toy.field("name", toy.string)
+  use name <- toy.field("name", toy.string |> toy.string_nonempty)
   use information_url <- toy.field(
     "information_url",
     toy.string |> toy.nullable,
