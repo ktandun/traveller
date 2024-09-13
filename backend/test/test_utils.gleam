@@ -1,6 +1,6 @@
 import shared/constants
+import traveller/context.{type Context, Context}
 import traveller/database
-import traveller/web
 import wisp.{type Request}
 import wisp/testing
 import youid/uuid
@@ -19,15 +19,11 @@ pub fn gen_uuid() {
   uuid.v4()
 }
 
-pub fn with_context(callback: fn(web.Context) -> t) -> t {
+pub fn with_context(callback: fn(Context) -> t) -> t {
   use db <- database.with_connection()
 
   let context =
-    web.Context(
-      db: db,
-      uuid_provider: gen_uuid,
-      static_directory: "/priv/static",
-    )
+    Context(db: db, uuid_provider: gen_uuid, static_directory: "/priv/static")
 
   callback(context)
 }

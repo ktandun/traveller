@@ -2,9 +2,9 @@ import gleam/erlang/os
 import gleam/erlang/process
 import mist
 import setup
+import traveller/context.{Context}
 import traveller/database
 import traveller/router
-import traveller/web
 import wisp
 import wisp/wisp_mist
 import youid/uuid
@@ -30,7 +30,7 @@ pub fn main() {
   }
 
   let context =
-    web.Context(
+    Context(
       db: db,
       uuid_provider: uuid.v7,
       static_directory: static_directory(),

@@ -11,13 +11,11 @@ run: build
 clean:
     cd backend && gleam clean && rm -f manifest.toml
     cd shared && gleam clean && rm -f manifest.toml
-    cd database && gleam clean && rm -f manifest.toml
     cd frontend && gleam clean && rm -f manifest.toml
 
 build:
     cd backend && gleam build
     cd shared && gleam build
-    cd database && gleam build
     cd frontend && gleam build
 
 buildprod:
@@ -33,7 +31,6 @@ buildprod:
 
 db:
     cd backend && dbmate drop && dbmate up
-    cd database && PGUSER=kenzietandun PGDATABASE=kenzietandun gleam run -m squirrel
 
 test: db
     cd backend && gleam test
@@ -50,4 +47,4 @@ nginx:
     cd infra && docker build -t my-nginx-proxy . && docker run -d --name nginx-proxy -p 8080:8080 my-nginx-proxy
 
 format:
-    gleam format {database,backend,shared,frontend}/{src,test}
+    gleam format {backend,shared,frontend}/{src,test}

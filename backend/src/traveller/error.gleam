@@ -20,7 +20,6 @@ pub type AppError {
 }
 
 pub fn json_codec_decode_error(e) {
-  io.debug(e)
   let response =
     [#("title", json.string("JSON_CODEC_DECODE_ERROR"))]
     |> json.object()
@@ -93,6 +92,7 @@ pub fn log_query_error(query_error: pgo.QueryError) {
       )
     }
     UnexpectedResultType(e) -> {
+      io.debug(e)
       wisp.log_error("UnexpectedResultType")
     }
     ConnectionUnavailable -> {

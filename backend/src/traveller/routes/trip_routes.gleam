@@ -10,10 +10,10 @@ import shared/trip_models.{
   type PlaceActivities, type UpdateTripCompanionsRequest, type UpdateTripRequest,
   type UserTrips,
 }
+import traveller/context.{type Context}
 import traveller/database/trips_db
 import traveller/date_util
 import traveller/error.{type AppError}
-import traveller/web.{type Context}
 import youid/uuid
 
 /// Returns list of places for a trip set by user
@@ -64,7 +64,7 @@ pub fn handle_delete_trip_place(
     trip_place_id,
   ))
 
-  trips_db.delete_user_trip_place(ctx, user_id, trip_id, trip_place_id)
+  trips_db.delete_user_trip_place(ctx, trip_place_id)
 }
 
 /// Creates a trip place for a user
@@ -180,12 +180,7 @@ pub fn handle_update_place_activities(
     trip_place_id,
   ))
 
-  use _ <- result.try(trips_db.delete_place_activities(
-    ctx,
-    user_id,
-    trip_id,
-    trip_place_id,
-  ))
+  use _ <- result.try(trips_db.delete_place_activities(ctx, trip_place_id))
 
   use _ <- result.try(trips_db.create_place_activities(
     ctx,
@@ -267,14 +262,14 @@ pub fn handle_update_place_culinaries(
   pgo.transaction(ctx.db, fn(db_conn) {
     use _ <- result.try(
       trips_db.delete_place_culinaries(
-        ctx |> web.with_db_conn(db_conn),
+        ctx |> context.with_db_conn(db_conn),
         trip_place_id,
       )
       |> result.map_error(fn(e) { "delete_place_culinaries" }),
     )
 
     trips_db.update_place_culinaries(
-      ctx |> web.with_db_conn(db_conn),
+      ctx |> context.with_db_conn(db_conn),
       trip_place_id,
       update_request,
     )

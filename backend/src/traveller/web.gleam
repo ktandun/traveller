@@ -6,21 +6,11 @@ import gleam/result
 import shared/constants
 import shared/id.{type Id, type UserId}
 import simplifile
+import traveller/context.{type Context}
+import traveller/database/users_db
 import traveller/error.{type AppError}
 import wisp.{type Request, type Response}
 import youid/uuid.{type Uuid}
-
-pub type Context {
-  Context(
-    db: pgo.Connection,
-    uuid_provider: fn() -> Uuid,
-    static_directory: String,
-  )
-}
-
-pub fn with_db_conn(ctx: Context, db_conn: pgo.Connection) {
-  Context(..ctx, db: db_conn)
-}
 
 pub fn middleware(
   ctx: Context,
@@ -92,21 +82,18 @@ pub fn require_authenticated(
     |> result.map_error(fn(_) { error.UserUnauthenticated }),
   )
 
-  use user_id_uuid <- require_ok(
+  use _ <- require_ok(
     uuid.from_string(user_id)
     |> result.map_error(fn(_) {
       error.VerificationFailed("Invalid UUID user id " <> user_id)
     }),
   )
 
-  use pgo.Returned(row_count, _) <- require_ok(
-    sql.find_user_by_userid(ctx.db, user_id_uuid)
-    |> result.map_error(fn(e) { error.DatabaseError(e) }),
-  )
+  use exists <- require_ok(users_db.find_user_by_user_id(ctx, user_id))
 
-  case row_count {
-    1 -> next(id.to_id(user_id))
-    _ -> error_to_response(error.UserUnauthenticated)
+  case exists {
+    True -> next(id.to_id(user_id))
+    False -> error_to_response(error.UserUnauthenticated)
   }
 }
 

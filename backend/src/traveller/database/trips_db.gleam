@@ -1,5 +1,4 @@
 import birl
-import database/sql
 import gleam/dynamic
 import gleam/list
 import gleam/option.{type Option}
@@ -13,12 +12,11 @@ import shared/trip_models.{
   type TripCompanion, type UpdateTripRequest,
 }
 import shared/trip_models_codecs
+import traveller/context.{type Context}
 import traveller/database
 import traveller/date_util
 import traveller/error.{type AppError}
 import traveller/json_util
-import traveller/uuid_util
-import traveller/web.{type Context}
 import youid/uuid
 
 pub fn get_user_trips(
@@ -65,11 +63,34 @@ pub fn get_user_trip_dates_by_trip_id(
   user_id: Id(UserId),
   trip_id: Id(TripId),
 ) -> Result(#(birl.Day, birl.Day), AppError) {
-  let user_id = uuid_util.from_string(id.id_value(user_id))
-  let trip_id = uuid_util.from_string(id.id_value(trip_id))
+  let user_id = id.id_value(user_id)
+  let trip_id = id.id_value(trip_id)
+
+  let sql =
+    "
+    SELECT
+        start_date,
+        end_date
+    FROM
+        trips_view ()
+    WHERE
+        user_id = $1
+        AND trip_id = $2;
+    "
+
+  let return_type =
+    dynamic.tuple2(
+      dynamic.tuple3(dynamic.int, dynamic.int, dynamic.int),
+      dynamic.tuple3(dynamic.int, dynamic.int, dynamic.int),
+    )
 
   use query_result <- result.try(
-    sql.get_user_trip_dates_by_trip_id(ctx.db, user_id, trip_id)
+    pgo.execute(
+      sql,
+      ctx.db,
+      [pgo.text(user_id), pgo.text(trip_id)],
+      return_type,
+    )
     |> database.to_app_error(),
   )
 
@@ -78,7 +99,7 @@ pub fn get_user_trip_dates_by_trip_id(
     "get_user_trip_dates_by_trip_id",
   )
 
-  let sql.GetUserTripDatesByTripIdRow(start_date, end_date) = row
+  let #(start_date, end_date) = row
 
   Ok(#(
     start_date |> date_util.from_date_tuple,
@@ -92,16 +113,36 @@ pub fn create_user_trip(
   create_trip_request: CreateTripRequest,
 ) -> Result(Id(TripId), AppError) {
   let new_trip_id = ctx.uuid_provider()
-  let user_id = uuid_util.from_string(id.id_value(user_id))
+  let user_id = id.id_value(user_id)
 
-  use pgo.Returned(_, _) <- result.try(
-    sql.create_trip(
+  let sql =
+    "
+    SELECT 
+      create_trip (
+        user_id => $1, 
+        trip_id => $2, 
+        destination => $3, 
+        start_date => $4, 
+        end_date => $5
+      )
+    "
+
+  let return_type = dynamic.dynamic
+
+  use _ <- result.try(
+    pgo.execute(
+      sql,
       ctx.db,
-      user_id |> uuid.to_string,
-      new_trip_id |> uuid.to_string,
-      create_trip_request.destination,
-      create_trip_request.start_date |> date_util_shared.to_yyyy_mm_dd,
-      create_trip_request.end_date |> date_util_shared.to_yyyy_mm_dd,
+      [
+        pgo.text(user_id),
+        pgo.text(new_trip_id |> uuid.to_string),
+        pgo.text(create_trip_request.destination),
+        pgo.text(
+          create_trip_request.start_date |> date_util_shared.to_yyyy_mm_dd,
+        ),
+        pgo.text(create_trip_request.end_date |> date_util_shared.to_yyyy_mm_dd),
+      ],
+      return_type,
     )
     |> database.to_app_error(),
   )
@@ -162,26 +203,42 @@ pub fn ensure_trip_id_exists(
   user_id: Id(UserId),
   trip_id: Id(TripId),
 ) -> Result(Nil, AppError) {
-  let user_uuid = uuid_util.from_string(id.id_value(user_id))
-  let trip_uuid = uuid_util.from_string(id.id_value(trip_id))
+  let user_id = id.id_value(user_id)
+  let trip_id = id.id_value(trip_id)
+
+  let sql =
+    "
+    SELECT
+        count(1)
+    FROM
+        user_trips
+    WHERE
+        user_id = $1::uuid
+        AND trip_id = $2::uuid
+    "
+
+  let return_type = dynamic.element(0, dynamic.int)
 
   use query_result <- result.try(
-    sql.find_trip_by_trip_id(ctx.db, user_uuid, trip_uuid)
+    pgo.execute(
+      sql,
+      ctx.db,
+      [pgo.text(user_id), pgo.text(trip_id)],
+      return_type,
+    )
     |> database.to_app_error(),
   )
 
   use row <- database.require_single_row(query_result, "find_trip_by_trip_id")
-
-  let sql.FindTripByTripIdRow(row) = row
 
   case row {
     1 -> Ok(Nil)
     _ ->
       Error(error.VerificationFailed(
         "User ID "
-        <> user_id |> id.id_value
+        <> user_id
         <> " Trip ID "
-        <> trip_id |> id.id_value
+        <> trip_id
         <> " combination does not exist",
       ))
   }
@@ -193,37 +250,50 @@ pub fn ensure_trip_place_id_exists(
   trip_id: Id(TripId),
   trip_place_id: Id(TripPlaceId),
 ) -> Result(Nil, AppError) {
-  let user_uuid = uuid_util.from_string(id.id_value(user_id))
-  let trip_uuid = uuid_util.from_string(id.id_value(trip_id))
-  let trip_place_uuid = uuid_util.from_string(id.id_value(trip_place_id))
+  let user_id = id.id_value(user_id)
+  let trip_id = id.id_value(trip_id)
+  let trip_place_id = id.id_value(trip_place_id)
+
+  let sql =
+    "
+    SELECT
+        count(1)
+    FROM
+        user_trips ut
+        INNER JOIN trip_places tp ON ut.trip_id = tp.trip_id
+    WHERE
+        ut.user_id = $1::uuid
+        AND ut.trip_id = $2::uuid
+        AND tp.trip_place_id = $3::uuid
+    "
+
+  let return_type = dynamic.element(0, dynamic.int)
 
   use query_result <- result.try(
-    sql.find_trip_by_trip_place_id(
+    pgo.execute(
+      sql,
       ctx.db,
-      user_uuid,
-      trip_uuid,
-      trip_place_uuid,
+      [pgo.text(user_id), pgo.text(trip_id), pgo.text(trip_place_id)],
+      return_type,
     )
     |> database.to_app_error(),
   )
 
-  use row <- database.require_single_row(
+  use count <- database.require_single_row(
     query_result,
     "find_trip_by_trip_place_id",
   )
 
-  let sql.FindTripByTripPlaceIdRow(row) = row
-
-  case row {
+  case count {
     1 -> Ok(Nil)
     _ ->
       Error(error.VerificationFailed(
         "User ID "
-        <> user_id |> id.id_value
+        <> user_id
         <> " Trip ID "
-        <> trip_id |> id.id_value
+        <> trip_id
         <> " Trip Place ID "
-        <> trip_place_id |> id.id_value
+        <> trip_place_id
         <> " combination does not exist",
       ))
   }
@@ -231,15 +301,21 @@ pub fn ensure_trip_place_id_exists(
 
 pub fn delete_user_trip_place(
   ctx: Context,
-  user_id: Id(UserId),
-  trip_id: Id(TripId),
   trip_place_id: Id(TripPlaceId),
 ) -> Result(Nil, AppError) {
-  let user_id = uuid_util.from_string(id.id_value(user_id))
-  let trip_id = uuid_util.from_string(id.id_value(trip_id))
-  let trip_place_id = uuid_util.from_string(id.id_value(trip_place_id))
+  let trip_place_id = id.id_value(trip_place_id)
 
-  sql.delete_trip_place(ctx.db, user_id, trip_id, trip_place_id)
+  let sql =
+    "
+    DELETE FROM 
+      trip_places
+    WHERE 
+      trip_place_id = $1::uuid;
+    "
+
+  let return_type = dynamic.dynamic
+
+  pgo.execute(sql, ctx.db, [pgo.text(trip_place_id)], return_type)
   |> result.map(fn(_) { Nil })
   |> database.to_app_error()
 }
@@ -248,17 +324,34 @@ pub fn upsert_trip_place(
   ctx: Context,
   trip_id: Id(TripId),
   trip_place_id: Id(TripPlaceId),
-  request: CreateTripPlaceRequest,
+  create_request: CreateTripPlaceRequest,
 ) -> Result(Nil, AppError) {
   let trip_id = id.id_value(trip_id)
   let trip_place_id = id.id_value(trip_place_id)
 
-  sql.upsert_trip_place(
+  let sql =
+    "
+    SELECT
+      upsert_trip_place (
+        trip_place_id => $1,
+        trip_id => $2,
+        name => $3,
+        date => $4
+      )
+    "
+
+  let return_type = dynamic.dynamic
+
+  pgo.execute(
+    sql,
     ctx.db,
-    trip_place_id,
-    trip_id,
-    request.place,
-    request.date |> date_util_shared.to_yyyy_mm_dd,
+    [
+      pgo.text(trip_place_id),
+      pgo.text(trip_id),
+      pgo.text(create_request.place),
+      pgo.text(create_request.date |> date_util_shared.to_yyyy_mm_dd),
+    ],
+    return_type,
   )
   |> result.map(fn(_) { Nil })
   |> database.to_app_error()
@@ -267,23 +360,40 @@ pub fn upsert_trip_place(
 pub fn upsert_trip_companion(
   ctx: Context,
   trip_id: Id(TripId),
-  request: List(TripCompanion),
+  upsert_request: List(TripCompanion),
 ) -> Result(List(Nil), AppError) {
   let trip_id = id.id_value(trip_id)
 
-  request
+  let sql =
+    "
+    SELECT
+      upsert_trip_companion (
+        trip_companion_id => $1,
+        trip_id => $2,
+        name => $3,
+        email => $4
+      )
+    "
+
+  let return_type = dynamic.dynamic
+
+  upsert_request
   |> list.map(fn(companion) {
-    let trip_companion_id = case string.is_empty(companion.trip_companion_id) {
-      True -> ctx.uuid_provider() |> uuid.to_string
-      False -> companion.trip_companion_id
+    let trip_companion_id = case companion.trip_companion_id {
+      "" -> ctx.uuid_provider() |> uuid.to_string
+      _ -> companion.trip_companion_id
     }
 
-    sql.upsert_trip_companion(
+    pgo.execute(
+      sql,
       ctx.db,
-      trip_companion_id,
-      trip_id,
-      companion.name |> string.trim,
-      companion.email |> string.trim,
+      [
+        pgo.text(trip_companion_id),
+        pgo.text(trip_id),
+        pgo.text(companion.name),
+        pgo.text(companion.email),
+      ],
+      return_type,
     )
     |> result.map(fn(_) { Nil })
     |> database.to_app_error()
@@ -291,10 +401,18 @@ pub fn upsert_trip_companion(
   |> result.all
 }
 
-pub fn delete_trip_companions(ctx: Context, trip_id: Id(TripId)) {
-  let trip_id = id.id_value(trip_id)
+pub fn delete_trip_companions(
+  ctx: Context,
+  trip_id: Id(TripId),
+) -> Result(Nil, AppError) {
+  let sql =
+    "
+    SELECT delete_trip_companions (trip_id => $1);
+    "
 
-  sql.delete_trip_companions(ctx.db, trip_id)
+  let return_type = dynamic.dynamic
+
+  pgo.execute(sql, ctx.db, [pgo.text(trip_id |> id.id_value)], return_type)
   |> result.map(fn(_) { Nil })
   |> database.to_app_error()
 }
@@ -302,21 +420,34 @@ pub fn delete_trip_companions(ctx: Context, trip_id: Id(TripId)) {
 pub fn update_user_trip(
   ctx: Context,
   trip_id: Id(TripId),
-  update_trip_request: UpdateTripRequest,
+  update_request: UpdateTripRequest,
 ) -> Result(Id(TripId), AppError) {
-  use pgo.Returned(_, _) <- result.try(
-    sql.update_trip(
-      ctx.db,
-      trip_id |> id.id_value,
-      update_trip_request.destination,
-      update_trip_request.start_date |> date_util_shared.to_yyyy_mm_dd,
-      update_trip_request.end_date |> date_util_shared.to_yyyy_mm_dd,
-    )
-    |> database.to_app_error(),
-  )
+  let sql =
+    "
+    SELECT
+      update_trip (
+        trip_id => $1,
+        destination => $2,
+        start_date => $3,
+        end_date => $4
+      )
+    "
 
-  trip_id
-  |> Ok
+  let return_type = dynamic.dynamic
+
+  pgo.execute(
+    sql,
+    ctx.db,
+    [
+      pgo.text(trip_id |> id.id_value),
+      pgo.text(update_request.destination),
+      pgo.text(update_request.start_date |> date_util_shared.to_yyyy_mm_dd),
+      pgo.text(update_request.end_date |> date_util_shared.to_yyyy_mm_dd),
+    ],
+    return_type,
+  )
+  |> result.map(fn(_) { trip_id })
+  |> database.to_app_error()
 }
 
 pub fn get_place_activities(
@@ -324,17 +455,38 @@ pub fn get_place_activities(
   trip_id: Id(TripId),
   trip_place_id: Id(TripPlaceId),
 ) -> Result(PlaceActivities, AppError) {
-  let trip_id = uuid_util.from_string(id.id_value(trip_id))
-  let trip_place_id = uuid_util.from_string(id.id_value(trip_place_id))
+  let trip_id = id.id_value(trip_id)
+  let trip_place_id = id.id_value(trip_place_id)
+
+  let sql =
+    "
+    SELECT
+        json_build_object(
+          'trip_id', trip_id,
+          'trip_place_id', trip_place_id,
+          'place_name', place_name,
+          'place_activities', place_activities
+        )
+    FROM
+        place_activities_view ()
+    WHERE
+        trip_id = $1::uuid
+        AND trip_place_id = $2::uuid;
+    "
+
+  let return_type = dynamic.element(0, dynamic.string)
 
   use query_result <- result.try(
-    sql.get_place_activities(ctx.db, trip_id, trip_place_id)
+    pgo.execute(
+      sql,
+      ctx.db,
+      [pgo.text(trip_id), pgo.text(trip_place_id)],
+      return_type,
+    )
     |> database.to_app_error(),
   )
 
   use row <- database.require_single_row(query_result, "get_place_activities")
-
-  let sql.GetPlaceActivitiesRow(row) = row
 
   use place_activities <- result.try(json_util.try_decode(
     row,
@@ -387,15 +539,19 @@ pub fn create_place_activities(
 
 pub fn delete_place_activities(
   ctx: Context,
-  user_id: Id(UserId),
-  trip_id: Id(TripId),
   trip_place_id: Id(TripPlaceId),
 ) -> Result(Nil, AppError) {
-  let user_id = uuid_util.from_string(id.id_value(user_id))
-  let trip_id = uuid_util.from_string(id.id_value(trip_id))
-  let trip_place_id = uuid_util.from_string(id.id_value(trip_place_id))
+  let trip_place_id = id.id_value(trip_place_id)
 
-  sql.delete_place_activities(ctx.db, user_id, trip_id, trip_place_id)
+  let sql =
+    "
+    DELETE FROM place_activities
+    WHERE trip_place_id = $1::uuid
+    "
+
+  let return_type = dynamic.dynamic
+
+  pgo.execute(sql, ctx.db, [pgo.text(trip_place_id)], return_type)
   |> result.map(fn(_) { Nil })
   |> database.to_app_error()
 }

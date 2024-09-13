@@ -5,11 +5,12 @@ import shared/constants
 import shared/id.{type Id, type UserId}
 import shared/trip_models
 import shared/trip_models_codecs
+import traveller/context.{type Context}
 import traveller/json_util
 import traveller/routes/auth_routes
 import traveller/routes/trip_routes
 import traveller/validations
-import traveller/web.{type Context}
+import traveller/web
 import wisp.{type Request, type Response}
 
 pub fn handle_request(req: Request, ctx: Context) -> Response {
