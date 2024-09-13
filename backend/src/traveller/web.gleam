@@ -4,15 +4,12 @@ import gleam/http/response
 import gleam/int
 import gleam/io
 import gleam/json.{type DecodeError, type Json}
-import gleam/pgo.{
-  ConnectionUnavailable, ConstraintViolated, PostgresqlError,
-  UnexpectedArgumentCount, UnexpectedArgumentType, UnexpectedResultType,
-}
+import gleam/pgo
 import gleam/result
 import shared/constants
 import shared/id.{type Id, type UserId}
 import simplifile
-import traveller/error.{type AppError, JsonDecodeError}
+import traveller/error.{type AppError}
 import wisp.{type Request, type Response}
 import youid/uuid.{type Uuid}
 
@@ -22,6 +19,10 @@ pub type Context {
     uuid_provider: fn() -> Uuid,
     static_directory: String,
   )
+}
+
+pub fn with_db_conn(ctx: Context, db_conn: pgo.Connection) {
+  Context(..ctx, db: db_conn)
 }
 
 pub fn middleware(
@@ -85,7 +86,9 @@ pub fn require_authenticated(
 
   use user_id_uuid <- require_ok(
     uuid.from_string(user_id)
-    |> result.map_error(fn(_) { error.InvalidUUIDString(user_id) }),
+    |> result.map_error(fn(_) {
+      error.VerificationFailed("Invalid UUID user id " <> user_id)
+    }),
   )
 
   use pgo.Returned(row_count, _) <- require_ok(
@@ -118,7 +121,14 @@ fn json_with_status(json: Json, status: Int) -> Response {
 pub fn error_to_response(error: AppError) -> Response {
   case error {
     error.DecodeError(e) -> error.json_codec_decode_error(e)
-    error.InvalidFieldContent(field) ->
+    error.VerificationFailed(error_text) ->
+      [
+        #("title", json.string("VERIFICATION_FAILED")),
+        #("detail", json.string(error_text)),
+      ]
+      |> json.object()
+      |> json_with_status(400)
+    error.ValidationFailed(field) ->
       [
         #("title", json.string("INVALID_FIELD_CONTENT")),
         #("detail", json.string(field)),
@@ -130,120 +140,16 @@ pub fn error_to_response(error: AppError) -> Response {
       |> json.object()
       |> json_with_status(400)
     error.QueryNotReturningSingleResult(e) ->
-      [#("title", json.string("QUERY_NOT_RETURNING_SINGLE_ROW:" <> e))]
+      [#("title", json.string("QUERY_NOT_RETURNING_SINGLE_ROW: " <> e))]
       |> json.object()
-      |> json_with_status(400)
-    error.InvalidUUIDString(e) ->
-      [
-        #("title", json.string("INVALID_UUID_STRING")),
-        #("detail", json.string(e)),
-      ]
-      |> json.object()
-      |> json_with_status(400)
+      |> json_with_status(500)
     error.UserUnauthenticated -> error.user_unauthenticated()
-    error.InvalidLogin -> error.invalid_login()
-    error.InvalidDestinationSpecified ->
-      [#("title", json.string("INVALID_DESTINATION_SPECIFIED"))]
-      |> json.object()
-      |> json_with_status(400)
-    error.InvalidDateSpecified ->
-      [#("title", json.string("INVALID_DATE_SPECIFIED"))]
-      |> json.object()
-      |> json_with_status(400)
-    error.TripDoesNotExist ->
-      [#("title", json.string("TRIP_DOES_NOT_EXIST"))]
-      |> json.object()
-      |> json_with_status(400)
-    error.UserAlreadyRegistered ->
-      [#("title", json.string("USER_ALREADY_REGISTERED"))]
-      |> json.object()
-      |> json_with_status(400)
+    error.TransactionError(e) -> error.transaction_error(e)
+    error.DatabaseError(e) -> {
+      error.log_query_error(e)
 
-    error.DatabaseError(query_error) -> {
-      let response =
-        json.object([#("title", json.string("DATABASE_ERROR"))])
-        |> json_with_status(500)
-
-      case query_error {
-        ConstraintViolated(message, constraint, detail) -> {
-          wisp.log_error(
-            "ConstraintViolated "
-            <> message
-            <> " constraint: "
-            <> constraint
-            <> " detail: "
-            <> detail,
-          )
-          response
-        }
-        PostgresqlError(code, name, message) -> {
-          wisp.log_error(
-            "postgresqlerror "
-            <> code
-            <> " name: "
-            <> name
-            <> " message: "
-            <> message,
-          )
-          response
-        }
-        UnexpectedArgumentCount(expected, got) -> {
-          wisp.log_error(
-            "UnexpectedArgumentCount"
-            <> " expected: "
-            <> int.to_string(expected)
-            <> " got: "
-            <> int.to_string(got),
-          )
-          response
-        }
-        UnexpectedArgumentType(expected, got) -> {
-          wisp.log_error(
-            "UnexpectedArgumentType"
-            <> " expected: "
-            <> expected
-            <> " got: "
-            <> got,
-          )
-          response
-        }
-        UnexpectedResultType(e) -> {
-          io.debug(e)
-          wisp.log_error("UnexpectedResultType")
-          response
-        }
-        ConnectionUnavailable -> {
-          wisp.log_error("ConnectionUnavailable")
-          response
-        }
-      }
-    }
-
-    error.JsonDecodeError(errors) -> {
-      io.debug(errors)
-      let decode_errors_json =
-        json.array(errors, of: fn(error) {
-          let decode_error = {
-            case error {
-              dynamic.DecodeError(expected, found, path) -> #(
-                expected,
-                found,
-                path,
-              )
-            }
-          }
-
-          let #(expected, found, path) = decode_error
-          json.object([
-            #("expected", json.string(expected)),
-            #("found", json.string(found)),
-            #("path", json.array(path, of: json.string)),
-          ])
-        })
-
-      [#("title", json.string("DECODE_ERROR")), #("detail", decode_errors_json)]
-      |> json.object
-      |> json_with_status(400)
+      json.object([#("title", json.string("DATABASE_ERROR"))])
+      |> json_with_status(500)
     }
   }
 }

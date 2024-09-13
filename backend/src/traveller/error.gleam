@@ -1,24 +1,22 @@
-import gleam/dynamic.{type DecodeErrors}
+import gleam/int
 import gleam/io
 import gleam/json
-import gleam/pgo.{type QueryError}
+import gleam/pgo.{
+  ConnectionUnavailable, ConstraintViolated, PostgresqlError,
+  UnexpectedArgumentCount, UnexpectedArgumentType, UnexpectedResultType,
+}
 import toy.{type ToyError}
 import wisp
 
 pub type AppError {
-  DatabaseError(QueryError)
+  DatabaseError(pgo.QueryError)
   QueryNotReturningSingleResult(String)
-  InvalidLogin
   BodyNotJsonError
+  TransactionError(pgo.TransactionError)
   DecodeError(List(ToyError))
-  JsonDecodeError(DecodeErrors)
-  UserAlreadyRegistered
   UserUnauthenticated
-  TripDoesNotExist
-  InvalidDateSpecified
-  InvalidDestinationSpecified
-  InvalidUUIDString(String)
-  InvalidFieldContent(String)
+  ValidationFailed(String)
+  VerificationFailed(String)
 }
 
 pub fn json_codec_decode_error(e) {
@@ -44,4 +42,61 @@ pub fn invalid_login() {
   |> json.object()
   |> json.to_string_builder
   |> wisp.json_response(400)
+}
+
+pub fn transaction_error(e: pgo.TransactionError) {
+  case e {
+    pgo.TransactionQueryError(query_error) -> log_query_error(query_error)
+    pgo.TransactionRolledBack(err) -> wisp.log_error(err)
+  }
+
+  [#("title", json.string("TRANSACTION_ERROR"))]
+  |> json.object()
+  |> json.to_string_builder
+  |> wisp.json_response(400)
+}
+
+pub fn log_query_error(query_error: pgo.QueryError) {
+  case query_error {
+    ConstraintViolated(message, constraint, detail) -> {
+      wisp.log_error(
+        "ConstraintViolated "
+        <> message
+        <> " constraint: "
+        <> constraint
+        <> " detail: "
+        <> detail,
+      )
+    }
+    PostgresqlError(code, name, message) -> {
+      wisp.log_error(
+        "postgresqlerror "
+        <> code
+        <> " name: "
+        <> name
+        <> " message: "
+        <> message,
+      )
+    }
+    UnexpectedArgumentCount(expected, got) -> {
+      wisp.log_error(
+        "UnexpectedArgumentCount"
+        <> " expected: "
+        <> int.to_string(expected)
+        <> " got: "
+        <> int.to_string(got),
+      )
+    }
+    UnexpectedArgumentType(expected, got) -> {
+      wisp.log_error(
+        "UnexpectedArgumentType" <> " expected: " <> expected <> " got: " <> got,
+      )
+    }
+    UnexpectedResultType(e) -> {
+      wisp.log_error("UnexpectedResultType")
+    }
+    ConnectionUnavailable -> {
+      wisp.log_error("ConnectionUnavailable")
+    }
+  }
 }

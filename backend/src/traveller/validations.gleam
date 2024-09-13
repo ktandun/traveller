@@ -6,7 +6,7 @@ pub fn string_not_empty(
   field_name: String,
 ) -> Result(Nil, AppError) {
   case string.is_empty(string.trim(str)) {
-    True -> Error(error.InvalidFieldContent(field_name))
+    True -> Error(error.ValidationFailed(field_name))
     False -> Ok(Nil)
   }
 }

@@ -162,11 +162,11 @@ pub fn ensure_trip_id_exists(
   user_id: Id(UserId),
   trip_id: Id(TripId),
 ) -> Result(Nil, AppError) {
-  let user_id = uuid_util.from_string(id.id_value(user_id))
-  let trip_id = uuid_util.from_string(id.id_value(trip_id))
+  let user_uuid = uuid_util.from_string(id.id_value(user_id))
+  let trip_uuid = uuid_util.from_string(id.id_value(trip_id))
 
   use query_result <- result.try(
-    sql.find_trip_by_trip_id(ctx.db, user_id, trip_id)
+    sql.find_trip_by_trip_id(ctx.db, user_uuid, trip_uuid)
     |> database.to_app_error(),
   )
 
@@ -176,7 +176,14 @@ pub fn ensure_trip_id_exists(
 
   case row {
     1 -> Ok(Nil)
-    _ -> Error(error.TripDoesNotExist)
+    _ ->
+      Error(error.VerificationFailed(
+        "User ID "
+        <> user_id |> id.id_value
+        <> " Trip ID "
+        <> trip_id |> id.id_value
+        <> " combination does not exist",
+      ))
   }
 }
 
@@ -186,12 +193,17 @@ pub fn ensure_trip_place_id_exists(
   trip_id: Id(TripId),
   trip_place_id: Id(TripPlaceId),
 ) -> Result(Nil, AppError) {
-  let user_id = uuid_util.from_string(id.id_value(user_id))
-  let trip_id = uuid_util.from_string(id.id_value(trip_id))
-  let trip_place_id = uuid_util.from_string(id.id_value(trip_place_id))
+  let user_uuid = uuid_util.from_string(id.id_value(user_id))
+  let trip_uuid = uuid_util.from_string(id.id_value(trip_id))
+  let trip_place_uuid = uuid_util.from_string(id.id_value(trip_place_id))
 
   use query_result <- result.try(
-    sql.find_trip_by_trip_place_id(ctx.db, user_id, trip_id, trip_place_id)
+    sql.find_trip_by_trip_place_id(
+      ctx.db,
+      user_uuid,
+      trip_uuid,
+      trip_place_uuid,
+    )
     |> database.to_app_error(),
   )
 
@@ -204,7 +216,16 @@ pub fn ensure_trip_place_id_exists(
 
   case row {
     1 -> Ok(Nil)
-    _ -> Error(error.TripDoesNotExist)
+    _ ->
+      Error(error.VerificationFailed(
+        "User ID "
+        <> user_id |> id.id_value
+        <> " Trip ID "
+        <> trip_id |> id.id_value
+        <> " Trip Place ID "
+        <> trip_place_id |> id.id_value
+        <> " combination does not exist",
+      ))
   }
 }
 
@@ -491,6 +512,25 @@ pub fn get_place_culinaries(
   use row <- database.require_single_row(query_result, "get_place_culinaries")
 
   json_util.try_decode(row, trip_models_codecs.trip_place_culinaries_decoder())
+}
+
+pub fn delete_place_culinaries(
+  ctx: Context,
+  trip_place_id: Id(TripPlaceId),
+) -> Result(Nil, AppError) {
+  let trip_place_id = id.id_value(trip_place_id)
+
+  let sql =
+    "
+    DELETE FROM place_culinaries pculi
+    WHERE pculi.trip_place_id = $1
+    "
+
+  let return_type = dynamic.dynamic
+
+  pgo.execute(sql, ctx.db, [pgo.text(trip_place_id)], return_type)
+  |> result.map(fn(_) { Nil })
+  |> database.to_app_error()
 }
 
 pub fn update_place_culinaries(

@@ -1,6 +1,7 @@
 import gleam/bool
 import gleam/list
 import gleam/option.{type Option}
+import gleam/pgo
 import gleam/result
 import gleam/string
 import shared/id.{type Id, type TripId, type TripPlaceId, type UserId}
@@ -21,13 +22,6 @@ pub fn handle_get_trip_places(
   user_id: Id(UserId),
   trip_id: Id(TripId),
 ) -> Result(trip_models.UserTripPlaces, AppError) {
-  let trip_id_value = id.id_value(trip_id)
-
-  use _ <- result.try(
-    uuid.from_string(trip_id_value)
-    |> result.map_error(fn(_) { error.InvalidUUIDString(trip_id_value) }),
-  )
-
   use _ <- result.try(trips_db.ensure_trip_id_exists(ctx, user_id, trip_id))
 
   trips_db.get_user_trip_places(ctx, user_id, trip_id)
@@ -50,12 +44,7 @@ pub fn handle_create_trip(
 ) -> Result(Id(TripId), AppError) {
   use <- bool.guard(
     date_util.is_before(create_request.end_date, create_request.start_date),
-    Error(error.InvalidDateSpecified),
-  )
-
-  use <- bool.guard(
-    string.is_empty(create_request.destination |> string.trim),
-    Error(error.InvalidDestinationSpecified),
+    Error(error.ValidationFailed("Date specified is not within trip dates")),
   )
 
   trips_db.create_user_trip(ctx, user_id, create_request)
@@ -92,7 +81,7 @@ pub fn handle_create_trip_place(
 
   use <- bool.guard(
     !date_util.is_date_within(request.date, start_date, end_date),
-    Error(error.InvalidDateSpecified),
+    Error(error.ValidationFailed("Date specified is not within trip dates")),
   )
 
   let trip_place_id = ctx.uuid_provider() |> uuid.to_string |> id.to_id()
@@ -141,12 +130,7 @@ pub fn handle_update_trip(
       update_trip_request.end_date,
       update_trip_request.start_date,
     ),
-    Error(error.InvalidDateSpecified),
-  )
-
-  use <- bool.guard(
-    string.is_empty(update_trip_request.destination |> string.trim),
-    Error(error.InvalidDestinationSpecified),
+    Error(error.ValidationFailed("Start date specified is after end date")),
   )
 
   use _ <- result.try(trips_db.update_user_trip(
@@ -280,5 +264,21 @@ pub fn handle_update_place_culinaries(
     trip_place_id,
   ))
 
-  trips_db.update_place_culinaries(ctx, trip_place_id, update_request)
+  pgo.transaction(ctx.db, fn(db_conn) {
+    use _ <- result.try(
+      trips_db.delete_place_culinaries(
+        ctx |> web.with_db_conn(db_conn),
+        trip_place_id,
+      )
+      |> result.map_error(fn(e) { "delete_place_culinaries" }),
+    )
+
+    trips_db.update_place_culinaries(
+      ctx |> web.with_db_conn(db_conn),
+      trip_place_id,
+      update_request,
+    )
+    |> result.map_error(fn(e) { "update_place_culinaries" })
+  })
+  |> result.map_error(fn(e) { error.TransactionError(e) })
 }

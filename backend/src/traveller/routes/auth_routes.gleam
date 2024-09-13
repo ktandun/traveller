@@ -15,7 +15,10 @@ pub fn handle_signup(
 
   use is_user_exists <- result.try(users_db.find_user_by_email(ctx.db, email))
 
-  use <- bool.guard(is_user_exists, Error(error.UserAlreadyRegistered))
+  use <- bool.guard(
+    is_user_exists,
+    Error(error.VerificationFailed("User already exists")),
+  )
 
   users_db.create_user(ctx.db, email, password)
 }
@@ -28,7 +31,10 @@ pub fn handle_login(
   let auth_models.LoginRequest(email, password) = login_request
   use is_user_exists <- result.try(users_db.find_user_by_email(ctx.db, email))
 
-  use <- bool.guard(!is_user_exists, Error(error.InvalidLogin))
+  use <- bool.guard(
+    !is_user_exists,
+    Error(error.VerificationFailed("User with specified email does not exist")),
+  )
 
   users_db.login_user(ctx.db, email, password)
 }

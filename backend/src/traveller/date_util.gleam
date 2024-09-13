@@ -10,7 +10,11 @@ pub fn from_date_tuple(date: #(Int, Int, Int)) -> birl.Day {
 
 pub fn from_yyyy_mm_dd(date_str: String) -> Result(birl.Day, AppError) {
   date_util_shared.from_yyyy_mm_dd(date_str)
-  |> result.map_error(fn(_) { error.InvalidDateSpecified })
+  |> result.map_error(fn(_) {
+    error.ValidationFailed(
+      "Unable to convert date to format yyyy-mm-dd " <> date_str,
+    )
+  })
 }
 
 pub fn is_date_within(

@@ -11,14 +11,15 @@ pub fn login_user(
   email: String,
   password: String,
 ) -> Result(Id(UserId), AppError) {
-  use pgo.Returned(_, rows) <- result.try(
+  use query_result <- result.try(
     sql.check_user_login(conn, email, password) |> database.to_app_error(),
   )
 
-  case rows {
-    [sql.CheckUserLoginRow(user_id)] -> Ok(id.to_id(user_id))
-    _ -> Error(error.InvalidLogin)
-  }
+  use row <- database.require_single_row(query_result, "login_user")
+
+  let sql.CheckUserLoginRow(user_id) = row
+
+  Ok(id.to_id(user_id))
 }
 
 pub fn create_user(
