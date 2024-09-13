@@ -1,5 +1,4 @@
 import birl
-import gleam/io
 import gleam/list
 import gleam/option
 import gleeunit/should

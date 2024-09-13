@@ -1,6 +1,5 @@
 import gleam/http
 import gleam/json
-import gleam/result
 import shared/auth_models
 import shared/constants
 import shared/id.{type Id, type UserId}
@@ -40,6 +39,7 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
     }
     ["api", "trips", trip_id] -> {
       use user_id <- web.require_authenticated(req, ctx)
+      use _ <- web.require_valid_uuid(trip_id)
 
       case req.method {
         http.Put -> put_trip(req, ctx, user_id, trip_id)
@@ -48,6 +48,7 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
     }
     ["api", "trips", trip_id, "places"] -> {
       use user_id <- web.require_authenticated(req, ctx)
+      use _ <- web.require_valid_uuid(trip_id)
 
       case req.method {
         http.Get -> get_trips_places(req, ctx, user_id, trip_id)
@@ -57,6 +58,7 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
     }
     ["api", "trips", trip_id, "companions"] -> {
       use user_id <- web.require_authenticated(req, ctx)
+      use _ <- web.require_valid_uuid(trip_id)
 
       case req.method {
         http.Post -> post_trip_companions(req, ctx, user_id, trip_id)
@@ -65,6 +67,8 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
     }
     ["api", "trips", trip_id, "places", trip_place_id] -> {
       use user_id <- web.require_authenticated(req, ctx)
+      use _ <- web.require_valid_uuid(trip_id)
+      use _ <- web.require_valid_uuid(trip_place_id)
 
       case req.method {
         http.Delete ->
@@ -74,6 +78,8 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
     }
     ["api", "trips", trip_id, "places", trip_place_id, "activities"] -> {
       use user_id <- web.require_authenticated(req, ctx)
+      use _ <- web.require_valid_uuid(trip_id)
+      use _ <- web.require_valid_uuid(trip_place_id)
 
       case req.method {
         http.Get ->
@@ -85,6 +91,8 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
     }
     ["api", "trips", trip_id, "places", trip_place_id, "accomodations"] -> {
       use user_id <- web.require_authenticated(req, ctx)
+      use _ <- web.require_valid_uuid(trip_id)
+      use _ <- web.require_valid_uuid(trip_place_id)
 
       case req.method {
         http.Get ->
@@ -109,6 +117,8 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
 
     ["api", "trips", trip_id, "places", trip_place_id, "culinaries"] -> {
       use user_id <- web.require_authenticated(req, ctx)
+      use _ <- web.require_valid_uuid(trip_id)
+      use _ <- web.require_valid_uuid(trip_place_id)
 
       case req.method {
         http.Get ->

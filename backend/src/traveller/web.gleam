@@ -1,8 +1,5 @@
 import database/sql
-import gleam/dynamic
 import gleam/http/response
-import gleam/int
-import gleam/io
 import gleam/json.{type DecodeError, type Json}
 import gleam/pgo
 import gleam/result
@@ -74,6 +71,17 @@ pub fn require_ok(
   }
 }
 
+pub fn require_valid_uuid(
+  uuid: String,
+  next: fn(uuid.Uuid) -> Response,
+) -> Response {
+  case uuid.from_string(uuid) {
+    Ok(uuid) -> next(uuid)
+    Error(_) ->
+      error_to_response(error.ValidationFailed("Invalid UUID String " <> uuid))
+  }
+}
+
 pub fn require_authenticated(
   req: Request,
   ctx: Context,
@@ -128,10 +136,10 @@ pub fn error_to_response(error: AppError) -> Response {
       ]
       |> json.object()
       |> json_with_status(400)
-    error.ValidationFailed(field) ->
+    error.ValidationFailed(error_text) ->
       [
-        #("title", json.string("INVALID_FIELD_CONTENT")),
-        #("detail", json.string(field)),
+        #("title", json.string("VALIDATION_FAILED")),
+        #("detail", json.string(error_text)),
       ]
       |> json.object()
       |> json_with_status(400)
@@ -140,7 +148,10 @@ pub fn error_to_response(error: AppError) -> Response {
       |> json.object()
       |> json_with_status(400)
     error.QueryNotReturningSingleResult(e) ->
-      [#("title", json.string("QUERY_NOT_RETURNING_SINGLE_ROW: " <> e))]
+      [
+        #("title", json.string("QUERY_NOT_RETURNING_SINGLE_ROW")),
+        #("detail", json.string(e)),
+      ]
       |> json.object()
       |> json_with_status(500)
     error.UserUnauthenticated -> error.user_unauthenticated()
