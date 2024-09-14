@@ -28,7 +28,7 @@ pub fn handle_signup(
 pub fn handle_login(
   ctx: Context,
   login_request: LoginRequest,
-) -> Result(Id(UserId), AppError) {
+) -> Result(String, AppError) {
   let auth_models.LoginRequest(email, password) = login_request
   use is_user_exists <- result.try(users_db.find_user_by_email(ctx, email))
 
@@ -47,5 +47,5 @@ pub fn handle_login(
     session_token,
   ))
 
-  Ok(user_id)
+  Ok(session_token)
 }

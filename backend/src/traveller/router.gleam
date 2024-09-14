@@ -154,7 +154,7 @@ fn post_login(req: Request, ctx: Context) {
   |> wisp.set_cookie(
     req,
     constants.cookie,
-    id.id_value(session_token),
+    session_token,
     wisp.Signed,
     60 * 60 * 24,
   )

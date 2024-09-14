@@ -150,12 +150,7 @@ pub fn send_login_request(login_request: auth_models.LoginRequest) {
   |> with_url("/api/login")
   |> with_method(Post)
   |> with_json_body(auth_models.login_request_encoder(login_request))
-  |> with_response_decoder(fn(response) {
-    response
-    |> toy.decode(id.id_decoder())
-    |> decode_util.map_toy_error_to_decode_errors()
-  })
-  |> with_to_event(fn(result) {
+  |> with_ignore_response_to_event(fn(result) {
     events.LoginPage(events.LoginPageApiReturnedResponse(result))
   })
   |> build

@@ -124,7 +124,7 @@ pub type LoginPageEvent {
   LoginPageUserUpdatedEmail(email: String)
   LoginPageUserUpdatedPassword(password: String)
   LoginPageUserClickedSubmit
-  LoginPageApiReturnedResponse(Result(Id(UserId), HttpError))
+  LoginPageApiReturnedResponse(Result(Nil, HttpError))
 }
 
 pub type TripsDashboardPageEvent {
