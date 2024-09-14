@@ -2,10 +2,7 @@ import env
 import frontend/routes.{type Route}
 import frontend/uuid_util
 import gleam/list
-import gleam/option.{type Option}
 import gleam/result
-import gleam/string
-import lustre/effect
 import lustre_http.{type HttpError}
 import shared/auth_models
 import shared/date_util_shared
