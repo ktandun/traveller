@@ -14,15 +14,16 @@ pub type AppEvent {
   HideToast
   // page specific events
   LoginPage(LoginPageEvent)
-  TripsDashboardPage(TripsDashboardPageEvent)
-  TripDetailsPage(TripDetailsPageEvent)
   TripCompanionsPage(TripCompanionsPageEvent)
   TripCreatePage(TripCreatePageEvent)
-  TripUpdatePage(TripUpdatePageEvent)
-  TripPlaceCreatePage(TripPlaceCreatePageEvent)
-  TripPlaceActivitiesPage(TripPlaceActivitiesPageEvent)
+  TripDetailsPage(TripDetailsPageEvent)
   TripPlaceAccomodationPage(TripPlaceAccomodationPageEvent)
+  TripPlaceActivitiesPage(TripPlaceActivitiesPageEvent)
+  TripPlaceCreatePage(TripPlaceCreatePageEvent)
   TripPlaceCulinariesPage(TripPlaceCulinariesPageEvent)
+  TripPlaceUpdatePage(TripPlaceUpdatePageEvent)
+  TripUpdatePage(TripUpdatePageEvent)
+  TripsDashboardPage(TripsDashboardPageEvent)
 }
 
 pub type AppModel {
@@ -40,6 +41,8 @@ pub type AppModel {
     trip_update_errors: String,
     trip_place_create: TripPlaceCreateForm,
     trip_place_create_errors: String,
+    trip_place_update: TripPlaceUpdateForm,
+    trip_place_update_errors: String,
     trip_place_activities: PlaceActivitiesForm,
     trip_place_accomodation: PlaceAccomodationForm,
     trip_place_culinaries: PlaceCulinariesForm,
@@ -67,6 +70,14 @@ pub fn set_default_trip_place_create(model: AppModel) {
     ..model,
     trip_place_create: default_trip_place_create_form(),
     trip_place_create_errors: "",
+  )
+}
+
+pub fn set_default_trip_place_update(model: AppModel) {
+  AppModel(
+    ..model,
+    trip_place_update: default_trip_place_update_form(),
+    trip_place_update_errors: "",
   )
 }
 
@@ -114,6 +125,8 @@ pub fn default_app_model() {
     trip_update_errors: "",
     trip_place_create: default_trip_place_create_form(),
     trip_place_create_errors: "",
+    trip_place_update: default_trip_place_update_form(),
+    trip_place_update_errors: "",
     trip_place_activities: default_trip_place_activities_form(),
     trip_place_accomodation: default_place_accomodation_form(),
     trip_place_culinaries: default_place_culinaries_form(),
@@ -184,6 +197,23 @@ pub type TripPlaceCreatePageEvent {
   )
   TripPlaceCreatePageUserInputCreateTripPlaceRequest(TripPlaceCreateForm)
   TripPlaceCreatePageUserClickedSubmit(trip_id: String)
+}
+
+pub type TripPlaceUpdateForm {
+  TripPlaceUpdateForm(place: String, date: String)
+}
+
+pub fn default_trip_place_update_form() {
+  TripPlaceUpdateForm(place: "", date: "")
+}
+
+pub type TripPlaceUpdatePageEvent {
+  TripPlaceUpdatePageApiReturnedResponse(
+    trip_id: String,
+    Result(Id(TripPlaceId), HttpError),
+  )
+  TripPlaceUpdatePageUserInputUpdateTripPlaceRequest(TripPlaceUpdateForm)
+  TripPlaceUpdatePageUserClickedSubmit(trip_id: String)
 }
 
 pub type TripCompanionsPageEvent {

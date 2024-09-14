@@ -61,10 +61,7 @@ pub fn require_ok(
   }
 }
 
-pub fn require_valid_uuid(
-  uuid: String,
-  next: fn(uuid.Uuid) -> Response,
-) -> Response {
+pub fn require_valid_uuid(uuid: String, next: fn(Uuid) -> Response) -> Response {
   case uuid.from_string(uuid) {
     Ok(uuid) -> next(uuid)
     Error(_) ->

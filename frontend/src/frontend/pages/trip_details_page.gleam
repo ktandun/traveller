@@ -99,7 +99,20 @@ pub fn trip_details_view(model: AppModel) {
           model.trip_details.user_trip_places
             |> list.map(fn(place) {
               html.tr([], [
-                html.td([], [element.text(place.name)]),
+                html.td([], [
+                  html.a(
+                    [
+                      attribute.href(
+                        "/trips/"
+                        <> model.trip_details.trip_id
+                        <> "/places/"
+                        <> place.trip_place_id
+                        <> "/update",
+                      ),
+                    ],
+                    [element.text(place.name)],
+                  ),
+                ]),
                 html.td([], [
                   element.text(date_util_shared.to_human_readable(place.date)),
                 ]),
@@ -111,7 +124,7 @@ pub fn trip_details_view(model: AppModel) {
                         <> model.trip_details.trip_id
                         <> "/places/"
                         <> place.trip_place_id
-                        <> "/accomodations/",
+                        <> "/accomodations",
                       ),
                     ],
                     [

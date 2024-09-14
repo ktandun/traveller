@@ -3,6 +3,7 @@ pub type Route {
   Signup
   TripsDashboard
   TripDetails(trip_id: String)
+  TripPlaceUpdate(trip_id: String, trip_place_id: String)
   TripPlaceCreate(trip_id: String)
   TripPlaceActivities(trip_id: String, trip_place_id: String)
   TripPlaceAccomodations(trip_id: String, trip_place_id: String)

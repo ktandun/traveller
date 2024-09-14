@@ -1,6 +1,6 @@
 import gleam/bool
 import gleam/list
-import gleam/option.{type Option}
+import gleam/option
 import gleam/pgo
 import gleam/result
 import gleam/string
@@ -69,7 +69,7 @@ pub fn handle_delete_trip_place(
 
 /// Creates a trip place for a user
 /// Ensures date is between trip start_date and end_date
-pub fn handle_create_trip_place(
+pub fn handle_upsert_trip_place(
   ctx: Context,
   user_id: Id(UserId),
   trip_id: Id(TripId),
@@ -265,7 +265,7 @@ pub fn handle_update_place_culinaries(
         ctx |> context.with_db_conn(db_conn),
         trip_place_id,
       )
-      |> result.map_error(fn(e) { "delete_place_culinaries" }),
+      |> result.map_error(fn(_e) { "delete_place_culinaries" }),
     )
 
     trips_db.update_place_culinaries(
@@ -273,7 +273,7 @@ pub fn handle_update_place_culinaries(
       trip_place_id,
       update_request,
     )
-    |> result.map_error(fn(e) { "update_place_culinaries" })
+    |> result.map_error(fn(_e) { "update_place_culinaries" })
   })
   |> result.map_error(fn(e) { error.TransactionError(e) })
 }

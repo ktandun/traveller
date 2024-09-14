@@ -1,7 +1,6 @@
 import frontend/api
 import frontend/breadcrumb
 import frontend/events.{type AppEvent, type AppModel, AppModel}
-import frontend/loading_spinner
 import frontend/pages/error_500
 import frontend/pages/login_page
 import frontend/pages/trip_companions_page
@@ -11,6 +10,7 @@ import frontend/pages/trip_place_accomodations_page
 import frontend/pages/trip_place_activities_page
 import frontend/pages/trip_place_create_page
 import frontend/pages/trip_place_culinaries_page
+import frontend/pages/trip_place_update_page
 import frontend/pages/trip_update_page
 import frontend/pages/trips_dashboard_page
 import frontend/routes.{type Route}
@@ -64,6 +64,8 @@ fn path_to_route(path_segments: List(String)) -> Route {
     ["trips", trip_id, "update"] -> routes.TripUpdate(trip_id)
     ["trips", trip_id, "add-companions"] -> routes.TripCompanions(trip_id)
     ["trips", trip_id, "places", "create"] -> routes.TripPlaceCreate(trip_id)
+    ["trips", trip_id, "places", trip_place_id, "update"] ->
+      routes.TripPlaceUpdate(trip_id, trip_place_id)
     ["trips", trip_id, "places", trip_place_id, "activities"] ->
       routes.TripPlaceActivities(trip_id, trip_place_id)
     ["trips", trip_id, "places", trip_place_id, "accomodations"] ->
@@ -81,6 +83,7 @@ pub fn update(model: AppModel, msg: AppEvent) -> #(AppModel, Effect(AppEvent)) {
     events.OnRouteChange(route) -> #(AppModel(..model, route:), case route {
       routes.TripsDashboard -> api.send_get_user_trips_request()
       routes.TripPlaceCreate(trip_id)
+      | routes.TripPlaceUpdate(trip_id, _)
       | routes.TripCompanions(trip_id)
       | routes.TripUpdate(trip_id) ->
         case string.is_empty(model.trip_details.destination) {
@@ -130,6 +133,8 @@ pub fn update(model: AppModel, msg: AppEvent) -> #(AppModel, Effect(AppEvent)) {
       trip_update_page.handle_trip_update_page_event(model, event)
     events.TripPlaceCreatePage(event) ->
       trip_place_create_page.handle_trip_place_create_page_event(model, event)
+    events.TripPlaceUpdatePage(event) ->
+      trip_place_update_page.handle_trip_place_update_page_event(model, event)
     events.TripCompanionsPage(event) ->
       trip_companions_page.handle_trip_companions_page_event(model, event)
     events.TripPlaceActivitiesPage(event) ->
@@ -171,6 +176,12 @@ pub fn view(model: AppModel) -> Element(AppEvent) {
       routes.Signup -> html.h1([], [element.text("Signup")])
       routes.TripsDashboard -> trips_dashboard_page.trips_dashboard_view(model)
       routes.TripDetails(_trip_id) -> trip_details_page.trip_details_view(model)
+      routes.TripPlaceUpdate(trip_id, trip_place_id) ->
+        trip_place_update_page.trip_place_update_view(
+          model,
+          trip_id,
+          trip_place_id,
+        )
       routes.TripPlaceActivities(trip_id, trip_place_id) ->
         trip_place_activities_page.trip_place_activities_view(
           model,

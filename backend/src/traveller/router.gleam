@@ -237,7 +237,7 @@ fn post_trips_places(
     trip_models.create_trip_place_request_decoder(),
   ))
 
-  use trip_place_id <- web.require_ok(trip_routes.handle_create_trip_place(
+  use trip_place_id <- web.require_ok(trip_routes.handle_upsert_trip_place(
     ctx,
     user_id,
     trip_id,
