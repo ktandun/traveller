@@ -102,8 +102,9 @@ pub fn handle_trip_place_create_page_event(
       case date {
         Ok(date) -> #(
           model,
-          api.send_create_trip_place_request(
+          api.send_upsert_trip_place_request(
             trip_id,
+            option.None,
             trip_models.CreateTripPlaceRequest(place: form.place, date:),
           ),
         )

@@ -1,9 +1,14 @@
 import env
 import frontend/routes.{type Route}
 import frontend/uuid_util
+import gleam/list
 import gleam/option.{type Option}
+import gleam/result
+import gleam/string
+import lustre/effect
 import lustre_http.{type HttpError}
 import shared/auth_models
+import shared/date_util_shared
 import shared/id.{type Id, type TripId, type TripPlaceId, type UserId}
 import shared/trip_models.{type UserTripCompanion}
 
@@ -79,6 +84,27 @@ pub fn set_default_trip_place_update(model: AppModel) {
     trip_place_update: default_trip_place_update_form(),
     trip_place_update_errors: "",
   )
+}
+
+pub fn set_trip_place_update_form_from_place_details(model: AppModel) {
+  let trip_place_update_form = case model.route {
+    routes.TripPlaceUpdate(_trip_id, trip_place_id) ->
+      model.trip_details.user_trip_places
+      |> list.find_map(fn(place) {
+        case place.trip_place_id == trip_place_id {
+          True ->
+            Ok(TripPlaceUpdateForm(
+              place: place.name,
+              date: place.date |> date_util_shared.to_yyyy_mm_dd,
+            ))
+          False -> Error(Nil)
+        }
+      })
+      |> result.unwrap(default_trip_place_update_form())
+    _ -> default_trip_place_update_form()
+  }
+
+  AppModel(..model, trip_place_update: trip_place_update_form)
 }
 
 pub fn set_default_trip_create(model: AppModel) {
@@ -208,12 +234,13 @@ pub fn default_trip_place_update_form() {
 }
 
 pub type TripPlaceUpdatePageEvent {
+  TripPlaceUpdatePageOnLoad
   TripPlaceUpdatePageApiReturnedResponse(
     trip_id: String,
     Result(Id(TripPlaceId), HttpError),
   )
   TripPlaceUpdatePageUserInputUpdateTripPlaceRequest(TripPlaceUpdateForm)
-  TripPlaceUpdatePageUserClickedSubmit(trip_id: String)
+  TripPlaceUpdatePageUserClickedSubmit(trip_id: String, trip_place_id: String)
 }
 
 pub type TripCompanionsPageEvent {

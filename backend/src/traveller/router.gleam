@@ -1,5 +1,6 @@
 import gleam/http
 import gleam/json
+import gleam/option
 import shared/auth_models
 import shared/constants
 import shared/id.{type Id, type UserId}
@@ -72,9 +73,10 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
       use _ <- web.require_valid_uuid(trip_place_id)
 
       case req.method {
+        http.Put -> put_trip_place(req, ctx, user_id, trip_id, trip_place_id)
         http.Delete ->
           delete_trip_place(req, ctx, user_id, trip_id, trip_place_id)
-        _ -> wisp.method_not_allowed([http.Delete])
+        _ -> wisp.method_not_allowed([http.Put, http.Delete])
       }
     }
     ["api", "trips", trip_id, "places", trip_place_id, "activities"] -> {
@@ -223,6 +225,36 @@ fn get_trips_places(
   |> wisp.json_response(200)
 }
 
+fn put_trip_place(
+  req: Request,
+  ctx: Context,
+  user_id: Id(UserId),
+  trip_id: String,
+  trip_place_id: String,
+) {
+  let trip_id = id.to_id(trip_id)
+  let trip_place_id = id.to_id(trip_place_id)
+
+  use request_body <- wisp.require_string_body(req)
+  use create_trip_place_request <- web.require_valid_json(json_util.try_decode(
+    request_body,
+    trip_models.create_trip_place_request_decoder(),
+  ))
+
+  use trip_place_id <- web.require_ok(trip_routes.handle_upsert_trip_place(
+    ctx,
+    user_id,
+    trip_id,
+    option.Some(trip_place_id),
+    create_trip_place_request,
+  ))
+
+  trip_place_id
+  |> id.id_encoder
+  |> json.to_string_builder
+  |> wisp.json_response(200)
+}
+
 fn post_trips_places(
   req: Request,
   ctx: Context,
@@ -241,6 +273,7 @@ fn post_trips_places(
     ctx,
     user_id,
     trip_id,
+    option.None,
     create_trip_place_request,
   ))
 

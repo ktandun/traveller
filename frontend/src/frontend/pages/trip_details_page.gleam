@@ -1,9 +1,12 @@
 import frontend/events.{type AppModel, type TripDetailsPageEvent, AppModel}
+import frontend/routes
 import frontend/web
 import gleam/float
 import gleam/int
+import gleam/io
 import gleam/list
 import gleam/option
+import gleam/result
 import lustre/attribute
 import lustre/effect
 import lustre/element
@@ -192,21 +195,24 @@ pub fn handle_trip_details_page_event(
   case event {
     events.TripDetailsPageApiReturnedTripDetails(result) ->
       case result {
-        Ok(user_trip_places) -> #(
-          AppModel(
-            ..model,
-            trip_details: user_trip_places,
-            trip_update: events.TripUpdateForm(
-              start_date: user_trip_places.start_date
-                |> date_util_shared.to_yyyy_mm_dd,
-              end_date: user_trip_places.end_date
-                |> date_util_shared.to_yyyy_mm_dd,
-              destination: user_trip_places.destination,
-            ),
-          ),
-          effect.none(),
-        )
         Error(e) -> web.error_to_app_event(e, model)
+        Ok(user_trip_places) -> {
+          #(
+            AppModel(
+              ..model,
+              trip_details: user_trip_places,
+              trip_update: events.TripUpdateForm(
+                start_date: user_trip_places.start_date
+                  |> date_util_shared.to_yyyy_mm_dd,
+                end_date: user_trip_places.end_date
+                  |> date_util_shared.to_yyyy_mm_dd,
+                destination: user_trip_places.destination,
+              ),
+            )
+              |> events.set_trip_place_update_form_from_place_details,
+            effect.none(),
+          )
+        }
       }
     events.TripDetailsPageUserClickedAddCompanions(trip_id) -> #(
       model,

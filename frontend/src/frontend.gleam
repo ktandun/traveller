@@ -76,43 +76,45 @@ fn path_to_route(path_segments: List(String)) -> Route {
   }
 }
 
+fn load_trip_details(model: AppModel, trip_id: String) {
+  case string.is_empty(model.trip_details.destination) {
+    True -> api.send_get_trip_details_request(trip_id)
+    False -> effect.none()
+  }
+}
+
 // Root handler for all the events in the app
 pub fn update(model: AppModel, msg: AppEvent) -> #(AppModel, Effect(AppEvent)) {
   case msg {
     // Handle page-specific on-load events
     events.OnRouteChange(route) -> #(AppModel(..model, route:), case route {
       routes.TripsDashboard -> api.send_get_user_trips_request()
+      routes.TripPlaceUpdate(trip_id, _) ->
+        effect.batch([
+          load_trip_details(model, trip_id),
+          effect.from(fn(dispatch) {
+            dispatch(events.TripPlaceUpdatePage(
+              events.TripPlaceUpdatePageOnLoad,
+            ))
+          }),
+        ])
       routes.TripPlaceCreate(trip_id)
-      | routes.TripPlaceUpdate(trip_id, _)
       | routes.TripCompanions(trip_id)
-      | routes.TripUpdate(trip_id) ->
-        case string.is_empty(model.trip_details.destination) {
-          True -> api.send_get_trip_details_request(trip_id)
-          False -> effect.none()
-        }
+      | routes.TripUpdate(trip_id) -> load_trip_details(model, trip_id)
       routes.TripDetails(trip_id) -> api.send_get_trip_details_request(trip_id)
       routes.TripPlaceActivities(trip_id, trip_place_id) ->
         effect.batch([
-          case string.is_empty(model.trip_details.destination) {
-            True -> api.send_get_trip_details_request(trip_id)
-            False -> effect.none()
-          },
+          load_trip_details(model, trip_id),
           api.send_get_place_activities_request(trip_id, trip_place_id),
         ])
       routes.TripPlaceAccomodations(trip_id, trip_place_id) ->
         effect.batch([
-          case string.is_empty(model.trip_details.destination) {
-            True -> api.send_get_trip_details_request(trip_id)
-            False -> effect.none()
-          },
+          load_trip_details(model, trip_id),
           api.send_get_place_accomodation_request(trip_id, trip_place_id),
         ])
       routes.TripPlaceCulinaries(trip_id, trip_place_id) ->
         effect.batch([
-          case string.is_empty(model.trip_details.destination) {
-            True -> api.send_get_trip_details_request(trip_id)
-            False -> effect.none()
-          },
+          load_trip_details(model, trip_id),
           api.send_get_place_culinaries_request(trip_id, trip_place_id),
         ])
       _ -> effect.none()

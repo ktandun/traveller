@@ -1,6 +1,7 @@
 import gleam/bool
+import gleam/io
 import gleam/list
-import gleam/option
+import gleam/option.{type Option}
 import gleam/pgo
 import gleam/result
 import gleam/string
@@ -73,18 +74,27 @@ pub fn handle_upsert_trip_place(
   ctx: Context,
   user_id: Id(UserId),
   trip_id: Id(TripId),
+  trip_place_id: Option(Id(TripPlaceId)),
   request: CreateTripPlaceRequest,
 ) -> Result(Id(TripPlaceId), AppError) {
   use #(start_date, end_date) <- result.try(
     trips_db.get_user_trip_dates_by_trip_id(ctx, user_id, trip_id),
   )
 
+  io.debug(start_date)
+  io.debug(request.date)
+  io.debug(end_date)
+
   use <- bool.guard(
     !date_util.is_date_within(request.date, start_date, end_date),
     Error(error.ValidationFailed("Date specified is not within trip dates")),
   )
 
-  let trip_place_id = ctx.uuid_provider() |> uuid.to_string |> id.to_id()
+  let trip_place_id =
+    option.unwrap(
+      trip_place_id,
+      ctx.uuid_provider() |> uuid.to_string |> id.to_id(),
+    )
 
   use _ <- result.try(trips_db.upsert_trip_place(
     ctx,

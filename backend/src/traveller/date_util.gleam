@@ -22,7 +22,7 @@ pub fn is_date_within(
   start from: birl.Day,
   end to: birl.Day,
 ) -> Bool {
-  is_before(from, date) && is_before(date, to)
+  is_before_or_equal(from, date) && is_before_or_equal(date, to)
 }
 
 pub fn is_before(start from: birl.Day, end to: birl.Day) -> Bool {
@@ -40,5 +40,5 @@ pub fn is_before_or_equal(start from: birl.Day, end to: birl.Day) -> Bool {
   let start_date = birl.set_day(now, from)
   let end_date = birl.set_day(now, to)
 
-  birl.to_unix(start_date) < birl.to_unix(end_date)
+  birl.to_unix(start_date) <= birl.to_unix(end_date)
 }

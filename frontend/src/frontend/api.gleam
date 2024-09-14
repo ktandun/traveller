@@ -226,13 +226,19 @@ pub fn send_create_trip_request(create_request: trip_models.CreateTripRequest) {
   |> send
 }
 
-pub fn send_create_trip_place_request(
+pub fn send_upsert_trip_place_request(
   trip_id: String,
+  trip_place_id: Option(String),
   create_request: trip_models.CreateTripPlaceRequest,
 ) {
   new_request()
-  |> with_url("/api/trips/" <> trip_id <> "/places")
-  |> with_method(Post)
+  |> with_url(
+    "/api/trips/" <> trip_id <> "/places/" <> option.unwrap(trip_place_id, ""),
+  )
+  |> with_method(case trip_place_id {
+    option.Some(_) -> Put
+    option.None -> Post
+  })
   |> with_json_body(trip_models.create_trip_place_request_encoder(
     create_request,
   ))
@@ -242,10 +248,17 @@ pub fn send_create_trip_place_request(
     |> decode_util.map_toy_error_to_decode_errors()
   })
   |> with_to_event(fn(decode_result) {
-    events.TripPlaceCreatePage(events.TripPlaceCreatePageApiReturnedResponse(
-      trip_id,
-      decode_result,
-    ))
+    case trip_place_id {
+      option.Some(_) ->
+        events.TripPlaceUpdatePage(
+          events.TripPlaceUpdatePageApiReturnedResponse(trip_id, decode_result),
+        )
+
+      option.None ->
+        events.TripPlaceCreatePage(
+          events.TripPlaceCreatePageApiReturnedResponse(trip_id, decode_result),
+        )
+    }
   })
   |> build
   |> send
