@@ -1,11 +1,15 @@
 import shared/constants
+import shared/id
 import traveller/context.{type Context, Context}
 import traveller/database
+import traveller/database/users_db
 import wisp.{type Request}
 import wisp/testing
 import youid/uuid
 
 pub const testing_user_id = "ab995595-008e-4ab5-94bb-7845f5d48626"
+
+pub const testing_user_session_token = "fb9d5701-f1e1-4b86-8dfd-f51722677ced"
 
 pub const testing_trip_id = "87fccf2c-dbeb-4e6f-b116-5f46463c2ee7"
 
@@ -35,5 +39,19 @@ pub fn set_json_header(req: Request) -> Request {
 
 pub fn set_auth_cookie(req: Request) -> Request {
   req
-  |> testing.set_cookie(constants.cookie, testing_user_id, wisp.Signed)
+  |> testing.set_cookie(
+    constants.cookie,
+    testing_user_session_token,
+    wisp.Signed,
+  )
+}
+
+pub fn reset_testing_user_session_token() {
+  use ctx <- with_context()
+
+  users_db.set_user_session_token(
+    ctx,
+    testing_user_id |> id.to_id,
+    testing_user_session_token,
+  )
 }

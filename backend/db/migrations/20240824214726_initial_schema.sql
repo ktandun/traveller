@@ -7,7 +7,10 @@ CREATE TABLE users (
     created_utc timestamp DEFAULT timezone('utc', now()),
     email text NOT NULL,
     password text NOT NULL,
-    UNIQUE (email)
+    session_token uuid,
+    login_timestamp timestamp,
+    UNIQUE (email),
+    UNIQUE (session_token)
 );
 
 CREATE TABLE trips (
@@ -482,19 +485,19 @@ CREATE OR REPLACE FUNCTION trip_place_culinaries_view ()
     AS $f$
 BEGIN
     RETURN QUERY WITH culinaries AS (
-    SELECT
-        pculi.trip_place_id,
-        json_agg(json_build_object('place_culinary_id', pculi.place_culinary_id, 'name', pculi.name, 'information_url', pculi.information_url, 'open_time', TO_CHAR(pculi.open_time, 'HH24:MI'), 'close_time', TO_CHAR(pculi.close_time, 'HH24:MI'))) AS culinaries
-FROM
-    place_culinaries pculi
-GROUP BY
-    pculi.trip_place_id
+        SELECT
+            pculi.trip_place_id,
+            json_agg(json_build_object('place_culinary_id', pculi.place_culinary_id, 'name', pculi.name, 'information_url', pculi.information_url, 'open_time', TO_CHAR(pculi.open_time, 'HH24:MI'), 'close_time', TO_CHAR(pculi.close_time, 'HH24:MI'))) AS culinaries
+        FROM
+            place_culinaries pculi
+        GROUP BY
+            pculi.trip_place_id
 )
-SELECT
-    tp.trip_id,
-    tp.trip_place_id,
-    tp.name AS place_name,
-    coalesce(c.culinaries, '[]'::json) AS place_culinaries
+    SELECT
+        tp.trip_id,
+        tp.trip_place_id,
+        tp.name AS place_name,
+        coalesce(c.culinaries, '[]'::json) AS place_culinaries
 FROM
     trip_places tp
     LEFT JOIN culinaries c ON c.trip_place_id = tp.trip_place_id;
@@ -507,6 +510,14 @@ LANGUAGE PLPGSQL;
 ------------------------------------------------------
 SELECT
     create_user (user_id => 'ab995595-008e-4ab5-94bb-7845f5d48626', email => 'test@example.com', PASSWORD => crypt('password', gen_salt('bf', 8)));
+
+UPDATE
+    users
+SET
+    session_token = 'fb9d5701-f1e1-4b86-8dfd-f51722677ced',
+    login_timestamp = timezone('utc', now())
+WHERE
+    user_id = 'ab995595-008e-4ab5-94bb-7845f5d48626';
 
 SELECT
     create_user (user_id => 'abc5bc96-e6e4-48ed-aa47-aa08082f0382', email => 'user@example.com', PASSWORD => crypt('password', gen_salt('bf', 8)));

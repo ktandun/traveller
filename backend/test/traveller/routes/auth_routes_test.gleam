@@ -1,4 +1,5 @@
-import gleam/io
+import gleam/http/response
+import gleam/list
 import gleeunit/should
 import shared/auth_models
 import shared/id
@@ -56,10 +57,13 @@ pub fn login_successful_test() {
     testing.post_json("/api/login", [], json)
     |> router.handle_request(ctx)
 
-  let response =
-    json_util.try_decode(testing.string_body(response), id.id_decoder())
+  should.equal(200, response.status)
 
-  should.be_ok(response)
+  let cookies = response.get_cookies(response)
+
+  should.be_false(list.is_empty(cookies))
+
+  test_utils.reset_testing_user_session_token()
 }
 
 pub fn login_invalid_login_test() {

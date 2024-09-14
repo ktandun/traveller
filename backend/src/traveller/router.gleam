@@ -145,16 +145,16 @@ fn post_login(req: Request, ctx: Context) {
     auth_models.login_request_decoder(),
   ))
 
-  use user_id <- web.require_ok(auth_routes.handle_login(ctx, login_request))
+  use session_token <- web.require_ok(auth_routes.handle_login(
+    ctx,
+    login_request,
+  ))
 
-  user_id
-  |> id.id_encoder
-  |> json.to_string_builder
-  |> wisp.json_response(200)
+  wisp.ok()
   |> wisp.set_cookie(
     req,
     constants.cookie,
-    id.id_value(user_id),
+    id.id_value(session_token),
     wisp.Signed,
     60 * 60 * 24,
   )

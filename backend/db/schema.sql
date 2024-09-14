@@ -10,13 +10,6 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: public; Type: SCHEMA; Schema: -; Owner: -
---
-
--- *not* creating schema, since initdb creates it
-
-
---
 -- Name: pgcrypto; Type: EXTENSION; Schema: -; Owner: -
 --
 
@@ -193,19 +186,19 @@ CREATE FUNCTION public.trip_place_culinaries_view() RETURNS TABLE(trip_id uuid, 
     AS $$
 BEGIN
     RETURN QUERY WITH culinaries AS (
-    SELECT
-        pculi.trip_place_id,
-        json_agg(json_build_object('place_culinary_id', pculi.place_culinary_id, 'name', pculi.name, 'information_url', pculi.information_url, 'open_time', TO_CHAR(pculi.open_time, 'HH24:MI'), 'close_time', TO_CHAR(pculi.close_time, 'HH24:MI'))) AS culinaries
-FROM
-    place_culinaries pculi
-GROUP BY
-    pculi.trip_place_id
+        SELECT
+            pculi.trip_place_id,
+            json_agg(json_build_object('place_culinary_id', pculi.place_culinary_id, 'name', pculi.name, 'information_url', pculi.information_url, 'open_time', TO_CHAR(pculi.open_time, 'HH24:MI'), 'close_time', TO_CHAR(pculi.close_time, 'HH24:MI'))) AS culinaries
+        FROM
+            place_culinaries pculi
+        GROUP BY
+            pculi.trip_place_id
 )
-SELECT
-    tp.trip_id,
-    tp.trip_place_id,
-    tp.name AS place_name,
-    coalesce(c.culinaries, '[]'::json) AS place_culinaries
+    SELECT
+        tp.trip_id,
+        tp.trip_place_id,
+        tp.name AS place_name,
+        coalesce(c.culinaries, '[]'::json) AS place_culinaries
 FROM
     trip_places tp
     LEFT JOIN culinaries c ON c.trip_place_id = tp.trip_place_id;
@@ -602,7 +595,9 @@ CREATE TABLE public.users (
     user_id uuid NOT NULL,
     created_utc timestamp without time zone DEFAULT timezone('utc'::text, now()),
     email text NOT NULL,
-    password text NOT NULL
+    password text NOT NULL,
+    session_token uuid,
+    login_timestamp timestamp without time zone
 );
 
 
@@ -692,6 +687,14 @@ ALTER TABLE ONLY public.users
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (user_id);
+
+
+--
+-- Name: users users_session_token_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_session_token_key UNIQUE (session_token);
 
 
 --

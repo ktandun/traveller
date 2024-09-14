@@ -5,6 +5,7 @@ import shared/id.{type Id, type UserId}
 import traveller/context.{type Context}
 import traveller/database/users_db
 import traveller/error.{type AppError}
+import youid/uuid
 
 /// Checks if user does not exist yet, creates a user and returns their id
 pub fn handle_signup(
@@ -36,5 +37,15 @@ pub fn handle_login(
     Error(error.VerificationFailed("User with specified email does not exist")),
   )
 
-  users_db.login_user(ctx, email, password)
+  use user_id <- result.try(users_db.login_user(ctx, email, password))
+
+  let session_token = ctx.uuid_provider() |> uuid.to_string
+
+  use _ <- result.try(users_db.set_user_session_token(
+    ctx,
+    user_id,
+    session_token,
+  ))
+
+  Ok(user_id)
 }

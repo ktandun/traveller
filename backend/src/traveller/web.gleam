@@ -1,7 +1,7 @@
-import database/sql
 import gleam/http/response
+import gleam/io
 import gleam/json.{type DecodeError, type Json}
-import gleam/pgo
+import gleam/option
 import gleam/result
 import shared/constants
 import shared/id.{type Id, type UserId}
@@ -77,23 +77,26 @@ pub fn require_authenticated(
   ctx: Context,
   next: fn(Id(UserId)) -> Response,
 ) {
-  use user_id <- require_ok(
+  use session_token <- require_ok(
     wisp.get_cookie(req, constants.cookie, wisp.Signed)
     |> result.map_error(fn(_) { error.UserUnauthenticated }),
   )
 
   use _ <- require_ok(
-    uuid.from_string(user_id)
+    uuid.from_string(session_token)
     |> result.map_error(fn(_) {
-      error.VerificationFailed("Invalid UUID user id " <> user_id)
+      error.VerificationFailed("Invalid Session ID Format " <> session_token)
     }),
   )
 
-  use exists <- require_ok(users_db.find_user_by_user_id(ctx, user_id))
+  use user_id <- require_ok(users_db.find_user_by_session_token(
+    ctx,
+    session_token,
+  ))
 
-  case exists {
-    True -> next(id.to_id(user_id))
-    False -> error_to_response(error.UserUnauthenticated)
+  case user_id {
+    option.Some(user_id) -> next(user_id)
+    _ -> error_to_response(error.UserUnauthenticated)
   }
 }
 
