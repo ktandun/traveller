@@ -81,10 +81,6 @@ pub fn handle_upsert_trip_place(
     trips_db.get_user_trip_dates_by_trip_id(ctx, user_id, trip_id),
   )
 
-  io.debug(start_date)
-  io.debug(request.date)
-  io.debug(end_date)
-
   use <- bool.guard(
     !date_util.is_date_within(request.date, start_date, end_date),
     Error(error.ValidationFailed("Date specified is not within trip dates")),
