@@ -21,7 +21,7 @@ buildprod:
     sleep 5
     cd backend && dbmate -e PRODUCTION_DATABASE_URL drop
     cd backend && dbmate -e PRODUCTION_DATABASE_URL up
-    docker compose up
+    docker compose up -d
 
 db:
     cd backend && dbmate drop && dbmate up
