@@ -1,3 +1,5 @@
+set dotenv-required
+
 export DEPLOY_ENV := "Development"
 export DATABASE_HOST := "localhost"
 export DATABASE_PORT := "5432"

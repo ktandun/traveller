@@ -24,7 +24,8 @@ pub fn main() {
     "Production" -> {
       Nil
     }
-    _ -> {
+    env -> {
+      wisp.log_info("Running on " <> env)
       setup.radiate()
     }
   }

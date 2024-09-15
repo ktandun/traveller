@@ -1,7 +1,7 @@
 import gleam/erlang/os
 import gleam/int
 import gleam/option
-import gleam/pgo
+import gleam/pgo.{type Connection}
 import gleam/result
 import traveller/error.{type AppError}
 

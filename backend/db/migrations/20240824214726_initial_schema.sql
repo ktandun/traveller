@@ -505,64 +505,67 @@ END;
 $f$
 LANGUAGE PLPGSQL;
 
-------------------------------------------------------
------------------ SEED -------------------------------
-------------------------------------------------------
-SELECT
-    create_user (user_id => 'ab995595-008e-4ab5-94bb-7845f5d48626', email => 'test@example.com', PASSWORD => crypt('password', gen_salt('bf', 8)));
-
-UPDATE
-    users
-SET
-    session_token = 'fb9d5701-f1e1-4b86-8dfd-f51722677ced',
-    login_timestamp = timezone('utc', now())
-WHERE
-    user_id = 'ab995595-008e-4ab5-94bb-7845f5d48626';
-
-SELECT
-    create_user (user_id => 'abc5bc96-e6e4-48ed-aa47-aa08082f0382', email => 'user@example.com', PASSWORD => crypt('password', gen_salt('bf', 8)));
-
-SELECT
-    create_trip (user_id => 'ab995595-008e-4ab5-94bb-7845f5d48626', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', destination => 'Singapore', start_date => CURRENT_DATE::text, end_date => (CURRENT_DATE + interval '1 month')::text);
-
-SELECT
-    create_trip (user_id => 'ab995595-008e-4ab5-94bb-7845f5d48626', trip_id => '38933aaa-d41f-4a99-b8a7-f1dfd7e95c86', destination => 'Bali', start_date => '2024-08-01', end_date => '2024-09-01');
-
-SELECT
-    create_trip (user_id => 'ab995595-008e-4ab5-94bb-7845f5d48626', trip_id => '14794e0a-9a80-4be6-b9b1-070f094ca06c', destination => 'Fiji', start_date => '2024-02-01', end_date => '2024-02-14');
-
-SELECT
-    create_trip (user_id => 'ab995595-008e-4ab5-94bb-7845f5d48626', trip_id => '6dc47c9e-f363-4c0b-afbb-d3324a4e8d59', destination => 'Canada', start_date => '2024-03-01', end_date => '2024-03-28');
-
-SELECT
-    upsert_trip_place (trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Universal Studios', date => CURRENT_DATE::text);
-
-SELECT
-    upsert_trip_place (trip_place_id => '65916ea8-c637-4921-89a0-97d3661ce782', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Botanical Garden', date => (CURRENT_DATE + make_interval(days => 1))::text);
-
-SELECT
-    upsert_trip_place (trip_place_id => 'a99f7893-632a-41fb-bd40-2f8fe8dd1d7e', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Food Stalls', date => (CURRENT_DATE + make_interval(days => 2))::text);
-
-SELECT
-    upsert_trip_companion (trip_companion_id => '7fccacf1-1f38-49ad-b9de-b3a9788508e1', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Noel', email => 'noel@gmail.com');
-
-SELECT
-    upsert_trip_companion (trip_companion_id => '8D9102DD-747C-4E2A-B867-00C3A701D30C', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Senchou', email => 'senchou@gmail.com');
-
-SELECT
-    create_place_activity (place_activity_id => 'c26a0603-16d2-4156-b985-acf398b16cd2', trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', name => 'Battlestar Galactica: HUMAN vs. CYLON', information_url => 'https://www.sentosa.com.sg/en/things-to-do/attractions/universal-studios-singapore/', start_time => '10:00', end_time => '12:00', entry_fee => 3);
-
-SELECT
-    create_place_activity (place_activity_id => '5035f7ca-82e1-41ed-ba23-68a3ff53d47f', trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', name => 'TRANSFORMERS The Ride: The Ultimate 3D Battle', information_url => 'https://www.sentosa.com.sg/en/things-to-do/attractions/universal-studios-singapore/', start_time => '12:00', end_time => '13:00', entry_fee => 12);
-
-SELECT
-    upsert_place_accomodation (trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', place_accomodation_id => '58cc6f2b-4291-4396-bf4f-5102f8fce4fe', accomodation_name => 'Marina Bay Sands', information_url => 'https://www.marinabaysands.com', accomodation_fee => 120, paid => TRUE);
-
-SELECT
-    upsert_place_culinary (trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', place_culinary_id => 'd8e8ab96-6ed7-4210-903c-79c21534686f', name => 'SKAI', information_url => 'https://www.tripadvisor.co.nz/Restaurant_Review-g294265-d15123886-Reviews-SKAI-Singapore.html', open_time => '10:00', close_time => '23:00');
-
-SELECT
-    upsert_place_culinary (trip_place_id => '65916ea8-c637-4921-89a0-97d3661ce782', place_culinary_id => 'ebc82287-6f34-4689-bc8d-6d92143448da', name => 'Waterfall Ristorante', information_url => 'https://www.tripadvisor.co.nz/Restaurant_Review-g294265-d3952172-Reviews-Waterfall_Ristorante_Italiano-Singapore.html', open_time => '12:00', close_time => '14:30');
+DO $$
+BEGIN
+    IF current_database() != 'traveller' THEN
+        PERFORM
+            create_user (user_id => 'ab995595-008e-4ab5-94bb-7845f5d48626', email => 'test@example.com', PASSWORD => crypt('password', gen_salt('bf', 8)));
+        --
+        UPDATE
+            users
+        SET
+            session_token = 'fb9d5701-f1e1-4b86-8dfd-f51722677ced',
+            login_timestamp = timezone('utc', now())
+        WHERE
+            user_id = 'ab995595-008e-4ab5-94bb-7845f5d48626';
+        --
+        PERFORM
+            create_user (user_id => 'abc5bc96-e6e4-48ed-aa47-aa08082f0382', email => 'user@example.com', PASSWORD => crypt('password', gen_salt('bf', 8)));
+        --
+        PERFORM
+            create_trip (user_id => 'ab995595-008e-4ab5-94bb-7845f5d48626', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', destination => 'Singapore', start_date => CURRENT_DATE::text, end_date => (CURRENT_DATE + interval '1 month')::text);
+        --
+        PERFORM
+            create_trip (user_id => 'ab995595-008e-4ab5-94bb-7845f5d48626', trip_id => '38933aaa-d41f-4a99-b8a7-f1dfd7e95c86', destination => 'Bali', start_date => '2024-08-01', end_date => '2024-09-01');
+        --
+        PERFORM
+            create_trip (user_id => 'ab995595-008e-4ab5-94bb-7845f5d48626', trip_id => '14794e0a-9a80-4be6-b9b1-070f094ca06c', destination => 'Fiji', start_date => '2024-02-01', end_date => '2024-02-14');
+        --
+        PERFORM
+            create_trip (user_id => 'ab995595-008e-4ab5-94bb-7845f5d48626', trip_id => '6dc47c9e-f363-4c0b-afbb-d3324a4e8d59', destination => 'Canada', start_date => '2024-03-01', end_date => '2024-03-28');
+        --
+        PERFORM
+            upsert_trip_place (trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Universal Studios', date => CURRENT_DATE::text);
+        --
+        PERFORM
+            upsert_trip_place (trip_place_id => '65916ea8-c637-4921-89a0-97d3661ce782', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Botanical Garden', date => (CURRENT_DATE + make_interval(days => 1))::text);
+        --
+        PERFORM
+            upsert_trip_place (trip_place_id => 'a99f7893-632a-41fb-bd40-2f8fe8dd1d7e', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Food Stalls', date => (CURRENT_DATE + make_interval(days => 2))::text);
+        --
+        PERFORM
+            upsert_trip_companion (trip_companion_id => '7fccacf1-1f38-49ad-b9de-b3a9788508e1', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Noel', email => 'noel@gmail.com');
+        --
+        PERFORM
+            upsert_trip_companion (trip_companion_id => '8D9102DD-747C-4E2A-B867-00C3A701D30C', trip_id => '87fccf2c-dbeb-4e6f-b116-5f46463c2ee7', name => 'Senchou', email => 'senchou@gmail.com');
+        --
+        PERFORM
+            create_place_activity (place_activity_id => 'c26a0603-16d2-4156-b985-acf398b16cd2', trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', name => 'Battlestar Galactica: HUMAN vs. CYLON', information_url => 'https://www.sentosa.com.sg/en/things-to-do/attractions/universal-studios-singapore/', start_time => '10:00', end_time => '12:00', entry_fee => 3);
+        --
+        PERFORM
+            create_place_activity (place_activity_id => '5035f7ca-82e1-41ed-ba23-68a3ff53d47f', trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', name => 'TRANSFORMERS The Ride: The Ultimate 3D Battle', information_url => 'https://www.sentosa.com.sg/en/things-to-do/attractions/universal-studios-singapore/', start_time => '12:00', end_time => '13:00', entry_fee => 12);
+        --
+        PERFORM
+            upsert_place_accomodation (trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', place_accomodation_id => '58cc6f2b-4291-4396-bf4f-5102f8fce4fe', accomodation_name => 'Marina Bay Sands', information_url => 'https://www.marinabaysands.com', accomodation_fee => 120, paid => TRUE);
+        --
+        PERFORM
+            upsert_place_culinary (trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', place_culinary_id => 'd8e8ab96-6ed7-4210-903c-79c21534686f', name => 'SKAI', information_url => 'https://www.tripadvisor.co.nz/Restaurant_Review-g294265-d15123886-Reviews-SKAI-Singapore.html', open_time => '10:00', close_time => '23:00');
+        --
+        PERFORM
+            upsert_place_culinary (trip_place_id => '65916ea8-c637-4921-89a0-97d3661ce782', place_culinary_id => 'ebc82287-6f34-4689-bc8d-6d92143448da', name => 'Waterfall Ristorante', information_url => 'https://www.tripadvisor.co.nz/Restaurant_Review-g294265-d3952172-Reviews-Waterfall_Ristorante_Italiano-Singapore.html', open_time => '12:00', close_time => '14:30');
+    END IF;
+END
+$$;
 
 -- migrate:down
 DROP FUNCTION trips_view ();
