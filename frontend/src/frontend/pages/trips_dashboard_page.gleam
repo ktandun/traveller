@@ -30,37 +30,41 @@ pub fn trips_dashboard_view(model: AppModel) {
         }),
       ],
     ),
-    html.table([], [
-      html.thead([], [
-        html.tr([], [
-          html.th([], [element.text("Destination")]),
-          html.th([], [element.text("From")]),
-          html.th([], [element.text("Until")]),
+    html.figure([], [
+      html.table([], [
+        html.thead([], [
+          html.tr([], [
+            html.th([], [element.text("Destination")]),
+            html.th([], [element.text("From")]),
+            html.th([], [element.text("Until")]),
+            html.th([], [element.text("Summary")]),
+          ]),
         ]),
-      ]),
-      html.tbody(
-        [],
-        model.trips_dashboard.user_trips
-          |> list.map(fn(user_trip) {
-            html.tr([], [
-              html.td([], [
-                html.a([attribute.href("trips/" <> user_trip.trip_id)], [
-                  element.text(user_trip.destination),
+        html.tbody(
+          [],
+          model.trips_dashboard.user_trips
+            |> list.map(fn(user_trip) {
+              html.tr([], [
+                html.td([], [
+                  html.a([attribute.href("trips/" <> user_trip.trip_id)], [
+                    element.text(user_trip.destination),
+                  ]),
                 ]),
-              ]),
-              html.td([], [
-                element.text(date_util_shared.to_human_readable(
-                  user_trip.start_date,
-                )),
-              ]),
-              html.td([], [
-                element.text(date_util_shared.to_human_readable(
-                  user_trip.end_date,
-                )),
-              ]),
-            ])
-          }),
-      ),
+                html.td([], [
+                  element.text(date_util_shared.to_human_readable(
+                    user_trip.start_date,
+                  )),
+                ]),
+                html.td([], [
+                  element.text(date_util_shared.to_human_readable(
+                    user_trip.end_date,
+                  )),
+                ]),
+                html.td([], [html.button([], [element.text("Generate")])]),
+              ])
+            }),
+        ),
+      ]),
     ]),
   ])
 }

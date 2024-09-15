@@ -4,7 +4,7 @@ import gleam/option.{type Option}
 import gleam/string
 import shared/custom_decoders
 import shared/date_util_shared
-import toy
+import toy.{type Decoder}
 
 //
 
@@ -70,8 +70,30 @@ pub type UserTripPlace {
     date: birl.Day,
     has_accomodation: Bool,
     accomodation_paid: Bool,
-    activities_count: Int,
-    culinaries_count: Int,
+    accomodation_name: Option(String),
+    accomodation_information_url: Option(String),
+    accomodation_fee: Option(Float),
+    activities: List(UserTripPlaceActivity),
+    culinaries: List(UserTripPlaceCulinary),
+  )
+}
+
+pub type UserTripPlaceActivity {
+  UserTripPlaceActivity(
+    name: String,
+    information_url: Option(String),
+    start_time: Option(String),
+    end_time: Option(String),
+    entry_fee: Option(Float),
+  )
+}
+
+pub type UserTripPlaceCulinary {
+  UserTripPlaceCulinary(
+    name: String,
+    information_url: Option(String),
+    open_time: Option(String),
+    close_time: Option(String),
   )
 }
 
@@ -101,14 +123,90 @@ pub fn default_user_trip_places() {
   )
 }
 
-pub fn user_trip_place_decoder() {
+pub fn user_trip_place_activity_decoder() -> Decoder(UserTripPlaceActivity) {
+  use name <- toy.field("name", toy.string)
+  use information_url <- toy.field(
+    "information_url",
+    toy.string |> toy.nullable,
+  )
+  use start_time <- toy.field("start_time", toy.string |> toy.nullable)
+  use end_time <- toy.field("end_time", toy.string |> toy.nullable)
+  use entry_fee <- toy.field(
+    "entry_fee",
+    custom_decoders.number |> toy.nullable,
+  )
+
+  toy.decoded(UserTripPlaceActivity(
+    name:,
+    information_url:,
+    start_time:,
+    end_time:,
+    entry_fee:,
+  ))
+}
+
+pub fn user_trip_place_activity_encoder(data: UserTripPlaceActivity) {
+  json.object([
+    #("name", json.string(data.name)),
+    #("information_url", json.nullable(data.information_url, json.string)),
+    #("start_time", json.nullable(data.start_time, json.string)),
+    #("end_time", json.nullable(data.end_time, json.string)),
+    #("entry_fee", json.nullable(data.entry_fee, json.float)),
+  ])
+}
+
+pub fn user_trip_place_culinary_decoder() -> Decoder(UserTripPlaceCulinary) {
+  use name <- toy.field("name", toy.string)
+  use information_url <- toy.field(
+    "information_url",
+    toy.string |> toy.nullable,
+  )
+  use open_time <- toy.field("open_time", toy.string |> toy.nullable)
+  use close_time <- toy.field("close_time", toy.string |> toy.nullable)
+
+  toy.decoded(UserTripPlaceCulinary(
+    name:,
+    information_url:,
+    open_time:,
+    close_time:,
+  ))
+}
+
+pub fn user_trip_place_culinary_encoder(data: UserTripPlaceCulinary) {
+  json.object([
+    #("name", json.string(data.name)),
+    #("information_url", json.nullable(data.information_url, json.string)),
+    #("start_time", json.nullable(data.open_time, json.string)),
+    #("end_time", json.nullable(data.close_time, json.string)),
+  ])
+}
+
+pub fn user_trip_place_decoder() -> Decoder(UserTripPlace) {
   use trip_place_id <- toy.field("trip_place_id", toy.string)
   use name <- toy.field("name", toy.string)
   use date <- toy.field("date", custom_decoders.day_decoder("date"))
   use has_accomodation <- toy.field("has_accomodation", toy.bool)
   use accomodation_paid <- toy.field("accomodation_paid", toy.bool)
-  use activities_count <- toy.field("activities_count", toy.int)
-  use culinaries_count <- toy.field("culinaries_count", toy.int)
+  use accomodation_name <- toy.field(
+    "accomodation_name",
+    toy.string |> toy.nullable,
+  )
+  use accomodation_information_url <- toy.field(
+    "accomodation_information_url",
+    toy.string |> toy.nullable,
+  )
+  use accomodation_fee <- toy.field(
+    "accomodation_fee",
+    custom_decoders.number |> toy.nullable,
+  )
+  use activities <- toy.field(
+    "activities",
+    user_trip_place_activity_decoder() |> toy.list,
+  )
+  use culinaries <- toy.field(
+    "culinaries",
+    user_trip_place_culinary_decoder() |> toy.list,
+  )
 
   toy.decoded(UserTripPlace(
     trip_place_id:,
@@ -116,8 +214,11 @@ pub fn user_trip_place_decoder() {
     date:,
     has_accomodation:,
     accomodation_paid:,
-    activities_count:,
-    culinaries_count:,
+    accomodation_name:,
+    accomodation_information_url:,
+    accomodation_fee:,
+    activities:,
+    culinaries:,
   ))
 }
 
@@ -128,8 +229,20 @@ pub fn user_trip_place_encoder(data: UserTripPlace) {
     #("date", json.string(data.date |> date_util_shared.to_yyyy_mm_dd)),
     #("has_accomodation", json.bool(data.has_accomodation)),
     #("accomodation_paid", json.bool(data.accomodation_paid)),
-    #("activities_count", json.int(data.activities_count)),
-    #("culinaries_count", json.int(data.culinaries_count)),
+    #("accomodation_name", json.nullable(data.accomodation_name, json.string)),
+    #(
+      "accomodation_information_url",
+      json.nullable(data.accomodation_information_url, json.string),
+    ),
+    #("accomodation_fee", json.nullable(data.accomodation_fee, json.float)),
+    #(
+      "activities",
+      json.array(data.activities, of: user_trip_place_activity_encoder),
+    ),
+    #(
+      "culinaries",
+      json.array(data.culinaries, of: user_trip_place_culinary_encoder),
+    ),
   ])
 }
 

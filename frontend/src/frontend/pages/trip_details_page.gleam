@@ -1,12 +1,9 @@
 import frontend/events.{type AppModel, type TripDetailsPageEvent, AppModel}
-import frontend/routes
 import frontend/web
 import gleam/float
 import gleam/int
-import gleam/io
 import gleam/list
 import gleam/option
-import gleam/result
 import lustre/attribute
 import lustre/effect
 import lustre/element
@@ -154,9 +151,11 @@ pub fn trip_details_view(model: AppModel) {
                       ),
                     ],
                     [
-                      element.text(case place.activities_count {
-                        0 -> "None planned"
-                        count -> int.to_string(count) <> " planned"
+                      element.text(case place.activities {
+                        [] -> "None planned"
+                        _ ->
+                          int.to_string(list.length(place.activities))
+                          <> " planned"
                       }),
                     ],
                   ),
@@ -173,9 +172,11 @@ pub fn trip_details_view(model: AppModel) {
                       ),
                     ],
                     [
-                      element.text(case place.culinaries_count {
-                        0 -> "None planned"
-                        count -> int.to_string(count) <> " planned"
+                      element.text(case place.culinaries {
+                        [] -> "None planned"
+                        _ ->
+                          int.to_string(list.length(place.culinaries))
+                          <> " planned"
                       }),
                     ],
                   ),

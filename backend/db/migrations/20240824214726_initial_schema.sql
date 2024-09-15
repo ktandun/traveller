@@ -222,25 +222,45 @@ BEGIN
         GROUP BY
             tc.trip_id
 ),
-culinaries_count AS (
+culinaries AS (
     SELECT
         tp.trip_place_id,
-        COUNT(pculi.place_culinary_id) AS count
+        CASE WHEN count(pculi.place_culinary_id) = 0 THEN
+            '[]'::json
+        ELSE
+            json_agg(json_build_object('name', pculi.name, 'information_url', information_url, 'open_time', open_time, 'close_time', close_time))
+        END AS culinaries
     FROM
         trip_places tp
         LEFT JOIN place_culinaries pculi ON tp.trip_place_id = pculi.trip_place_id
     GROUP BY
         tp.trip_place_id
 ),
-activities_count AS (
+activities AS (
     SELECT
         tp.trip_place_id,
-        COUNT(pactiv.place_activity_id) AS count
+        CASE WHEN count(pactiv.place_activity_id) = 0 THEN
+            '[]'::json
+        ELSE
+            json_agg(json_build_object('name', pactiv.name, 'information_url', information_url, 'start_time', start_time, 'end_time', end_time, 'entry_fee', entry_fee))
+        END AS activities
     FROM
         trip_places tp
         LEFT JOIN place_activities pactiv ON tp.trip_place_id = pactiv.trip_place_id
     GROUP BY
         tp.trip_place_id
+),
+accomodations AS (
+    SELECT
+        tp.trip_place_id,
+        paccom.place_accomodation_id,
+        paccom.name,
+        paccom.information_url,
+        paccom.accomodation_fee,
+        paccom.paid
+    FROM
+        trip_places tp
+        LEFT JOIN place_accomodations paccom ON tp.trip_place_id = paccom.trip_place_id
 ),
 trip_places_ordered_by_date AS (
     SELECT
@@ -253,12 +273,12 @@ trip_places_ordered_by_date AS (
 places AS (
     SELECT
         tp.trip_id,
-        json_agg(json_build_object('trip_place_id', tp.trip_place_id, 'name', tp.name, 'date', to_char(tp.date, 'YYYY-MM-DD'), 'has_accomodation', paccom.place_accomodation_id IS NOT NULL, 'accomodation_paid', coalesce(paccom.paid, FALSE), 'activities_count', act_count.count, 'culinaries_count', cul_count.count)) AS places
-FROM
-    trip_places_ordered_by_date tp
-    LEFT JOIN place_accomodations paccom ON tp.trip_place_id = paccom.trip_place_id
-        LEFT JOIN activities_count act_count ON tp.trip_place_id = act_count.trip_place_id
-        LEFT JOIN culinaries_count cul_count ON tp.trip_place_id = cul_count.trip_place_id
+        json_agg(json_build_object('trip_place_id', tp.trip_place_id, 'name', tp.name, 'date', to_char(tp.date, 'YYYY-MM-DD'), 'has_accomodation', accom.place_accomodation_id IS NOT NULL, 'accomodation_paid', coalesce(accom.paid, FALSE), 'accomodation_name', accom.name, 'accomodation_information_url', accom.information_url, 'accomodation_fee', accom.accomodation_fee, 'activities', act.activities, 'culinaries', coalesce(cul.culinaries, '[]'::json))) AS places
+    FROM
+        trip_places_ordered_by_date tp
+        LEFT JOIN accomodations accom ON tp.trip_place_id = accom.trip_place_id
+        LEFT JOIN activities act ON tp.trip_place_id = act.trip_place_id
+        LEFT JOIN culinaries cul ON tp.trip_place_id = cul.trip_place_id
     GROUP BY
         tp.trip_id
 ),
@@ -266,7 +286,7 @@ fees_aggregate AS (
     SELECT
         utrip.trip_id,
         SUM(coalesce(pactiv.entry_fee, 0)) AS total_activities_fee,
-    SUM(coalesce(paccom.accomodation_fee, 0)) AS total_accomodations_fee
+        SUM(coalesce(paccom.accomodation_fee, 0)) AS total_accomodations_fee
 FROM
     user_trips utrip
     LEFT JOIN trip_places tplac ON utrip.trip_id = tplac.trip_id
