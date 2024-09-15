@@ -1,12 +1,5 @@
 set dotenv-required
 
-export DEPLOY_ENV := "Development"
-export DATABASE_HOST := "localhost"
-export DATABASE_PORT := "5432"
-export DATABASE_USER := "kenzietandun"
-export DATABASE_PASS := "password"
-export DATABASE_DB := "kenzietandun"
-
 run: build
     npx concurrently "just nginx" "just frontend" "just backend"
 
