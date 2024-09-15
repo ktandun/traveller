@@ -35,6 +35,27 @@ pub fn set_user_session_token(
   |> database.to_app_error()
 }
 
+pub fn remove_user_session_token(
+  ctx: Context,
+  user_id: Id(UserId),
+) -> Result(Nil, AppError) {
+  let sql =
+    "
+    UPDATE 
+        users 
+    SET 
+        session_token = NULL
+    WHERE 
+        user_id = $1;
+    "
+
+  let return_type = dynamic.dynamic
+
+  pgo.execute(sql, ctx.db, [pgo.text(user_id |> id.id_value)], return_type)
+  |> result.map(fn(_) { Nil })
+  |> database.to_app_error()
+}
+
 pub fn login_user(
   ctx: Context,
   email: String,

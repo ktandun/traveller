@@ -49,3 +49,8 @@ pub fn handle_login(
 
   Ok(session_token)
 }
+
+/// Removes user's session token
+pub fn handle_logout(ctx: Context, user_id: Id(UserId)) -> Result(Nil, AppError) {
+  users_db.remove_user_session_token(ctx, user_id)
+}

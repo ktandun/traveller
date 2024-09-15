@@ -18,6 +18,14 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
   use req <- web.middleware(ctx, req)
 
   case wisp.path_segments(req) {
+    ["api", "logout"] -> {
+      use user_id <- web.require_authenticated(req, ctx)
+
+      case req.method {
+        http.Post -> post_logout(req, ctx, user_id)
+        _ -> wisp.method_not_allowed([http.Post])
+      }
+    }
     ["api", "login"] -> {
       case req.method {
         http.Post -> post_login(req, ctx)
@@ -140,6 +148,13 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
   }
 }
 
+fn post_logout(req: Request, ctx: Context, user_id: Id(UserId)) {
+  use _ <- web.require_ok(auth_routes.handle_logout(ctx, user_id))
+
+  wisp.ok()
+  |> wisp.set_cookie(req, constants.cookie, "", wisp.PlainText, 60 * 60 * 24)
+}
+
 fn post_login(req: Request, ctx: Context) {
   use request_body <- wisp.require_string_body(req)
   use login_request <- web.require_valid_json(json_util.try_decode(
@@ -169,12 +184,24 @@ fn post_signup(req: Request, ctx: Context) {
     auth_models.signup_request_decoder(),
   ))
 
-  use user_id <- web.require_ok(auth_routes.handle_signup(ctx, signup_request))
+  use _ <- web.require_ok(auth_routes.handle_signup(ctx, signup_request))
 
-  user_id
-  |> id.id_encoder
-  |> json.to_string_builder
-  |> wisp.json_response(200)
+  use session_token <- web.require_ok(auth_routes.handle_login(
+    ctx,
+    auth_models.LoginRequest(
+      email: signup_request.email,
+      password: signup_request.password,
+    ),
+  ))
+
+  wisp.ok()
+  |> wisp.set_cookie(
+    req,
+    constants.cookie,
+    session_token,
+    wisp.Signed,
+    60 * 60 * 24,
+  )
 }
 
 fn get_trips(_req: Request, ctx: Context, user_id: Id(UserId)) {

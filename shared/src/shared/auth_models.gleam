@@ -31,6 +31,10 @@ pub type SignupRequest {
   SignupRequest(email: String, password: String)
 }
 
+pub fn default_signup_request() {
+  SignupRequest(email: "", password: "")
+}
+
 pub fn signup_request_decoder() {
   use email <- toy.field("email", toy.string |> toy.string_email)
   use password <- toy.field("password", toy.string |> toy.string_min(8))

@@ -6,16 +6,19 @@ import gleam/result
 import lustre_http.{type HttpError}
 import shared/auth_models
 import shared/date_util_shared
-import shared/id.{type Id, type TripId, type TripPlaceId, type UserId}
+import shared/id.{type Id, type TripId, type TripPlaceId}
 import shared/trip_models.{type UserTripCompanion}
 
 pub type AppEvent {
   NoEvent
   OnRouteChange(Route)
+  LogoutClicked
+  LogoutApiReturnedResponse
   ShowToast
   HideToast
   // page specific events
   LoginPage(LoginPageEvent)
+  SignupPage(SignupPageEvent)
   TripCompanionsPage(TripCompanionsPageEvent)
   TripCreatePage(TripCreatePageEvent)
   TripDetailsPage(TripDetailsPageEvent)
@@ -35,6 +38,7 @@ pub type AppModel {
     show_loading: Bool,
     api_base_url: String,
     login_request: auth_models.LoginRequest,
+    signup_request: auth_models.SignupRequest,
     trips_dashboard: trip_models.UserTrips,
     trip_details: trip_models.UserTripPlaces,
     trip_create: CreateTripForm,
@@ -140,6 +144,7 @@ pub fn default_app_model() {
     show_loading: False,
     api_base_url: env.api_base_url,
     login_request: auth_models.default_login_request(),
+    signup_request: auth_models.default_signup_request(),
     trips_dashboard: trip_models.default_user_trips(),
     trip_details: trip_models.default_user_trip_places(),
     trip_create: default_create_trip_form(),
@@ -161,6 +166,13 @@ pub type LoginPageEvent {
   LoginPageUserUpdatedPassword(password: String)
   LoginPageUserClickedSubmit
   LoginPageApiReturnedResponse(Result(Nil, HttpError))
+}
+
+pub type SignupPageEvent {
+  SignupPageUserUpdatedEmail(email: String)
+  SignupPageUserUpdatedPassword(password: String)
+  SignupPageUserClickedSubmit
+  SignupPageApiReturnedResponse(Result(Nil, HttpError))
 }
 
 pub type TripsDashboardPageEvent {

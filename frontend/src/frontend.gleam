@@ -3,6 +3,7 @@ import frontend/breadcrumb
 import frontend/events.{type AppEvent, type AppModel, AppModel}
 import frontend/pages/error_500
 import frontend/pages/login_page
+import frontend/pages/signup_page
 import frontend/pages/trip_companions_page
 import frontend/pages/trip_create_page
 import frontend/pages/trip_details_page
@@ -15,6 +16,7 @@ import frontend/pages/trip_update_page
 import frontend/pages/trips_dashboard_page
 import frontend/routes.{type Route}
 import frontend/toast
+import gleam/option
 import gleam/string
 import gleam/uri.{type Uri}
 import lustre
@@ -58,6 +60,7 @@ fn path_to_route(path_segments: List(String)) -> Route {
     [] -> routes.TripsDashboard
     ["500"] -> routes.ErrorFiveHundred
     ["login"] -> routes.Login
+    ["signup"] -> routes.Signup
     ["dashboard"] -> routes.TripsDashboard
     ["trips", "create"] -> routes.TripCreate
     ["trips", trip_id] -> routes.TripDetails(trip_id)
@@ -123,8 +126,16 @@ pub fn update(model: AppModel, msg: AppEvent) -> #(AppModel, Effect(AppEvent)) {
     events.ShowToast -> toast.show_toast(model)
     events.HideToast -> toast.hide_toast(model)
 
+    events.LogoutClicked -> #(model, api.send_logout_request())
+    events.LogoutApiReturnedResponse -> #(
+      model,
+      modem.push("/login", option.None, option.None),
+    )
+
     // Let the children pages handle their page-sepcific events
     events.LoginPage(event) -> login_page.handle_login_page_event(model, event)
+    events.SignupPage(event) ->
+      signup_page.handle_signup_page_event(model, event)
     events.TripsDashboardPage(event) ->
       trips_dashboard_page.handle_trips_dashboard_page_event(model, event)
     events.TripDetailsPage(event) ->
@@ -175,7 +186,7 @@ pub fn view(model: AppModel) -> Element(AppEvent) {
     case model.route {
       routes.ErrorFiveHundred -> error_500.error_five_hundred()
       routes.Login -> login_page.login_view(model)
-      routes.Signup -> html.h1([], [element.text("Signup")])
+      routes.Signup -> signup_page.signup_view(model)
       routes.TripsDashboard -> trips_dashboard_page.trips_dashboard_view(model)
       routes.TripDetails(_trip_id) -> trip_details_page.trip_details_view(model)
       routes.TripPlaceUpdate(trip_id, trip_place_id) ->

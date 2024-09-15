@@ -145,6 +145,32 @@ pub fn send(api_request: ApiRequest(ReadyToFireRequest, decoder, app_event)) {
 // --------- API REQUESTS ----------
 // ---------------------------------
 
+pub fn send_signup_request(signup_request: auth_models.SignupRequest) {
+  new_request()
+  |> with_url("/api/signup")
+  |> with_method(Post)
+  |> with_json_body(auth_models.signup_request_encoder(signup_request))
+  |> with_ignore_response_to_event(fn(result) {
+    events.SignupPage(events.SignupPageApiReturnedResponse(result))
+  })
+  |> build
+  |> send
+}
+
+pub fn send_logout_request() {
+  new_request()
+  |> with_url("/api/logout")
+  |> with_method(Post)
+  |> with_ignore_response_to_event(fn(result) {
+    case result {
+      Ok(_) -> events.LogoutApiReturnedResponse
+      Error(_) -> events.NoEvent
+    }
+  })
+  |> build
+  |> send
+}
+
 pub fn send_login_request(login_request: auth_models.LoginRequest) {
   new_request()
   |> with_url("/api/login")

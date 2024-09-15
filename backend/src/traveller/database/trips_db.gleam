@@ -48,14 +48,15 @@ pub fn get_user_trips(
 
   let return_type = dynamic.element(0, dynamic.string)
 
-  use query_result <- result.try(
+  use pgo.Returned(_, rows) <- result.try(
     pgo.execute(sql, ctx.db, [pgo.text(user_id)], return_type)
     |> database.to_app_error(),
   )
 
-  use row <- database.require_single_row(query_result, "get_user_trips")
-
-  json_util.try_decode(row, trip_models.user_trips_decoder())
+  case rows {
+    [row] -> json_util.try_decode(row, trip_models.user_trips_decoder())
+    _ -> Ok(trip_models.default_user_trips())
+  }
 }
 
 pub fn get_user_trip_dates_by_trip_id(
