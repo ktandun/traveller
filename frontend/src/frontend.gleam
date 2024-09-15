@@ -12,6 +12,7 @@ import frontend/pages/trip_place_activities_page
 import frontend/pages/trip_place_create_page
 import frontend/pages/trip_place_culinaries_page
 import frontend/pages/trip_place_update_page
+import frontend/pages/trip_summary_page
 import frontend/pages/trip_update_page
 import frontend/pages/trips_dashboard_page
 import frontend/routes.{type Route}
@@ -64,6 +65,7 @@ fn path_to_route(path_segments: List(String)) -> Route {
     ["dashboard"] -> routes.TripsDashboard
     ["trips", "create"] -> routes.TripCreate
     ["trips", trip_id] -> routes.TripDetails(trip_id)
+    ["trips", trip_id, "summary"] -> routes.TripSummary(trip_id)
     ["trips", trip_id, "update"] -> routes.TripUpdate(trip_id)
     ["trips", trip_id, "add-companions"] -> routes.TripCompanions(trip_id)
     ["trips", trip_id, "places", "create"] -> routes.TripPlaceCreate(trip_id)
@@ -105,6 +107,7 @@ pub fn update(model: AppModel, msg: AppEvent) -> #(AppModel, Effect(AppEvent)) {
       | routes.TripCompanions(trip_id)
       | routes.TripUpdate(trip_id) -> load_trip_details(model, trip_id)
       routes.TripDetails(trip_id) -> api.send_get_trip_details_request(trip_id)
+      routes.TripSummary(trip_id) -> api.send_get_trip_details_request(trip_id)
       routes.TripPlaceActivities(trip_id, trip_place_id) ->
         effect.batch([
           load_trip_details(model, trip_id),
@@ -189,6 +192,7 @@ pub fn view(model: AppModel) -> Element(AppEvent) {
       routes.Signup -> signup_page.signup_view(model)
       routes.TripsDashboard -> trips_dashboard_page.trips_dashboard_view(model)
       routes.TripDetails(_trip_id) -> trip_details_page.trip_details_view(model)
+      routes.TripSummary(_trip_id) -> trip_summary_page.trip_summary_view(model)
       routes.TripPlaceUpdate(trip_id, trip_place_id) ->
         trip_place_update_page.trip_place_update_view(
           model,

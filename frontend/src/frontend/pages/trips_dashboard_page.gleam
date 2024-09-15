@@ -60,7 +60,16 @@ pub fn trips_dashboard_view(model: AppModel) {
                     user_trip.end_date,
                   )),
                 ]),
-                html.td([], [html.button([], [element.text("Generate")])]),
+                html.td([], [
+                  html.a(
+                    [
+                      attribute.href(
+                        "/trips/" <> user_trip.trip_id <> "/summary",
+                      ),
+                    ],
+                    [element.text("Generate")],
+                  ),
+                ]),
               ])
             }),
         ),

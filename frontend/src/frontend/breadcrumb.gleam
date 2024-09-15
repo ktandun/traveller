@@ -20,6 +20,7 @@ fn left_side(model: AppModel) {
         html.a([attribute.href("/login")], [element.text("Login")]),
       ])
     routes.TripDetails(trip_id)
+    | routes.TripSummary(trip_id)
     | routes.TripUpdate(trip_id)
     | routes.TripPlaceCreate(trip_id)
     | routes.TripPlaceUpdate(trip_id, _trip_place_id)
