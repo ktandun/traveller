@@ -573,7 +573,7 @@ BEGIN
             create_place_activity (place_activity_id => 'c26a0603-16d2-4156-b985-acf398b16cd2', trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', name => 'Battlestar Galactica: HUMAN vs. CYLON', information_url => 'https://www.sentosa.com.sg/en/things-to-do/attractions/universal-studios-singapore/', start_time => '10:00', end_time => '12:00', entry_fee => 3);
         --
         PERFORM
-            create_place_activity (place_activity_id => '5035f7ca-82e1-41ed-ba23-68a3ff53d47f', trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', name => 'TRANSFORMERS The Ride: The Ultimate 3D Battle', information_url => 'https://www.sentosa.com.sg/en/things-to-do/attractions/universal-studios-singapore/', start_time => '12:00', end_time => '13:00', entry_fee => 12);
+            create_place_activity (place_activity_id => '5035f7ca-82e1-41ed-ba23-68a3ff53d47f', trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', name => 'TRANSFORMERS The Ride: The Ultimate 3D Battle', information_url => NULL, start_time => NULL, end_time => NULL, entry_fee => NULL);
         --
         PERFORM
             upsert_place_accomodation (trip_place_id => '619ee043-d377-4ef7-8134-dc16c3c4af99', place_accomodation_id => '58cc6f2b-4291-4396-bf4f-5102f8fce4fe', accomodation_name => 'Marina Bay Sands', information_url => 'https://www.marinabaysands.com', accomodation_fee => 120, paid => TRUE);

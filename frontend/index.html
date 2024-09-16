@@ -7,15 +7,14 @@
     <!-- Uncomment this if you add the TailwindCSS integration -->
     <!-- <link rel="stylesheet" href="/priv/static/frontend.css"> -->
     <script type="module" src="/priv/static/frontend.mjs"></script>
+    <!--
     <link rel="stylesheet" href="https://cdn.simplecss.org/simple.css">
+    -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" >
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
     <style>
-    body {
-      grid-template-columns: 1fr min(60rem, 96%) 1fr;
-    }
-
     .text-cursive {
       font-family: 'Pacifico', cursive;
       font-optical-sizing: auto;
@@ -192,6 +191,8 @@
     </style>
   </head>
   <body>
-    <div id="app"></div>
+    <main class="container">
+      <div id="app"></div>
+    </main>
   </body>
 </html>

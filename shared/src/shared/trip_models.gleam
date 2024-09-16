@@ -176,8 +176,8 @@ pub fn user_trip_place_culinary_encoder(data: UserTripPlaceCulinary) {
   json.object([
     #("name", json.string(data.name)),
     #("information_url", json.nullable(data.information_url, json.string)),
-    #("start_time", json.nullable(data.open_time, json.string)),
-    #("end_time", json.nullable(data.close_time, json.string)),
+    #("open_time", json.nullable(data.open_time, json.string)),
+    #("close_time", json.nullable(data.close_time, json.string)),
   ])
 }
 

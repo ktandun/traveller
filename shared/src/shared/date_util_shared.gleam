@@ -46,7 +46,7 @@ pub fn to_human_readable(date: birl.Day) -> String {
     _ -> " "
   }
 
-  int.to_string(day) <> " " <> month <> " " <> int.to_string(year)
+  month <> " " <> int.to_string(day) <> ", " <> int.to_string(year)
 }
 
 pub fn to_yyyy_mm_dd(date: birl.Day) -> String {
