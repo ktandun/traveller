@@ -8,6 +8,7 @@ import frontend/toast
 import frontend/web
 import gleam/float
 import gleam/function
+import gleam/int
 import gleam/list
 import gleam/option
 import gleam/string
@@ -188,7 +189,11 @@ pub fn handle_trip_place_activities_page_event(
                 end_time: string.to_option(activity.end_time),
                 entry_fee: case float.parse(activity.entry_fee) {
                   Ok(entry_fee) -> option.Some(entry_fee)
-                  Error(_) -> option.None
+                  Error(_) ->
+                    case int.parse(activity.entry_fee) {
+                      Ok(entry_fee) -> option.Some(entry_fee |> int.to_float)
+                      Error(_) -> option.None
+                    }
                 },
               )
             },

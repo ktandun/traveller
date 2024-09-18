@@ -7,6 +7,7 @@ import frontend/toast
 import frontend/uuid_util
 import frontend/web
 import gleam/float
+import gleam/int
 import gleam/io
 import gleam/option
 import gleam/string
@@ -139,7 +140,12 @@ pub fn handle_trip_place_accomodations_page_event(
             float.parse(model.trip_place_accomodation.accomodation_fee)
           {
             Ok(accomodation_fee) -> option.Some(accomodation_fee)
-            Error(_) -> option.None
+            Error(_) ->
+              case int.parse(model.trip_place_accomodation.accomodation_fee) {
+                Ok(accomodation_fee) ->
+                  option.Some(accomodation_fee |> int.to_float)
+                Error(_) -> option.None
+              }
           },
           paid: model.trip_place_accomodation.paid,
         ),
