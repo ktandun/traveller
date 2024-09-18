@@ -62,23 +62,25 @@ pub fn trip_summary_view(model: AppModel) {
       ]),
       html.section([], [
         html.h2([], [text("Places of Interest and Activities")]),
-        html.table([], [
-          html.thead([], [
-            html.tr([], [
-              html.th([], [text("Place Name")]),
-              html.th([], [text("Date")]),
-              html.th([], [text("Accommodation")]),
-              html.th([], [text("Activities")]),
-              html.th([], [text("Culinaries")]),
+        html.figure([], [
+          html.table([], [
+            html.thead([], [
+              html.tr([], [
+                html.th([], [text("Place Name")]),
+                html.th([], [text("Date")]),
+                html.th([], [text("Accommodation")]),
+                html.th([], [text("Activities")]),
+                html.th([], [text("Culinaries")]),
+              ]),
             ]),
+            html.tbody(
+              [],
+              model.trip_details.user_trip_places
+                |> list.map(fn(user_trip_place) {
+                  render_place_and_activity(user_trip_place)
+                }),
+            ),
           ]),
-          html.tbody(
-            [],
-            model.trip_details.user_trip_places
-              |> list.map(fn(user_trip_place) {
-                render_place_and_activity(user_trip_place)
-              }),
-          ),
         ]),
       ]),
       html.section([], [
